@@ -1,6 +1,34 @@
 // @ts-check
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { ESCENARIO } from '../config/level.js';
+import { PALETA } from '../config/palette.js';
+
+/**
+ * Luces puntuales del nivel (luz_*): antorchas cálidas que parpadean y la luz azul de la cueva.
+ * Sin sombras (sección 4.2). Su número es fijo, así que los shaders no se recompilan.
+ * @param {THREE.Scene} escena
+ * @param {{objeto: THREE.Object3D, datos: Record<string, any>}[]} luces
+ */
+export function crearLucesNivel(escena, luces) {
+  const lista = luces.map(({ objeto, datos }) => {
+    const luz = new THREE.PointLight(datos.color ?? PALETA.fuego, Number(datos.intensidad ?? 5), Number(datos.distancia ?? 10), 2);
+    objeto.getWorldPosition(luz.position);
+    escena.add(luz);
+    return { luz, base: luz.intensity, parpadeo: Boolean(datos.parpadeo), fase: Math.random() * 10 };
+  });
+  return {
+    /** @param {number} t */
+    actualizar(t) {
+      for (let i = 0; i < lista.length; i++) {
+        const l = lista[i];
+        if (!l.parpadeo) continue;
+        const f = Math.sin(t * 9.1 + l.fase) * 0.5 + Math.sin(t * 23.7 + l.fase * 2) * 0.3 + Math.sin(t * 4.3) * 0.2;
+        l.luz.intensity = l.base * (1 + f * ESCENARIO.parpadeo_antorcha);
+      }
+    },
+  };
+}
 
 /**
  * Luz y atmósfera de la selva (sección 4.3): sol cálido de tarde con sombras, cielo procedural
@@ -24,7 +52,7 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
   escena.environment = pmrem.fromScene(escenaCielo).texture;
   pmrem.dispose();
 
-  escena.fog = new THREE.FogExp2(0x9db592, 0.012);
+  escena.fog = new THREE.FogExp2(PALETA.niebla_selva, ESCENARIO.niebla_selva);
 
   const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x5a4632, 0.55);
   escena.add(hemi);

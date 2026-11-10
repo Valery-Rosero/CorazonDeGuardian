@@ -317,7 +317,17 @@ def material_emisivo(nombre, hexa, fuerza=3.0):
 # Objetos
 # ---------------------------------------------------------------------------
 
-def crear_malla(nombre, k, materiales, armadura=None):
+def objeto_suelto(nombre, k, materiales, ubicacion=(0, 0, 0), props=None):
+    """Malla independiente del escenario (sin huesos) construida en coordenadas locales:
+    el origen del objeto queda en 'ubicacion' (origen a la geometría, como pide la semana 8)."""
+    obj = crear_malla(nombre, k, materiales, grupos=False)
+    obj.location = ubicacion
+    for clave, valor in (props or {}).items():
+        obj[clave] = valor
+    return obj
+
+
+def crear_malla(nombre, k, materiales, armadura=None, grupos=True):
     me = bpy.data.meshes.new(nombre)
     me.from_pydata([tuple(v) for v in k.v], [], [list(c) for c in k.f])
     me.update()
@@ -338,7 +348,7 @@ def crear_malla(nombre, k, materiales, armadura=None):
         pass
     obj = bpy.data.objects.new(nombre, me)
     bpy.context.scene.collection.objects.link(obj)
-    for hueso in sorted(set(k.vhueso)):
+    for hueso in sorted(set(k.vhueso)) if grupos else []:
         vg = obj.vertex_groups.new(name=hueso)
         vg.add([i for i, h in enumerate(k.vhueso) if h == hueso], 1.0, 'REPLACE')
     if armadura is not None:
@@ -379,6 +389,35 @@ def agregar_formas(obj, formas):
         # Blender 5.x puede crear la forma ya activa; el exportador guarda este valor como peso
         # inicial en el .glb, así que debe quedar en 0 (cara neutra al cargar).
         sk.value = 0.0
+
+
+def caja_invisible(nombre, minimo, maximo, rot=(0, 0, 0), props=None):
+    """Colisionador o trigger: caja de 8 vértices entre 'minimo' y 'maximo' (coordenadas de Blender)."""
+    c = [(a + b) / 2 for a, b in zip(minimo, maximo)]
+    sx, sy, sz = ((b - a) / 2 for a, b in zip(minimo, maximo))
+    v = [(-sx, -sy, -sz), (sx, -sy, -sz), (sx, sy, -sz), (-sx, sy, -sz),
+         (-sx, -sy, sz), (sx, -sy, sz), (sx, sy, sz), (-sx, sy, sz)]
+    f = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+    me = bpy.data.meshes.new(nombre)
+    me.from_pydata(v, [], f)
+    obj = bpy.data.objects.new(nombre, me)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.location = c
+    obj.rotation_euler = [math.radians(a) for a in rot]
+    for clave, valor in (props or {}).items():
+        obj[clave] = valor
+    return obj
+
+
+def vacio(nombre, pos, rot_z=0.0, props=None):
+    """Objeto vacío: puntos de aparición, emisores, luces, triggers radiales y puntos de interés."""
+    obj = bpy.data.objects.new(nombre, None)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.location = pos
+    obj.rotation_euler = (0, 0, math.radians(rot_z))
+    for clave, valor in (props or {}).items():
+        obj[clave] = valor
+    return obj
 
 
 def exportar_glb(ruta, objetos):

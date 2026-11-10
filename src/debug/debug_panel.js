@@ -16,7 +16,7 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
  */
 export function crearPanelDepuracion({ renderer, cfgJugador, camara, cara, decir, emociones }) {
   const stats = new Stats();
-  stats.dom.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:30;';
+  stats.dom.style.cssText = 'position:fixed;bottom:8px;right:8px;z-index:30;';
   document.body.appendChild(stats.dom);
 
   const info = document.createElement('div');
@@ -52,6 +52,8 @@ export function crearPanelDepuracion({ renderer, cfgJugador, camara, cara, decir
 
   let acumulado = 0;
   return {
+    stats,
+    info,
     inicio() {
       stats.begin();
     },

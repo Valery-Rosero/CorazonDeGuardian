@@ -86,6 +86,7 @@ export class AnimadorProcedural {
       }
     });
     this.fase = 0;
+    this.pisada = false;
     this.pesoMov = 0;
     this.pesoAire = 0;
     this.orientacionPrevia = 0;
@@ -119,8 +120,11 @@ export class AnimadorProcedural {
     const pt = 1 - pa;
 
     // --- Locomoción
+    const senoPrevio = Math.sin(this.fase);
     this.fase += dt * Math.PI * v / mezclar(cfg.paso_caminar, cfg.paso_correr, vNorm);
     const s = Math.sin(this.fase);
+    // Un pie toca el suelo cada vez que el seno cruza el cero (para el sonido de los pasos)
+    this.pisada = est.enSuelo && this.pesoMov > 0.35 && Math.sign(s) !== Math.sign(senoPrevio);
     const c = Math.cos(this.fase);
     const amp = mezclar(cfg.amplitud_caminar, cfg.amplitud_correr, vNorm) * this.pesoMov;
     const rodilla = amp * 1.4;

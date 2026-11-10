@@ -6,7 +6,10 @@ Aventura 3D para navegador hecha con **Three.js 0.160.0** y **cannon-es 0.20.0**
 
 - Node.js 20 o superior
 - Chrome o Edge con WebGL 2 activo
-- Solo para regenerar los modelos: Blender 3.6 o superior (probado con 5.2 LTS)
+- Solo para regenerar los recursos:
+  - Blender 3.6 o superior (probado con 5.2 LTS);
+  - Python 3 con numpy (para el audio);
+  - ffmpeg, opcional.
 
 ## Ejecutar
 
@@ -28,7 +31,16 @@ En `npm run dev`, o con `?debug` en la URL, aparece el panel de depuración. Mue
 | `npm run preview` | Probar la compilación de producción |
 | `npm run check` | Comprobación de tipos JSDoc |
 | `npm test` | Pruebas de lógica (`node --test`) |
-| `npm run assets` | Regenera los `.glb` con Blender. La ruta de Blender se lee de `BLENDER_PATH`. Con `-- --preview`, además genera renders en `docs/previews/`. |
+| `npm run assets` | Regenera los `.glb` con Blender y los sonidos con Python. La ruta de Blender se lee de `BLENDER_PATH`. Con `-- --preview`, además genera renders de Victoria en `docs/previews/`. |
+
+## Teclas de depuración (en `npm run dev` o con `?debug`)
+
+| Tecla | Acción |
+|---|---|
+| 1, 2, 3 | Teletransporte: entrada, cornisa, ruinas |
+| 6 | Invulnerabilidad |
+| 9 | Mostrar u ocultar los FPS y las llamadas de dibujo |
+| 0 | Mostrar u ocultar los triggers y los colisionadores |
 
 ## Estructura
 

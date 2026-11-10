@@ -18,6 +18,14 @@ export const PLAYER = Object.freeze({
   giro: 12,                    // rapidez con la que Victoria gira hacia donde se mueve
 });
 
+/** Vida y daño (sección 5.4). */
+export const VIDA = Object.freeze({
+  maxima: 100,
+  invulnerable_tras_dano: 0.6,  // s
+  flor_cura: 25,
+  espera_reaparicion: 1.2,      // s entre caer y mostrar la pantalla de derrota
+});
+
 /** Animación procedural de Victoria. */
 export const ANIMACION = Object.freeze({
   paso_caminar: 1.25,          // m recorridos por paso al caminar

@@ -48,6 +48,11 @@ export class ControladorJugador {
     this.velVertical = 0;
     this.orientacion = 0;
     this.aterrizaje = 0;
+    this.salto = false;
+    /** Cuerpo físico sobre el que está parada (para el puente). @type {CANNON.Body | null} */
+    this.cuerpoSuelo = null;
+    /** Mientras está muerta o en una cinemática, el jugador no controla a Victoria. */
+    this.bloqueado = false;
     /** Posición de los pies (para la cámara, el HUD y los triggers). */
     this.posicion = new THREE.Vector3();
 
@@ -62,17 +67,31 @@ export class ControladorJugador {
     this._dir = new THREE.Vector3();
 
     // Comprobación de suelo por contacto (semana 6): normal del contacto hacia arriba.
+    /** @type {CANNON.Body | null} */
+    this._cuerpoContacto = null;
     cuerpo.addEventListener('collide', (/** @type {any} */ e) => {
       const ni = e.contact.ni;
       const signo = e.contact.bi === cuerpo ? -1 : 1;
-      if (ni.y * signo > 0.5) this._contactoSuelo = true;
+      if (ni.y * signo > 0.5) {
+        this._contactoSuelo = true;
+        this._cuerpoContacto = e.contact.bi === cuerpo ? e.contact.bj : e.contact.bi;
+      }
     });
   }
 
-  /** @param {THREE.Vector3} pies */
-  colocar(pies) {
+  /**
+   * Coloca a Victoria (aparición, portal, reaparición) con su cuerpo físico.
+   * @param {THREE.Vector3} pies
+   * @param {number} [rumbo]
+   */
+  colocar(pies, rumbo) {
     this.cuerpo.position.set(pies.x, pies.y + this.mitad + 0.05, pies.z);
     this.cuerpo.velocity.set(0, 0, 0);
+    this.cuerpo.wakeUp();
+    if (rumbo !== undefined) this.orientacion = rumbo;
+    this.posicion.set(pies.x, pies.y, pies.z);
+    this.modelo.position.copy(this.posicion);
+    this.modelo.rotation.y = this.orientacion;
   }
 
   /**
@@ -92,6 +111,8 @@ export class ControladorJugador {
     const estabaEnSuelo = this.enSuelo;
     const porRayo = this._rayo.hasHit && this._rayo.distance <= this.mitad + 0.1;
     this.enSuelo = (porRayo || this._contactoSuelo) && b.velocity.y <= 0.6;
+    // Si el rayo cae en una rendija, el contacto dice sobre qué cuerpo está apoyada
+    this.cuerpoSuelo = porRayo ? this._rayo.body : this._contactoSuelo ? this._cuerpoContacto : null;
     this._contactoSuelo = false;
     if (!estabaEnSuelo && this.enSuelo) this.aterrizaje = Math.min(1, Math.abs(this.velVertical) / 9);
 
@@ -102,10 +123,12 @@ export class ControladorJugador {
     this._derecha.crossVectors(this._adelante, ARRIBA).normalize();
     let ix = 0;
     let iz = 0;
-    if (e.mantiene('adelante')) iz += 1;
-    if (e.mantiene('atras')) iz -= 1;
-    if (e.mantiene('derecha')) ix += 1;
-    if (e.mantiene('izquierda')) ix -= 1;
+    if (!this.bloqueado) {
+      if (e.mantiene('adelante')) iz += 1;
+      if (e.mantiene('atras')) iz -= 1;
+      if (e.mantiene('derecha')) ix += 1;
+      if (e.mantiene('izquierda')) ix -= 1;
+    }
     this._dir.set(0, 0, 0).addScaledVector(this._adelante, iz).addScaledVector(this._derecha, ix);
     const hayEntrada = this._dir.lengthSq() > 1e-4;
     if (hayEntrada) this._dir.normalize();
@@ -117,9 +140,11 @@ export class ControladorJugador {
     b.velocity.z = acercar(b.velocity.z, this._dir.z * vmax, acel * dt);
 
     // Salto con coyote time y memoria de tecla; gravedad extra al caer
-    if (actualizarSalto(this._salto, dt, this.enSuelo, e.pulso('saltar'), cfg)) {
+    this.salto = false;
+    if (actualizarSalto(this._salto, dt, this.enSuelo, !this.bloqueado && e.pulso('saltar'), cfg)) {
       b.velocity.y = velocidadSalto(cfg.altura_salto, GRAVEDAD) * cfg.compensacion_amortiguacion;
       this.enSuelo = false;
+      this.salto = true;
     }
     if (!this.enSuelo && b.velocity.y < 0) b.velocity.y -= GRAVEDAD * (cfg.gravedad_extra_caida - 1) * dt;
 

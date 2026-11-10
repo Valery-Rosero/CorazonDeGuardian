@@ -34,6 +34,9 @@ export class MundoFisico {
     const m = this.materiales;
     // Sin fricción para el jugador: no se queda pegado a las paredes.
     this.world.addContactMaterial(new CANNON.ContactMaterial(m.jugador, m.mundo, { friction: 0, restitution: 0 }));
+    // Sin fricción tampoco contra tablas y esferas: si no, Victoria se atasca en las rendijas del puente
+    this.world.addContactMaterial(new CANNON.ContactMaterial(m.jugador, m.tabla, { friction: 0, restitution: 0 }));
+    this.world.addContactMaterial(new CANNON.ContactMaterial(m.jugador, m.esfera, { friction: 0, restitution: 0.1 }));
     this.world.addContactMaterial(new CANNON.ContactMaterial(m.esfera, m.mundo, { friction: 0.4, restitution: 0.6 }));
     this.world.addContactMaterial(new CANNON.ContactMaterial(m.tabla, m.mundo, { friction: 0.5, restitution: 0.2 }));
 

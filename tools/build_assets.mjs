@@ -11,7 +11,7 @@ if (!existsSync(BLENDER)) {
   process.exit(1);
 }
 
-const scripts = ['tools/blender/build_personajes.py', 'tools/blender/build_nivel_prueba.py'];
+const scripts = ['tools/blender/build_personajes.py', 'tools/blender/build_zona_1_selva.py'];
 const extra = process.argv.includes('--preview') ? ['--', '--preview'] : [];
 
 for (const script of scripts) {
@@ -24,4 +24,11 @@ for (const script of scripts) {
     process.exit(r.status ?? 1);
   }
 }
-console.log('\n✔ Recursos generados en public/models/');
+console.log('\n▶ tools/audio/audio_synth.py');
+const python = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+const audio = spawnSync(python, ['tools/audio/audio_synth.py'], { stdio: 'inherit' });
+if (audio.status !== 0) {
+  console.error('✖ La síntesis de audio falló (necesita Python 3 con numpy)');
+  process.exit(audio.status ?? 1);
+}
+console.log('\n✔ Recursos generados en public/models/ y public/sounds/');

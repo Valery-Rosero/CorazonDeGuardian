@@ -25,4 +25,10 @@ export const CAMERA_LIMITES = Object.freeze({
   distancia_minima: 0.8,     // si choca con una pared, nunca se acerca más que esto
   margen_colision: 0.25,
   mezcla_perfil: 4,          // rapidez de mezcla entre perfiles
+  recentrar_espera: 2.5,     // s sin tocar el ratón antes de volver detrás de Victoria
+  recentrar_rapidez: 1.4,
+  hint_rapidez: 1.8,         // rapidez con la que la cámara se inclina hacia un punto de interés
+  hint_duracion: 2.2,        // s que dura la inclinación
+  ocultar_opacidad: 0.28,    // opacidad de lo que tapa a Victoria
+  sacudida_maxima: 0.35,     // m
 });

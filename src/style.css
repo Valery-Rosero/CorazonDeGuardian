@@ -97,6 +97,86 @@ html, body {
   border-bottom: 16px solid #9a2f1f;
 }
 
+#cartografa-mensaje {
+  margin-top: 0;
+  max-height: 0;
+  overflow: hidden;
+  font-style: italic;
+  color: #7a2f12;
+  font-size: 15px;
+  transition: max-height 0.35s, margin-top 0.35s, opacity 0.35s;
+  opacity: 0;
+}
+#cartografa-mensaje.visible { max-height: 40px; margin-top: 6px; opacity: 1; }
+
+/* Vida */
+#vida {
+  position: absolute;
+  left: 16px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vida-icono {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--oro-claro), var(--oro) 60%, #9c7424);
+  box-shadow: 0 0 12px rgba(221, 170, 54, 0.6);
+}
+.vida-barra {
+  width: 220px;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(10, 8, 6, 0.55);
+  border: 1px solid rgba(255, 244, 226, 0.35);
+  overflow: hidden;
+}
+#vida-relleno {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #c98a2a, var(--oro-claro));
+  transition: width 0.25s;
+}
+#vida-texto { font-size: 15px; min-width: 32px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+
+#vinyeta {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle, transparent 55%, rgba(170, 20, 10, 0.55));
+}
+#vinyeta.activo { animation: vinyeta 0.6s ease-out; }
+@keyframes vinyeta { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Destello dorado del portal */
+#destello {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 15;
+  background: radial-gradient(circle, #fff8e0, #f3d27a 60%, #ddaa36);
+}
+#destello.activo { animation: destello 0.7s ease-out; }
+@keyframes destello { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+
+.titulo-rojo { margin: 0; font-size: clamp(30px, 5vw, 54px); font-weight: normal; color: #e8a08c; letter-spacing: 0.03em; }
+.boton {
+  font: inherit;
+  font-size: 18px;
+  padding: 12px 34px;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--oro);
+  background: rgba(221, 170, 54, 0.15);
+  color: var(--calido);
+  cursor: pointer;
+}
+.boton:hover, .boton:focus-visible { background: rgba(221, 170, 54, 0.35); outline: none; }
+#derrota { background: radial-gradient(circle at 50% 40%, rgba(60, 14, 8, 0.7), rgba(10, 6, 4, 0.92)); cursor: default; }
+
 #reticula {
   position: absolute;
   left: 50%;
@@ -165,7 +245,7 @@ html, body {
 #depuracion-info {
   position: fixed;
   bottom: 60px;
-  left: 8px;
+  right: 8px;
   z-index: 30;
   font: 12px monospace;
   color: #0f0;

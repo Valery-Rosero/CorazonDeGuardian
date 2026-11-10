@@ -13,6 +13,7 @@
         <div class="cartografa-titulo">Cuaderno de la cartógrafa</div>
         <div id="cartografa-zona">Territorio sin cartografiar</div>
         <div id="cartografa-coords">X: 0.0 | Y: 0.0 | Z: 0.0</div>
+        <div id="cartografa-mensaje"></div>
         <div class="brujula" aria-hidden="true">
           <div id="cartografa-aguja" class="rosa">
             <span class="n">N</span><span class="e">E</span><span class="s">S</span><span class="o">O</span>
@@ -20,7 +21,13 @@
           </div>
         </div>
       </section>
+      <div id="vida" aria-label="Vida">
+        <div class="vida-icono" aria-hidden="true"></div>
+        <div class="vida-barra"><div id="vida-relleno"></div></div>
+        <span id="vida-texto">100</span>
+      </div>
       <div id="reticula" aria-hidden="true"></div>
+      <div id="vinyeta" aria-hidden="true"></div>
       <div id="subtitulo" class="oculto" data-estilo="calido">
         <span id="subtitulo-dicho"></span><span id="subtitulo-resto"></span>
       </div>
@@ -36,6 +43,14 @@
       <h1 class="titulo-oro">El Templo del Sol Perdido</h1>
       <p class="aviso">Haz clic para comenzar</p>
       <p class="controles">WASD moverse · Shift correr · Espacio saltar · Ratón cámara · P o Esc pausa</p>
+    </div>
+
+    <div id="destello" aria-hidden="true"></div>
+
+    <div id="derrota" class="pantalla oculto">
+      <h2 class="titulo-rojo">Victoria ha caído</h2>
+      <p class="controles">El último pilar solar te espera.</p>
+      <button id="boton-reintentar" type="button" class="boton">Reintentar</button>
     </div>
 
     <div id="pausa" class="pantalla oculto">
