@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>El Templo del Sol Perdido</title>
+  </head>
+  <body>
+    <canvas id="lienzo"></canvas>
+
+    <div id="hud">
+      <section id="cartografa" aria-label="Cuaderno de la cartógrafa">
+        <div class="cartografa-titulo">Cuaderno de la cartógrafa</div>
+        <div id="cartografa-zona">Territorio sin cartografiar</div>
+        <div id="cartografa-coords">X: 0.0 | Y: 0.0 | Z: 0.0</div>
+        <div class="brujula" aria-hidden="true">
+          <div id="cartografa-aguja" class="rosa">
+            <span class="n">N</span><span class="e">E</span><span class="s">S</span><span class="o">O</span>
+            <div class="flecha"></div>
+          </div>
+        </div>
+      </section>
+      <div id="reticula" aria-hidden="true"></div>
+      <div id="subtitulo" class="oculto" data-estilo="calido">
+        <span id="subtitulo-dicho"></span><span id="subtitulo-resto"></span>
+      </div>
+    </div>
+
+    <div id="pantalla-carga" class="pantalla">
+      <h1 class="titulo-oro">El Templo del Sol Perdido</h1>
+      <div class="barra"><div id="barra-progreso"></div></div>
+      <p id="texto-carga">Preparando la selva…</p>
+    </div>
+
+    <div id="pantalla-inicio" class="pantalla oculto">
+      <h1 class="titulo-oro">El Templo del Sol Perdido</h1>
+      <p class="aviso">Haz clic para comenzar</p>
+      <p class="controles">WASD moverse · Shift correr · Espacio saltar · Ratón cámara · P o Esc pausa</p>
+    </div>
+
+    <div id="pausa" class="pantalla oculto">
+      <h2 class="titulo-oro">Pausa</h2>
+      <p class="aviso">Haz clic para continuar</p>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

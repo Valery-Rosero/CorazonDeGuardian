@@ -1,0 +1,66 @@
+// @ts-check
+import * as THREE from 'three';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
+
+/**
+ * Luz y atmósfera de la selva (sección 4.3): sol cálido de tarde con sombras, cielo procedural
+ * convertido en mapa de entorno (IBL) sin descargar HDRI, niebla verdosa.
+ * @param {THREE.Scene} escena
+ * @param {THREE.WebGLRenderer} renderer
+ * @param {import('../config/quality.js').Calidad} calidad
+ */
+export function crearAmbienteSelva(escena, renderer, calidad) {
+  const elevacion = THREE.MathUtils.degToRad(22);
+  const azimut = THREE.MathUtils.degToRad(215);
+  const dirSol = new THREE.Vector3().setFromSphericalCoords(1, Math.PI / 2 - elevacion, azimut);
+
+  const cielo = crearCielo(dirSol);
+  escena.add(cielo);
+
+  // Mapa de entorno a partir de otra instancia del cielo
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const escenaCielo = new THREE.Scene();
+  escenaCielo.add(crearCielo(dirSol));
+  escena.environment = pmrem.fromScene(escenaCielo).texture;
+  pmrem.dispose();
+
+  escena.fog = new THREE.FogExp2(0x9db592, 0.012);
+
+  const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x5a4632, 0.55);
+  escena.add(hemi);
+  const ambiente = new THREE.AmbientLight(0xfff0dc, 0.22);
+  escena.add(ambiente);
+
+  const sol = new THREE.DirectionalLight(0xffe0b0, 2.3);
+  sol.castShadow = true;
+  sol.shadow.mapSize.set(calidad.sombras, calidad.sombras);
+  const c = sol.shadow.camera;
+  c.left = -14; c.right = 14; c.top = 14; c.bottom = -14; c.near = 1; c.far = 80;
+  sol.shadow.bias = -0.0004;
+  sol.shadow.normalBias = 0.03;
+  escena.add(sol);
+  escena.add(sol.target);
+
+  const desplazamiento = dirSol.clone().multiplyScalar(35);
+  return {
+    sol,
+    /** La cámara de sombras sigue a Victoria para mantener sombras nítidas. @param {THREE.Vector3} pos */
+    seguir(pos) {
+      sol.position.copy(pos).add(desplazamiento);
+      sol.target.position.copy(pos);
+    },
+  };
+}
+
+/** @param {THREE.Vector3} dirSol */
+function crearCielo(dirSol) {
+  const cielo = new Sky();
+  cielo.scale.setScalar(400);
+  const u = cielo.material.uniforms;
+  u.turbidity.value = 6;
+  u.rayleigh.value = 1.8;
+  u.mieCoefficient.value = 0.006;
+  u.mieDirectionalG.value = 0.86;
+  u.sunPosition.value.copy(dirSol);
+  return cielo;
+}

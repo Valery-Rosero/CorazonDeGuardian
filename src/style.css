@@ -1,0 +1,179 @@
+:root {
+  --oro: #ddaa36;
+  --oro-claro: #f3d27a;
+  --azul: #3198db;
+  --tinta: #3a2a1c;
+  --papel: #efe2c4;
+  --papel-oscuro: #d9c69c;
+  --noche: #15120e;
+  --calido: #fff4e2;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--noche);
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+  color: var(--calido);
+}
+
+#lienzo {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#hud.atenuado { opacity: 0.35; }
+
+/* Cuaderno de la cartógrafa */
+#cartografa {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 300px;
+  padding: 12px 16px 14px 16px;
+  color: var(--tinta);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.35), transparent 55%),
+    linear-gradient(160deg, var(--papel), var(--papel-oscuro));
+  border-radius: 4px 10px 6px 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), inset 0 0 22px rgba(120, 80, 30, 0.25);
+  transform: rotate(-0.8deg);
+}
+.cartografa-titulo {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+#cartografa-zona {
+  margin-top: 4px;
+  font-size: 17px;
+  font-style: italic;
+  padding-right: 54px;
+}
+#cartografa-coords {
+  margin-top: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+.brujula {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--tinta);
+  background: rgba(255, 250, 235, 0.5);
+}
+.rosa { position: absolute; inset: 0; font-size: 9px; font-weight: bold; }
+.rosa span { position: absolute; }
+.rosa .n { top: 1px; left: 50%; transform: translateX(-50%); color: #9a2f1f; }
+.rosa .s { bottom: 1px; left: 50%; transform: translateX(-50%); }
+.rosa .e { right: 3px; top: 50%; transform: translateY(-50%); }
+.rosa .o { left: 3px; top: 50%; transform: translateY(-50%); }
+.rosa .flecha {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -4px;
+  margin-top: -16px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 16px solid #9a2f1f;
+}
+
+#reticula {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--calido);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Subtítulos */
+#subtitulo {
+  position: absolute;
+  left: 50%;
+  bottom: 9vh;
+  transform: translateX(-50%);
+  max-width: min(900px, 90vw);
+  padding: 10px 22px;
+  border-radius: 8px;
+  background: rgba(10, 8, 6, 0.6);
+  font-size: 24px;
+  text-align: center;
+  line-height: 1.35;
+}
+#subtitulo[data-estilo='calido'] #subtitulo-dicho { color: var(--calido); }
+#subtitulo[data-estilo='gema'] #subtitulo-dicho { color: var(--oro-claro); text-shadow: 0 0 10px rgba(221, 170, 54, 0.8); }
+#subtitulo-resto { color: rgba(255, 244, 226, 0.35); }
+
+/* Pantallas */
+.pantalla {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: radial-gradient(circle at 50% 40%, rgba(40, 30, 18, 0.75), rgba(10, 8, 6, 0.94));
+  z-index: 20;
+  cursor: pointer;
+  text-align: center;
+  padding: 16px;
+}
+#pantalla-carga { cursor: default; }
+#pausa { background: rgba(10, 8, 6, 0.55); }
+.titulo-oro {
+  margin: 0;
+  font-size: clamp(32px, 6vw, 64px);
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro) 55%, #9c7424);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.aviso { font-size: 22px; margin: 0; animation: latido 1.6s ease-in-out infinite; }
+.controles { font-size: 15px; opacity: 0.75; margin: 0; }
+.barra { width: min(420px, 80vw); height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+#barra-progreso { height: 100%; width: 0; background: var(--oro); transition: width 0.2s; }
+#texto-carga { margin: 0; font-size: 14px; opacity: 0.75; }
+.con-error #texto-carga { color: #ff9b80; opacity: 1; }
+.oculto { display: none !important; }
+
+#depuracion-info {
+  position: fixed;
+  bottom: 60px;
+  left: 8px;
+  z-index: 30;
+  font: 12px monospace;
+  color: #0f0;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+}
+
+@keyframes latido {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
