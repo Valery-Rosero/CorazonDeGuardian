@@ -1,26 +1,39 @@
-# Cumplimiento del check-list del curso (semana 10)
+# Requisitos del curso (check-list de la semana 10)
 
-Estado al **día 2** (2026-11-11): **los 8 requisitos funcionan en la zona 1**, como pide el plan.
+Los 8 requisitos funcionan en el juego completo. Cada uno se puede demostrar en vivo desde el **modo demostración** (menú principal → «Demostración técnica», o `?demo`): al pulsar un requisito, Victoria va al lugar donde mejor se ve y aparece una explicación breve.
 
 | # | Requisito | Dónde está en el código | Cómo demostrarlo |
 |---|---|---|---|
-| 1 | **Escenario `.glb` desde Blender con iluminación y sombras** | `tools/blender/build_zona_1_selva.py` y los constructores `*_builder.py` → `public/models/zona_1_selva.glb`. Carga en `src/world/level_loader.js`. Luces en `src/world/environment.js`: `DirectionalLight` con `PCFSoftShadowMap` que sigue a Victoria, `AmbientLight` 0,22, `HemisphereLight` y 4 `PointLight` (antorchas que parpadean y luz azul en la cueva). | Recorrer el claro: Victoria, los árboles, las esferas y el altar proyectan sombra. Las antorchas iluminan el altar, la cornisa y el pórtico. |
-| 2 | **Navegación con `PointerLockControls` / `OrbitControls`** | `src/camera/camera_rig.js`: `PointerLockControls` con cámara en tercera persona, colisión, perfiles por zona, puntos de interés y recentrado. `OrbitControls` (modo foto) queda para el día 6. | Mover el ratón durante el juego. Al entrar en la cueva la cámara se acerca; en el puente sube y mira hacia abajo. |
-| 3 | **Audio 3D: `PositionalAudio` + `THREE.Audio`** | `src/core/audio_manager.js`. `PositionalAudio` en la cascada (`emit_cascada`, modelo lineal de 3 a 25 m) y en las 6 antorchas. `THREE.Audio` global para el ambiente de la selva, el portal, los checkpoints, las flores, la derrota, los saltos y los pasos. Sonidos sintetizados en `tools/audio/audio_synth.py`. | Acercarse y alejarse de la cascada (el volumen cambia) y cruzar el portal (sonido global). |
-| 4 | **Triggers radial (`distanceTo`) y AABB (`Box3`)** | `src/world/triggers.js`. AABB (`Box3.containsPoint`): zonas del cuaderno, zonas de cámara, portales, abismo. Radiales (`Vector3.distanceTo`): checkpoints, flores, área de la cascada. | El cuaderno cambia de zona; el portal de la cueva lleva a la cornisa con 3 s de enfriamiento; los pilares se encienden al pasar. |
-| 5 | **Partículas con `BufferGeometry` y física** | `src/fx/particles.js` (`THREE.Points` + `BufferGeometry` + `Float32Array`, gravedad, arrastre y reciclaje) y `src/fx/particle_presets.js`: gotas y salpicaduras de la cascada, niebla, fuego de antorchas, luciérnagas, polen y ráfagas. `AdditiveBlending` + `depthWrite: false`. | La cascada y las antorchas; la ráfaga dorada al encender un pilar. |
-| 6 | **Objeto dinámico con cannon-es (masa, gravedad, rebote)** | `src/world/level_loader.js` (`crearDinamico`) y `src/world/bridge.js`. Esferas rituales de 25 kg con restitución 0,6. Las 20 tablas del puente pasan de cinemáticas a dinámicas y caen. Posición y cuaternión se copian de cannon-es a Three.js en cada fotograma (`MundoFisico.sincronizar`). | Empujar las esferas del claro y cruzar el puente: las tablas tiemblan, caen y vuelven a los 3 s. |
-| 7 | **HUD HTML/CSS con zona y coordenadas** | `src/ui/cartographer_panel.js`, `src/ui/hud.js`, `index.html`, `src/style.css`. Incluye barra de vida y notas en el cuaderno. | Siempre visible arriba a la izquierda. |
-| 8 | **60 FPS sin crear objetos en `animate()`** | `src/core/game_loop.js`: bucle único. Partículas de capacidad fija, *pools* de audio de 8 + 8, temporales preasignados en cada sistema, materiales y vegetación creados al cargar. | Panel de depuración: FPS, llamadas de dibujo (~110 en el claro) y triángulos. |
+| 1 | **Escenario `.glb` desde Blender, con iluminación y sombras** | Generadores en `tools/blender/` (`build_zona_1_selva.py`, `build_zona_2_santuario.py`, `build_zona_3_camara.py`, `build_jefe.py`, piezas en `*_builder.py`) → `public/models/*.glb`. Carga con `GLTFLoader` en `src/core/assets.js` y `src/world/level_loader.js`. Luces en `src/world/environment.js`: `DirectionalLight` con sombras `PCFSoftShadowMap` que sigue a Victoria, `AmbientLight` 0,22, `HemisphereLight`, luz del cielo en armónicos esféricos, `PointLight` en antorchas y braseros, y un `SpotLight` sobre el altar del santuario (`src/main.js`). | Requisito 1 de la demostración: sombras de Victoria, árboles y columnas en las ruinas. En el santuario, el foco cálido sobre el altar del escudo. |
+| 2 | **Navegación con `PointerLockControls` y `OrbitControls`** | `src/camera/camera_rig.js`: tercera persona con `PointerLockControls`, colisión de cámara, perfiles por zona y recentrado. `src/camera/free_camera.js`: `OrbitControls` con amortiguación para el modo foto y la cámara libre de la demostración. | Mover el ratón durante el juego. Pulsar **F** (modo foto) o marcar «Cámara libre» en la demostración. |
+| 3 | **Audio 3D: `PositionalAudio` y `THREE.Audio`** | `src/core/audio_manager.js`. `PositionalAudio` en la cascada, las antorchas, el núcleo del Guardián (latido) y los efectos en el mundo. `THREE.Audio` global para el portal, los checkpoints, las páginas, los poderes, las voces y la música (`src/core/music.js`). Todo el sonido se sintetiza en `tools/audio/audio_synth.py` y `music_synth.py`. El audio se activa con el primer clic. | Requisito 3 de la demostración: acercarse y alejarse de la cascada (el volumen cambia). Cruzar el portal de la cueva (sonido global). |
+| 4 | **Triggers radial (`distanceTo`) y AABB (`Box3`)** | `src/world/triggers.js`. AABB (`Box3.containsPoint`): zonas del cuaderno, zonas de cámara, portal con enfriamiento, umbral de la arena, salida del escape, abismo. Radiales (`Vector3.distanceTo`): checkpoints, páginas, flores, objetos interactivos, detección de enemigos. | Requisito 4 de la demostración (con las cajas y anillos visibles): el cuaderno cambia de zona; el portal lleva a la cornisa y espera 3 s antes de volver a funcionar. |
+| 5 | **Partículas con `BufferGeometry` y física** | `src/fx/particles.js`: `THREE.Points` + `BufferGeometry` + `Float32Array`, capacidad fija, gravedad, arrastre y reciclaje. `src/fx/particle_presets.js`: cascada, niebla, fuego, luciérnagas, polen, chispas del Pulso, ráfagas, brasas de la fase 3 y polvo del derrumbe. `AdditiveBlending` + `depthWrite: false`. | Requisito 5 de la demostración: la cascada y su espuma; las antorchas del altar. |
+| 6 | **Objeto dinámico con cannon-es (masa, gravedad, rebote)** | `src/core/physics_world.js` (paso fijo 1/60) y `src/world/level_loader.js` (`crearDinamico`). Esferas rituales de 25 kg que ruedan y rebotan; tablas del puente que caen (`src/world/bridge.js`); fragmentos de los centinelas y del caparazón del Guardián (`src/enemies/fragments.js`); rocas del escape. Posición y cuaternión se copian de cannon-es a Three.js en cada fotograma. | Requisito 6 de la demostración: disparar el Pulso (clic) a las esferas del claro. Cruzar el puente. |
+| 7 | **HUD HTML/CSS con la zona y las coordenadas** | `src/ui/cartographer_panel.js` («Cuaderno de la cartógrafa»), `src/ui/hud.js`, `index.html`, `src/style.css`. | Siempre visible arriba a la izquierda. En la demostración (requisito 7) se resalta. |
+| 8 | **Optimización: 60 FPS sin crear objetos en `animate()`** | `src/core/game_loop.js`: un único bucle. Todo se crea al cargar: grupos de proyectiles, orbes, fragmentos, rocas, sonidos y luces; vectores temporales preasignados. Vegetación instanciada, grupo fijo de luces puntuales, luz del cielo en armónicos esféricos y resolución dinámica (`src/core/dynamic_resolution.js`). | La demostración muestra FPS, llamadas de dibujo y triángulos en tiempo real. |
 
-## Pruebas automáticas que respaldan los requisitos
+## Contenidos de las semanas 1 a 9
 
-`npm test` ejecuta 41 pruebas. La simulación `tests/zona1_simulacion.test.js` carga el `.glb` real y hace correr la física sin gráficos para comprobar:
+| Semana | Dónde se usa |
+|---|---|
+| 1 | Escena, cámara, renderizador y bucle con `requestAnimationFrame` (`src/core/`) |
+| 2 | `BufferGeometry`, materiales, `THREE.Group` (jerarquía de los personajes) y `lil-gui` (panel de depuración) |
+| 3 | Audio espacial y desbloqueo del audio con el primer clic |
+| 4 | Materiales PBR, catálogo de luces, *shadow maps* y partículas con mezcla aditiva |
+| 5 | cannon-es: cuerpos estáticos, dinámicos y cinemáticos (el Guardián), materiales de contacto y paso fijo |
+| 6 | Control con teclado, salto por impulso, cámara en tercera persona, proyectiles y `allowSleep` |
+| 7 | `GLTFLoader`, carpeta `public/` con rutas absolutas, pantalla de carga y `MeshMatcapMaterial` (espectros) |
+| 8 | Todo el arte se genera con scripts de Python en Blender, con presupuesto de polígonos por zona |
+| 9 | Triggers radiales y AABB, zonas sonoras, portal con enfriamiento y partículas de agua con gravedad |
 
-- aparecer, caminar, saltar 1,6 m y empujar una esfera;
-- cruzar el puente mientras caen las tablas;
-- caer al abismo y morir;
-- el portal con su enfriamiento;
-- subir la escalinata;
-- los límites del mapa;
-- **el recorrido completo del claro al pórtico del santuario**.
+## Reglas técnicas obligatorias (sección 1.3)
+
+- Recursos en minúsculas y sin espacios, en `public/`, cargados con rutas absolutas (`/models/...`, `/sounds/...`).
+- Nada se crea dentro del bucle; la física avanza con paso fijo.
+- El canvas ocupa toda la ventana y se adapta al cambiar su tamaño.
+- El audio empieza tras la primera interacción.
+
+## Pruebas automáticas
+
+`npm test` ejecuta 93 pruebas. Las simulaciones (`tests/*_simulacion.test.js`) cargan los `.glb` reales y hacen correr la física sin gráficos: el recorrido completo de la selva, el acertijo de los espejos, el combate contra el Guardián (que camina, salta y solo recibe daño con el núcleo abierto) y el escape de la arena a la cornisa en menos de 75 s.

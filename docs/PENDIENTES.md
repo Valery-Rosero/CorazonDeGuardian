@@ -114,16 +114,27 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 | Durante la derrota se retiran los trozos del caparazón que se cruzan entre la cámara y Mateo. | Caen con impulso al azar y a veces tapaban el primer plano. |
 | Se arregló un fallo del reproductor: con dos puntos, la mira se quedaba en el punto final (`tests/cine.test.js`). | Ninguna panorámica se movía. |
 
+## Día 6: el juego completo
+
+| Decisión | Motivo |
+|---|---|
+| Modo demostración (menú o `?demo`) con los 8 requisitos, triggers y colisionadores visibles, estadísticas y cámara libre. | Sección 1.4: la sustentación se hace desde ahí. |
+| Modo foto con `OrbitControls` (F o desde la pausa). | Requisito 2 del curso. |
+| `SpotLight` sobre el altar del escudo; su sombra solo en calidad alta. | Requisito 1 y tabla de la sección 14.3. |
+| Música sintetizada (`tools/audio/music_synth.py`) con un leitmotiv; los bucles van en `.wav` para empalmar sin silencio. | Sección 11. Un `.mp3` añade silencio al empezar y el bucle se oiría cortado. |
+| Bloom en calidad media y alta; profundidad de campo en las cinemáticas en alta. | Sección 14.3. |
+| Opciones completas (volúmenes por categoría, subtítulos y calidad). La calidad se aplica al recargar. | El renderizador se crea al empezar. |
+| Santuario y arena reconstruidos desde la hoja «Interiores del templo», con las mismas medidas y colisiones de juego. | Pediste mucho más detalle; las medidas sostienen el acertijo, el combate y las pruebas. |
+| El Guardián acepta los pasos que lo acercan al centro de la arena; en el golpe sísmico salta. | Se quedaba clavado en el trono (estaba fuera de su radio de movimiento). |
+| Tecla 8: el Guardián en fase 3. | Sección 19: la ruta de la sustentación. |
+| No se recorta calidad para la Iris Xe: el rendimiento se medirá en una computadora con tarjeta dedicada. | Lo pediste así. |
+
 ## Pendiente
 
-- `OrbitControls` en el modo foto (día 6).
-- Opciones completas en el menú (día 6). El volumen, la sensibilidad y la sacudida ya están.
-- Modo demo y modo foto (día 6).
-- Las flores solares solo curan si Victoria ha recibido daño.
-- Volver a medir los FPS en el equipo de referencia (Iris Xe) tras las mejoras de rendimiento. El día 5 daba ~30 FPS.
-- Medir los FPS en la arena durante la fase 3 (rocas, rayo y los espectros invocados).
-- Medir los FPS con la selva nueva: 82 árboles jóvenes instanciados (≈ 200 triángulos cada uno), 461 helechos y 700 matas.
-- Medir los FPS en el santuario con los espectros (cuerpo transparente) y las 7 luces.
+- Medir los FPS en una computadora con tarjeta gráfica dedicada (calidad media y alta).
+- Escuchar la música y las voces en el juego y ajustar volúmenes.
+- Grabar el video (`docs/GUION_VIDEO.md`) y completar la ficha (`docs/FICHA_CONCEPTO.md`) con los nombres del equipo.
+- Publicar `dist/` en la raíz de un dominio (Netlify o Vercel) si se quiere un enlace directo.
 
 ## Notas técnicas
 

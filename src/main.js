@@ -134,7 +134,7 @@ async function iniciar() {
     altarEscudo.getWorldPosition(focoAltar.target.position);
     focoAltar.position.copy(focoAltar.target.position).add(new THREE.Vector3(1.6, 6.5, 0));
   }
-  focoAltar.castShadow = calidad.sombras >= 2048;
+  focoAltar.castShadow = calidad.profundidad;   // solo en calidad alta (sección 14.3)
   focoAltar.shadow.mapSize.set(512, 512);
   escena.add(focoAltar, focoAltar.target);
 
@@ -690,6 +690,7 @@ async function iniciar() {
         }
       },
       recibirDano,
+      fase3: () => actoFinal.saltarAFase3(),
     });
   }
 

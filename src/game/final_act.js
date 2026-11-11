@@ -132,6 +132,27 @@ export class ActoFinal {
     return evento === 'despertar' || evento === 'salida' || evento === 'final';
   }
 
+  /**
+   * Depuración (tecla 8, sección 19): lleva a la arena y deja al Guardián en la fase 3 (furia),
+   * para mostrarla en la sustentación sin jugar el combate entero.
+   */
+  saltarAFase3() {
+    const c = this.c;
+    if (this.etapa === 'antes') {
+      c.teletransportar('debug_6');
+      this.trigger('despertar');
+      c.cine.saltar();
+      c.dialogos.callar();
+    }
+    if (this.etapa !== 'combate') return false;
+    const l = this.combate.logica;
+    if (l.fase >= 3) return false;
+    l.fase = 3;
+    l.vida = Math.floor(l.cfg.vida * l.cfg.umbral_fase3) - 1;
+    l.sucesos.push({ tipo: 'fase', fase: 3 });
+    return true;
+  }
+
   /** @param {number} f */
   _fase(f) {
     const c = this.c;
