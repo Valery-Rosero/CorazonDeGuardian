@@ -140,7 +140,11 @@ async function iniciar() {
     focoAltar.position.copy(focoAltar.target.position).add(new THREE.Vector3(1.6, 6.5, 0));
   }
   focoAltar.castShadow = calidad.profundidad;   // solo en calidad alta (sección 14.3)
-  focoAltar.shadow.mapSize.set(512, 512);
+  // Sombra nítida y sin «dientes» (acné de sombra): más resolución y desplazamiento de profundidad
+  focoAltar.shadow.mapSize.set(1024, 1024);
+  focoAltar.shadow.bias = -0.0006;
+  focoAltar.shadow.normalBias = 0.04;
+  focoAltar.shadow.radius = 3;
   escena.add(focoAltar, focoAltar.target);
 
   // ---------------- Victoria
@@ -1200,7 +1204,7 @@ async function iniciar() {
   }
   // Continuar la partida guardada (si la hay): «Jugar» pasa a ser «Nueva partida»
   const partida = leerPartida();
-  const botonContinuar = document.getElementById('boton-continuar');
+  const botonContinuar = document.getElementById('boton-continuar-partida');
   if (partida && botonContinuar) {
     botonContinuar.classList.remove('oculto');
     const jugar = document.getElementById('boton-jugar');
@@ -1254,7 +1258,14 @@ async function iniciar() {
     foto: () => entrarFoto(),
     inicio: () => location.reload(),
   });
+  let reintento = false;
+  document.addEventListener('pointerlockerror', () => {
+    if (reintento || enMenu || amanecer || muerta) return;
+    reintento = true;
+    setTimeout(() => rig.controles.lock(), 1100);
+  });
   rig.controles.addEventListener('lock', () => {
+    reintento = false;
     bucle.pausado = false;
     pantallas.pausa(false);
     oyente.context.resume();
