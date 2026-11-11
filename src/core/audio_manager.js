@@ -44,6 +44,17 @@ export class GestorAudio {
   }
 
   /**
+   * Cambia el volumen de un bucle ya creado (p. ej. la selva se apaga dentro del santuario).
+   * @param {THREE.Audio | THREE.PositionalAudio} audio @param {number} volumen
+   */
+  volumenBucle(audio, volumen) {
+    const b = this.bucles.find((x) => x.audio === audio);
+    if (!b) return;
+    b.base = volumen;
+    audio.setVolume(volumen * this._vol(b.categoria));
+  }
+
+  /**
    * Bucle global (ambiente o música).
    * @param {string} nombre @param {number} volumen @param {'ambiente'|'musica'} categoria
    */

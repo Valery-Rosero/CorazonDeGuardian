@@ -13,7 +13,8 @@ export class Losas {
   /** @param {import('../world/level_loader.js').Dinamico[]} dinamicos */
   constructor(dinamicos) {
     this.lista = dinamicos
-      .filter((d) => d.datos.interactuable === 'losa')
+      // Losas y puertas: todo cuerpo cinemático con 'mover' (la puerta de los espejos la abre el acertijo)
+      .filter((d) => Array.isArray(d.datos.mover))
       .map((d) => {
         const m = /** @type {number[]} */ (d.datos.mover ?? [0, 0, 0]);
         return {

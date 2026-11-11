@@ -31,6 +31,10 @@ export const pantallas = {
   alHacerClicInicio(fn) {
     $('pantalla-inicio').addEventListener('click', fn);
   },
+  /** Opacidad del fundido a negro (0 = se ve el juego, 1 = negro). @param {number} opacidad */
+  fundido(opacidad) {
+    $('fundido').style.opacity = String(Math.max(0, Math.min(1, opacidad)));
+  },
   /** @param {() => void} fn */
   alHacerClicPausa(fn) {
     $('pausa').addEventListener('click', fn);

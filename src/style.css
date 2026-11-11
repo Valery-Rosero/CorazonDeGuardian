@@ -160,6 +160,8 @@ html, body {
   background: radial-gradient(circle, #fff8e0, #f3d27a 60%, #ddaa36);
 }
 #destello.activo { animation: destello 0.7s ease-out; }
+/* Fundido a negro de las transiciones entre zonas (lo controla el código con la opacidad) */
+#fundido { position: fixed; inset: 0; pointer-events: none; opacity: 0; z-index: 14; background: #050403; }
 @keyframes destello { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
 
 .titulo-rojo { margin: 0; font-size: clamp(30px, 5vw, 54px); font-weight: normal; color: #e8a08c; letter-spacing: 0.03em; }

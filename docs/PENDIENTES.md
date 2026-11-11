@@ -50,16 +50,35 @@
 | Los riscos son capas apiladas (`rock_builder.estratos`). En la cornisa y la meseta la capa de arriba coincide con el colisionador; en la cascada los lados que tocan el agua quedan a ras (`a_ras`). | Victoria camina sobre la cornisa y la meseta, y la cortina de agua cae pegada a la roca. |
 | Presupuesto: 49.368 de 50.000 triángulos sin contar las instancias. Para no pasarse hay 20 ceibas de fondo en vez de 22. | Límite de la sección 4.2. |
 
+## Decisiones técnicas del día 4
+
+| Decisión | Motivo |
+|---|---|
+| El santuario se diseñó primero como tablero de la hoja de escenarios («Zona 2 · El santuario») y se construyó con sus medidas exactas (`docs/previews/santuario_vs_tablero.png`). | Misma regla que la selva y Victoria: nada se construye sin su diseño. |
+| El santuario es otro `.glb` (`zona_2_santuario.glb`) colocado lejos de la selva (y = -600 en Blender). Se entra por el pasadizo detrás de la puerta del pórtico, con fundido a negro. | La escalinata de la pirámide atravesaría las salas si el santuario estuviera debajo. El fundido además oculta el cambio de luces. |
+| La puerta del pórtico (`dyn_puerta_santuario`) se abre con la Manipulación, como la losa. | La sección 8.1 dice que el pórtico lleva al santuario; ahora se puede entrar. |
+| Las luces llevan grupo (1 selva, 2 santuario) y solo se enciende el de la zona donde está Victoria. El santuario usa 7. | Cada luz puntual cuesta en todos los píxeles; con todas encendidas la Iris Xe calcularía 11 (4 de la selva y 7 del santuario). |
+| Dentro del santuario: niebla azul oscura, sin sol ni luz del cielo, y un hemisferio azul más fuerte (`config/level.js`, `INTERIOR`). | Penumbra azul del tablero; sin la luz del cielo hacía falta más hemisferio para que se lea. |
+| Los enemigos se construyen desde sus tableros de la hoja de personajes (`docs/previews/enemigos_vs_boceto.png`): centinela de 678 triángulos y espectro de 376, dentro de su presupuesto. | Coherencia con los bocetos aprobados. |
+| El ojo del centinela es un material propio por centinela (2 llamadas por centinela en vez de 1). | El ojo cambia de color según el estado y no puede ser un color por vértice compartido. |
+| Las runas del centinela van en color por vértice y no brillan; solo el ojo cambia de color. | En el tablero, al cambiar de estado solo cambia el ojo. |
+| Los huesos del espectro llevan el prefijo `esp_`. | Comparte el `.glb` con el centinela y GLTFLoader renombra los nombres repetidos. |
+| Los orbes no son cuerpos de cannon-es: cada fotograma se barre su tramo con un raycast contra el escenario y con la distancia al cuerpo de Victoria. | Más barato y no atraviesan a 9 m/s. |
+| El primer centinela vigila la escalinata de las ruinas (zona 1). Los dos del santuario duermen como estatuas hasta que Victoria toma el escudo. | El primer combate se aprende con el Pulso; el segundo enseña el escudo justo cuando se consigue. |
+| Las cabezas de piedra y los bloques tallados tienen colisionador. | Antes se podían atravesar. |
+| Al reaparecer, los enemigos vivos vuelven a su puesto con la vida completa; los muertos siguen muertos. | El jugador no repite peleas ya ganadas. |
+| El rayo del acertijo se calcula en 2D (segmentos que reflejan por las dos caras) a 3 m de altura. | Pasa por encima de Victoria y de los espectros; la prueba revisa las 512 combinaciones: ninguna queda bloqueada. |
+
 ## Pendiente
 
-- El **bloqueo perfecto** del escudo (devolver proyectiles) ya se calcula en `Poderes.bloqueoPerfecto`, pero solo se nota cuando haya proyectiles enemigos (día 4).
-- La **asistencia de puntería** del Pulso (6° hacia el enemigo cercano) llega con los enemigos (día 4).
-- El altar del Escudo arcano está en el santuario (día 4); hasta entonces se desbloquea con la tecla 7.
+- La **puerta de la arena** (zona 3) solo muestra un aviso hasta el día 5.
+- La **voz de Victoria** al oír la voz tras la puerta de los espejos (`vic_voz_01`, propuesta) espera tu aprobación del guion.
 - `OrbitControls` en el modo foto (día 6).
 - Opciones de volumen y de sacudida de cámara en el menú (día 6). Los valores ya están en `src/config/audio.js` y en `Sacudida.intensidad`.
 - Las flores solares solo curan si Victoria ha recibido daño; hasta que lleguen los enemigos (día 4) se ven, pero no hacen falta.
 - Medir los FPS reales en el equipo de referencia (Iris Xe). Chrome sin ventana no sirve para medir rendimiento.
 - Medir los FPS con la selva nueva: 82 árboles jóvenes instanciados (≈ 200 triángulos cada uno), 461 helechos y 700 matas.
+- Medir los FPS en el santuario con los espectros (cuerpo transparente) y las 7 luces.
 
 ## Notas técnicas
 
@@ -73,4 +92,5 @@
 
 - `tools/blender/preview.py`: renders de revisión con sombreado toon.
 - `tools/blender/build_escenario_preview.py`: renderiza cada pieza del escenario encuadrada como su dibujo (`docs/previews/escenario/`).
+- `tools/blender/build_enemigos.py -- --preview` y `build_zona_2_santuario.py -- --preview`: renders para comparar con los bocetos y con el plano del tablero.
 - `tools/verificar_glb.py`: inspección rápida de un `.glb` sin Blender. Cuando exista el proyecto Vite, su comprobación pasa a una prueba de `node --test` en `tests/`.

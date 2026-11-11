@@ -21,7 +21,7 @@ import { SistemaTriggers } from '../src/world/triggers.js';
 
 export const DT = 1 / 60;
 
-function cargarGlb(ruta) {
+export function cargarGlb(ruta) {
   const datos = readFileSync(ruta);
   const buffer = datos.buffer.slice(datos.byteOffset, datos.byteOffset + datos.byteLength);
   return new Promise((ok, mal) => new GLTFLoader().parse(buffer, '', ok, mal));
@@ -37,8 +37,9 @@ class EntradaFalsa {
   pulso(a) { return this.pulsadas.has(a); }
 }
 
-export async function crearSimulacion() {
-  const gltf = await cargarGlb('public/models/zona_1_selva.glb');
+/** @param {string} [ruta]  .glb de la zona (por defecto la selva) */
+export async function crearSimulacion(ruta = 'public/models/zona_1_selva.glb') {
+  const gltf = await cargarGlb(ruta);
   const escena = new THREE.Scene();
   const fisica = new MundoFisico();
   const triggers = new SistemaTriggers();
@@ -68,7 +69,7 @@ export async function crearSimulacion() {
   const pecho = new THREE.Vector3();
 
   const sim = {
-    nivel, jugador, entrada, vida, checkpoints, puente, eventos, triggers, fisica,
+    nivel, jugador, entrada, vida, checkpoints, puente, eventos, triggers, fisica, escena, camara,
     poderes, interactuables, losas, pulsos,
     muerta: false,
     /** @type {{cuerpo: any, pos: any} | null} */

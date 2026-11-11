@@ -10,7 +10,7 @@ const _s = new THREE.Vector3();
  * sin importar cómo exportó Blender la orientación de reposo.
  * local = padreInv · delta · padre · reposo
  */
-class HuesoAnimable {
+export class HuesoAnimable {
   /**
    * @param {THREE.Bone} hueso
    * @param {THREE.Matrix4} invRaiz

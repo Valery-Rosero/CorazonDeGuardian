@@ -333,6 +333,144 @@ EFECTOS = {
     'brazalete': brazalete, 'pagina': pagina, 'losa_mover': losa_mover, 'esquiva': esquiva,
 }
 
+# ---------------------------------------------------------------------------
+# Día 4: enemigos y santuario. Van después de los anteriores para no cambiar los sonidos que ya
+# existen (el generador de números al azar es uno solo y avanza en orden).
+# ---------------------------------------------------------------------------
+
+def ambiente_santuario():
+    """Penumbra del templo: zumbido grave que respira, aire en los pasillos y gotas lejanas."""
+    n = SR_BUCLE * 12
+    t = np.arange(n) / n
+    dron = sum(np.sin(2 * np.pi * f * np.arange(n) / SR_BUCLE) * a for f, a in ((55.0, 1.0), (82.5, 0.5), (110.0, 0.3)))
+    dron *= 0.6 + 0.4 * np.sin(2 * np.pi * 2 * t) ** 2
+    aire = normalizar(ruido_espectral(n, SR_BUCLE, lambda f: paso_banda(500, 0.8)(f)), 0.25) * (0.7 + 0.3 * np.sin(2 * np.pi * 3 * t))
+    gotas = np.zeros(n)
+    for _ in range(9):
+        m = int(0.25 * SR_BUCLE)
+        tt = np.arange(m) / SR_BUCLE
+        gota = np.sin(2 * np.pi * RNG.uniform(1400, 2200) * tt * (1 + 0.6 * tt)) * np.exp(-tt * 28)
+        pegar_circular(gotas, gota * RNG.uniform(0.15, 0.35), int(RNG.uniform(0, n)))
+    return normalizar(normalizar(dron, 0.35) + aire + gotas, 0.7)
+
+
+def centinela_despierta():
+    dur = 1.6
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    roce = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(600)) * (0.7 + 0.3 * np.sin(2 * np.pi * 11 * t))
+    zumbido = np.sin(2 * np.pi * np.cumsum(60 + 50 * t / dur) / SR)
+    ojo = sum(np.sin(2 * np.pi * f * t) for f in (440, 660)) * envolvente(n, SR, 1.0, 0.4) * 0.3
+    return normalizar((roce + zumbido) * envolvente(n, SR, 0.2, 1.0, forma='lineal') + ojo)
+
+
+def centinela_aviso():
+    dur = 0.6
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    roce = filtrar(RNG.normal(0, 1, n), SR, paso_banda(320, 0.7)) * (t / dur)
+    sube = np.sin(2 * np.pi * np.cumsum(90 + 140 * (t / dur) ** 2) / SR) * 0.6
+    return normalizar((roce + sube) * envolvente(n, SR, 0.05, 0.6, forma='lineal'))
+
+
+def centinela_golpe():
+    dur = 0.9
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    golpe = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(300)) * np.exp(-t * 9)
+    grave = np.sin(2 * np.pi * np.cumsum(70 * np.exp(-t * 2.5) + 30) / SR) * np.exp(-t * 4)
+    piedritas = filtrar(RNG.normal(0, 1, n), SR, paso_banda(2600, 0.6)) * np.exp(-t * 14) * 0.3
+    return normalizar(golpe + grave + piedritas)
+
+
+def centinela_rompe():
+    dur = 1.5
+    n = int(dur * SR)
+    s = np.zeros(n)
+    for _ in range(26):
+        largo = int(SR * RNG.uniform(0.03, 0.12))
+        g = filtrar(RNG.normal(0, 1, largo), SR, paso_banda(RNG.uniform(250, 1600), 0.7)) * np.exp(-np.arange(largo) / (largo / 4))
+        inicio = int(RNG.uniform(0, n * 0.75))
+        fin = min(n, inicio + largo)
+        s[inicio:fin] += g[:fin - inicio] * RNG.uniform(0.3, 1.0)
+    t = np.arange(n) / SR
+    s += np.sin(2 * np.pi * 45 * t) * np.exp(-t * 3) * 0.8
+    return normalizar(s)
+
+
+def espectro_carga():
+    dur = 0.8
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    sube = np.sin(2 * np.pi * np.cumsum(300 + 900 * (t / dur) ** 1.5) / SR)
+    aire = filtrar(RNG.normal(0, 1, n), SR, paso_banda(1800, 0.5)) * (t / dur)
+    return normalizar((sube * 0.6 + aire * 0.4) * envolvente(n, SR, 0.3, 0.6, forma='lineal'), 0.7)
+
+
+def orbe_disparo():
+    dur = 0.5
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    soplo = filtrar(RNG.normal(0, 1, n), SR, paso_banda(900, 0.6)) * np.exp(-t * 6)
+    tono_frio = sum(np.sin(2 * np.pi * f * t) for f in (587.33, 880)) * np.exp(-t * 8) * 0.4
+    return normalizar(soplo + tono_frio, 0.75)
+
+
+def orbe_impacto():
+    dur = 0.45
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    s = filtrar(RNG.normal(0, 1, n), SR, paso_banda(1300, 0.8)) * np.exp(-t * 16)
+    s += sum(np.sin(2 * np.pi * f * t) for f in (440, 698.46)) * np.exp(-t * 10) * 0.5
+    return normalizar(s, 0.75)
+
+
+def espectro_muere():
+    dur = 1.6
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    baja = np.sin(2 * np.pi * np.cumsum(880 * 2 ** (-2 * t / dur)) / SR)
+    brillo = sum(np.sin(2 * np.pi * f * t + i) for i, f in enumerate((1318.5, 1760, 2349.3))) * 0.2
+    aire = filtrar(RNG.normal(0, 1, n), SR, paso_banda(3000, 0.6)) * 0.3
+    return normalizar((baja + brillo + aire) * envolvente(n, SR, 0.02, 0.9))
+
+
+def dano():
+    dur = 0.35
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    golpe = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(700)) * np.exp(-t * 18)
+    grave = np.sin(2 * np.pi * 110 * t) * np.exp(-t * 12)
+    return normalizar(golpe + grave, 0.8)
+
+
+def espejo_girar():
+    dur = 0.55
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    roce = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(900)) * envolvente(n, SR, 0.02, 0.2)
+    despues = t > 0.28
+    clic = filtrar(RNG.normal(0, 1, n), SR, paso_banda(2500, 0.4)) * np.exp(-np.maximum(t - 0.28, 0) * 60) * despues
+    campanilla = np.sin(2 * np.pi * 1567.98 * t) * np.exp(-np.maximum(t - 0.28, 0) * 7) * despues * 0.3
+    return normalizar(roce * 0.6 + clic + campanilla, 0.7)
+
+
+def acertijo_resuelto():
+    s = campana((392.0, 493.88, 587.33, 783.99, 987.77, 1174.66), 3.4, 0.11, 1.5)
+    n = len(s)
+    t = np.arange(n) / SR
+    pad = sum(np.sin(2 * np.pi * f * t) for f in (196.0, 293.66, 392.0)) * envolvente(n, SR, 0.5, 1.8) * 0.4
+    return normalizar(s + pad)
+
+
+BUCLES_DIA4 = {'ambiente_santuario': ambiente_santuario}
+EFECTOS_DIA4 = {
+    'centinela_despierta': centinela_despierta, 'centinela_aviso': centinela_aviso, 'centinela_golpe': centinela_golpe,
+    'centinela_rompe': centinela_rompe, 'espectro_carga': espectro_carga, 'orbe_disparo': orbe_disparo,
+    'orbe_impacto': orbe_impacto, 'espectro_muere': espectro_muere, 'dano': dano, 'espejo_girar': espejo_girar,
+    'acertijo_resuelto': acertijo_resuelto,
+}
+
 
 def buscar_ffmpeg():
     ruta = shutil.which('ffmpeg')
@@ -345,13 +483,19 @@ def buscar_ffmpeg():
 def main():
     os.makedirs(SALIDA, exist_ok=True)
     ffmpeg = buscar_ffmpeg()
-    for nombre, fn in BUCLES.items():
+    if not ffmpeg:
+        print('[audio] AVISO: ffmpeg no está instalado; los efectos quedan en .wav', file=sys.stderr)
+    # El orden importa: primero lo de los días 1 a 3 (los mismos sonidos de siempre), después lo nuevo
+    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4)):
+        generar(bucles, efectos, ffmpeg)
+
+
+def generar(bucles, efectos, ffmpeg):
+    for nombre, fn in bucles.items():
         ruta = os.path.join(SALIDA, f'{nombre}.wav')
         guardar_wav(ruta, fn(), SR_BUCLE)
         print(f'[audio] bucle {nombre}.wav ({os.path.getsize(ruta) / 1024:.0f} KB)')
-    if not ffmpeg:
-        print('[audio] AVISO: ffmpeg no está instalado; los efectos quedan en .wav', file=sys.stderr)
-    for nombre, fn in EFECTOS.items():
+    for nombre, fn in efectos.items():
         wav = os.path.join(SALIDA, f'{nombre}.wav')
         guardar_wav(wav, fn(), SR)
         if ffmpeg:

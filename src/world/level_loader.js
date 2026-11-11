@@ -11,7 +11,7 @@ import { agregarBordeSol, agregarViento, materialCascada, materialPoza, material
 const BORDE_SOL = { color: PALETA.dorado_solar, fuerza: 0.55 };
 
 /**
- * @typedef {{pos: THREE.Vector3, rumbo: number}} Spawn
+ * @typedef {{pos: THREE.Vector3, rumbo: number, datos: Record<string, any>}} Spawn
  * @typedef {{malla: THREE.Object3D, cuerpo: CANNON.Body, datos: Record<string, any>, inicio: {p: THREE.Vector3, q: THREE.Quaternion}}} Dinamico
  * @typedef {{tipo: string, pos: THREE.Vector3, datos: Record<string, any>, objeto: THREE.Object3D}} Emisor
  */
@@ -75,7 +75,7 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
     } else if (tipo === 'trg_rad') {
       triggers.agregarRadio(clave, o.getWorldPosition(new THREE.Vector3()), Number(o.userData.radio ?? 2), o.userData);
     } else if (tipo === 'spawn') {
-      res.spawns[clave] = { pos: o.getWorldPosition(new THREE.Vector3()), rumbo: rumboDe(o) };
+      res.spawns[clave] = { pos: o.getWorldPosition(new THREE.Vector3()), rumbo: rumboDe(o), datos: o.userData };
     } else if (tipo === 'hint') {
       res.hints[clave] = o.getWorldPosition(new THREE.Vector3());
     } else if (tipo === 'emit') {
@@ -304,4 +304,27 @@ function crearInstancias(plantilla, puntos, fraccion, viento, bordeSol) {
   inst.castShadow = false;
   inst.frustumCulled = false;
   return inst;
+}
+
+/**
+ * Une varios niveles cargados (la selva y el santuario) en uno solo: listas concatenadas y
+ * registros fusionados. Los nombres de cada .glb son distintos, así que no se pisan.
+ * @param {ReturnType<typeof construirNivel>[]} niveles
+ */
+export function combinarNiveles(niveles) {
+  const [primero, ...resto] = niveles;
+  const res = { ...primero };
+  /** @type {Record<string, any>} */
+  const r = res;
+  for (const n of resto) {
+    /** @type {Record<string, any>} */
+    const o = n;
+    for (const clave of ['colisionables', 'dinamicos', 'emisores', 'luces', 'ocluibles', 'giratorios', 'runas', 'interactuables']) {
+      r[clave] = [...r[clave], ...o[clave]];
+    }
+    for (const clave of ['spawns', 'hints', 'pilares', 'flores']) {
+      r[clave] = { ...r[clave], ...o[clave] };
+    }
+  }
+  return res;
 }

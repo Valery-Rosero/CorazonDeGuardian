@@ -5,6 +5,7 @@ import { COLOR_GEMA, ESCUDO, ESQUIVA, MANIPULACION, PULSO, TUTORIAL } from './co
 import { POSICIONAL, SONIDOS } from './config/audio.js';
 import { PAGINAS, TOTAL_PAGINAS } from './config/diary.js';
 import { CAMERA_LIMITES, CAMERA_PROFILES } from './config/camera_profiles.js';
+import { CENTINELA, ESPECTRO, ORBE } from './config/enemies.js';
 import { EXPRESIONES } from './config/expressions.js';
 import { INPUT_MAP } from './config/input_map.js';
 import { CHECKPOINT, PORTAL, PUENTE } from './config/level.js';
@@ -19,6 +20,7 @@ import { BucleJuego } from './core/game_loop.js';
 import { Entrada } from './core/input.js';
 import { MundoFisico } from './core/physics_world.js';
 import { ajustarAlRedimensionar, crearRenderer } from './core/renderer.js';
+import { GestorEnemigos } from './enemies/enemy_manager.js';
 import { chispaEn, crearEstela, crearParticulasDeEmisor, crearRafagas, rafagaEn } from './fx/particle_presets.js';
 import { texturaPunto } from './fx/particles.js';
 import { Interactuables } from './interaction/interactables.js';
@@ -38,10 +40,12 @@ import { pantallas, Subtitulos } from './ui/screens.js';
 import { Puente } from './world/bridge.js';
 import { Checkpoints } from './world/checkpoints.js';
 import { crearAmbienteSelva, crearLucesNivel } from './world/environment.js';
-import { construirNivel } from './world/level_loader.js';
+import { combinarNiveles, construirNivel } from './world/level_loader.js';
 import { aplicarMaterialesPersonaje, crearRampaToon } from './world/materials.js';
+import { Santuario } from './world/sanctuary.js';
 import { uTiempo } from './world/shaders.js';
 import { SistemaTriggers } from './world/triggers.js';
+import { Transicion } from './world/zone_transition.js';
 
 const params = new URLSearchParams(location.search);
 const DEPURACION = params.has('debug') || import.meta.env.DEV;
@@ -88,12 +92,17 @@ async function iniciar() {
 
   // ---------------- Carga
   const [modelos, buffers] = await Promise.all([
-    cargarModelos({ zona: '/models/zona_1_selva.glb', victoria: '/models/victoria.glb' }, (f, texto) => pantallas.progreso(f * 0.85, texto)),
+    cargarModelos({
+      zona: '/models/zona_1_selva.glb', santuario: '/models/zona_2_santuario.glb',
+      victoria: '/models/victoria.glb', enemigos: '/models/enemigos.glb',
+    }, (f, texto) => pantallas.progreso(f * 0.85, texto)),
     cargarSonidos(SONIDOS),
   ]);
   pantallas.progreso(0.95, 'Despertando la selva…');
 
-  const nivel = construirNivel(modelos.zona, escena, fisica, triggers, { vegetacion: calidad.vegetacion });
+  const opcionesNivel = { vegetacion: calidad.vegetacion };
+  const nivelSantuario = construirNivel(modelos.santuario, escena, fisica, triggers, opcionesNivel);
+  const nivel = combinarNiveles([construirNivel(modelos.zona, escena, fisica, triggers, opcionesNivel), nivelSantuario]);
   const luces = crearLucesNivel(escena, nivel.luces);
 
   // ---------------- Victoria
@@ -126,7 +135,8 @@ async function iniciar() {
 
   // ---------------- Audio (requisito 3)
   const audio = new GestorAudio(oyente, buffers, escena);
-  audio.bucleGlobal('ambiente_selva', 0.55);
+  const ambienteSelva = audio.bucleGlobal('ambiente_selva', 0.55);
+  const ambienteSantuario = audio.bucleGlobal('ambiente_santuario', 0);
   for (const em of nivel.emisores) {
     if (em.tipo === 'cascada') audio.buclePosicional('cascada', em.objeto, POSICIONAL.cascada);
     if (em.tipo === 'fuego') audio.buclePosicional('antorcha', em.objeto, POSICIONAL.antorcha);
@@ -161,12 +171,37 @@ async function iniciar() {
   });
   const checkpoints = new Checkpoints(nivel.pilares, nivel.spawns, CHECKPOINT);
 
+  // ---------------- Zonas: la selva y el santuario (que está lejos, más allá de la niebla)
+  let dentroSantuario = false;
+  /** @param {THREE.Vector3} pos */
+  const esSantuario = (pos) => pos.z > 400;
+  /** Luces, atmósfera y ambiente de la zona donde está Victoria. @param {boolean} dentro */
+  const aplicarZona = (dentro) => {
+    if (dentro === dentroSantuario) return;
+    dentroSantuario = dentro;
+    ambiente.ponerInterior(dentro);
+    luces.encenderGrupo(dentro ? 2 : 1);
+    audio.volumenBucle(ambienteSelva, dentro ? 0 : 0.55);
+    audio.volumenBucle(ambienteSantuario, dentro ? 0.6 : 0);
+  };
+  const transicion = new Transicion();
+
   /** @param {string} nombreSpawn */
   const teletransportar = (nombreSpawn) => {
     const s = nivel.spawns[nombreSpawn];
     if (!s) return;
     jugador.colocar(s.pos, s.rumbo);
     rig.reorientar(s.rumbo);
+    aplicarZona(esSantuario(s.pos));
+  };
+  /** Del pasadizo del pórtico al vestíbulo del santuario, con fundido a negro. */
+  const entrarAlSantuario = () => {
+    if (!transicion.iniciar(() => {
+      teletransportar('santuario');
+      hud.nota('El santuario', 3);
+    })) return;
+    jugador.bloqueado = true;
+    setTimeout(() => { if (!muerta) jugador.bloqueado = false; }, 1400);
   };
   const portales = new Portales(PORTAL, (destino) => {
     teletransportar(destino);
@@ -181,9 +216,10 @@ async function iniciar() {
   const poderes = new Poderes(PULSO, ESCUDO, MANIPULACION, ESQUIVA);
   const burbuja = new BurbujaEscudo(escena, ESCUDO.radio);
   const pulsos = new PoolPulsos(escena, fisica, PULSO, {
-    alImpactar: (p) => {
+    alImpactar: (p, cuerpo) => {
       rafagaEn(rafagas, p, 22, PALETA.oro_brillante, 4);
       audio.efectoEn('pulso_impacto', p, 0.9);
+      enemigos.golpear(cuerpo, PULSO.dano, p);
     },
     estela: (p) => chispaEn(estela, p, PALETA.oro_brillante, 1, 0.22),
   });
@@ -232,6 +268,9 @@ async function iniciar() {
     camara.getWorldDirection(dirCamara);
     origenPulso.addScaledVector(dirCamara, 0.45);
     dirPulso.subVectors(mira, origenPulso).normalize();
+    // Asistencia de puntería (sección 5.5): si un enemigo está casi bajo la retícula, va hacia él
+    const asistido = enemigos.asistencia(origenPulso, dirPulso, PULSO.asistencia, PULSO.alcance);
+    if (asistido) dirPulso.copy(asistido);
     pulsos.disparar(origenPulso, dirPulso);
     animador.gesto('disparo');
     jugador.mirarHacia(rumboCamara(), 0.45);
@@ -327,12 +366,13 @@ async function iniciar() {
     jugador.mirarHacia(Math.atan2(o.pos.x - jugador.posicion.x, o.pos.z - jugador.posicion.z), 0.6);
     audio.efecto('manipular', 0.8);
     rafagaEn(rafagas, o.pos, 18, PALETA.gema_manipulacion, 2.5);
+    if (santuario.usar(o)) return;
     if (o.tipo === 'pagina') leerPagina(o);
     else if (o.tipo === 'losa' && losas.activar(o.objeto)) {
       interactuables.desactivar(o);
       audio.efectoEn('losa_mover', o.pos, 1);
       rig.sacudida.agregar(0.3);
-      hud.nota('La losa se hunde en la piedra');
+      hud.nota(o.objeto.name === 'dyn_puerta_santuario' ? 'La puerta del santuario se hunde en el suelo' : 'La losa se hunde en la piedra');
     }
   };
 
@@ -346,9 +386,78 @@ async function iniciar() {
     }
     if (poderes.esquivaInvulnerable || !vida.danar(cantidad)) return false;
     rig.sacudida.agregar(0.35);
+    audio.efecto('dano', 0.8);
     if (vida.muerta) morir();
     return true;
   };
+
+  // ---------------- Enemigos (sección 6)
+  const toonEnemigos = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: rampa });
+  const posAviso = new THREE.Vector3();
+  const enemigos = new GestorEnemigos(escena, fisica, modelos.enemigos.scene, Object.values(nivel.spawns),
+    { centinela: CENTINELA, espectro: ESPECTRO, orbe: ORBE }, toonEnemigos, {
+      danarJugador: (cantidad, origen, orbe) => {
+        if (orbe && poderes.bloqueoPerfecto) {
+          // Bloqueo perfecto (sección 5.5): el orbe vuelve hacia el espectro
+          burbuja.golpe();
+          audio.efecto('escudo_bloquear');
+          rafagaEn(rafagas, origen, 30, PALETA.gema_escudo, 4);
+          hud.nota('¡Bloqueo perfecto!', 1.6);
+          return 'reflejo';
+        }
+        if (poderes.escudoActivo) {
+          recibirDano(cantidad);
+          return 'bloqueo';
+        }
+        return recibirDano(cantidad) ? 'dano' : 'nada';
+      },
+      alGolpeSuelo: (p) => {
+        audio.efectoEn('centinela_golpe', p, 1);
+        rafagaEn(rafagas, posAviso.copy(p).setY(p.y + 0.2), 26, PALETA.piedra_luz, 3.5);
+        rig.sacudida.agregar(Math.max(0, 0.5 - p.distanceTo(jugador.posicion) * 0.04));
+      },
+      alMorir: (a, p) => {
+        audio.efectoEn(a.tipo === 'centinela' ? 'centinela_rompe' : 'espectro_muere', p, 1);
+        rafagaEn(rafagas, p, 50, a.tipo === 'centinela' ? PALETA.piedra_luz : PALETA.espectro_luz, 5);
+      },
+      alDanar: (a, p) => rafagaEn(rafagas, p, 14, '#FFFFFF', 3),
+      alEstado: (a, estado, p) => {
+        if (a.tipo === 'centinela' && estado === 'ataque') audio.efectoEn('centinela_aviso', p, 0.9);
+        if (a.tipo === 'centinela' && estado === 'alerta') audio.efectoEn('centinela_despierta', p, 0.5);
+        if (a.tipo === 'espectro' && estado === 'cargar') audio.efectoEn('espectro_carga', p, 0.8);
+      },
+      alDisparar: (p) => audio.efectoEn('orbe_disparo', p, 0.9),
+      alOrbeMuro: (p) => {
+        audio.efectoEn('orbe_impacto', p, 0.7);
+        rafagaEn(rafagas, p, 16, PALETA.espectro_runa, 3);
+      },
+      estela: (p, color) => chispaEn(estela, p, color, 1, 0.5),
+    });
+
+  // ---------------- Santuario: altar del escudo, espejos y puertas (sección 8.2)
+  const santuario = new Santuario({
+    raiz: nivelSantuario.raiz, escena, interactuables, enemigos, losas, dinamicos: nivel.dinamicos,
+    luzCristal: luces.porDato('cristal'),
+    avisos: {
+      nota: (texto, seg) => hud.nota(texto, seg),
+      tutorial: (texto, seg) => hud.mensajeTutorial(texto, seg),
+      sonido: (nombre, pos, vol) => (pos ? audio.efectoEn(nombre, pos, vol ?? 1) : audio.efecto(nombre, vol ?? 1)),
+      sacudida: (f) => rig.sacudida.agregar(f),
+      rafaga: (pos, n, color, fuerza) => rafagaEn(rafagas, pos, n, color, fuerza),
+      chispa: (pos, color) => chispaEn(estela, pos, color, 1, 0.3),
+      desbloquearEscudo: () => {
+        poderes.desbloquear('escudo');
+        audio.efecto('brazalete');
+        brilloGema = 1;
+        colorGema.set(PALETA.gema_escudo);
+        cara.ponerEmocion('determinacion');
+        setTimeout(() => cara.ponerEmocion('neutral'), 2500);
+        hud.nota('El brazalete aprende el Escudo arcano', 4);
+        hud.mensajeTutorial(TUTORIAL.escudo, 8);
+        bus.emitir(EVENTOS.PODER_DESBLOQUEADO, ['escudo']);
+      },
+    },
+  });
 
   /** @param {number} dt */
   const usarPoderes = (dt) => {
@@ -397,6 +506,8 @@ async function iniciar() {
   const reaparecer = () => {
     const s = checkpoints.reaparicion;
     puente.reiniciar();
+    enemigos.reiniciar();
+    aplicarZona(esSantuario(s.pos));
     vida.reiniciar();
     poderes.reiniciarRecargas();
     jugador.colocar(s.pos, s.rumbo);
@@ -412,6 +523,7 @@ async function iniciar() {
     const d = t.datos;
     if (d.zona && entra) bus.emitir(EVENTOS.ZONA_CAMBIADA, d.zona);
     if (d.perfil_camara) rig.zona(String(d.perfil_camara), entra);
+    if (d.evento === 'sala_espejos') santuario.salaEspejos(entra);
     if (!entra) return;
     if (d.hint && nivel.hints[d.hint]) rig.mirarHacia(nivel.hints[d.hint]);
     if (muerta) return;
@@ -421,6 +533,12 @@ async function iniciar() {
         break;
       case 'muerte':
         morir();
+        break;
+      case 'transicion':
+        entrarAlSantuario();
+        break;
+      case 'puerta_arena':
+        santuario.puertaArena();
         break;
       case 'checkpoint': {
         const disco = checkpoints.pasar(Number(d.checkpoint));
@@ -490,6 +608,11 @@ async function iniciar() {
       vida.actualizar(dt);
       pulsos.actualizar(dt);
       losas.actualizar(dt);
+      // La zona (luces, atmósfera, ambiente) sigue a Victoria esté donde esté (teletransportes de depuración incluidos)
+      if (!transicion.activa) aplicarZona(esSantuario(jugador.posicion));
+      enemigos.actualizar(dt, t, jugador.posicion, !muerta);
+      santuario.actualizar(dt, t);
+      pantallas.fundido(transicion.actualizar(dt));
       avanzarBrazalete(dt);
       pecho.copy(jugador.posicion).y += 1.2;
       interactuables.actualizar(dt, pecho, camara, (o) => o.tipo === 'brazalete' || poderes.tiene('manipulacion'));

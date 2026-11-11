@@ -28,6 +28,19 @@ export const SONIDOS = Object.freeze({
   pagina: '/sounds/pagina.mp3',
   losa_mover: '/sounds/losa_mover.mp3',
   esquiva: '/sounds/esquiva.mp3',
+  // Día 4: enemigos y santuario
+  ambiente_santuario: '/sounds/ambiente_santuario.wav',
+  centinela_despierta: '/sounds/centinela_despierta.mp3',
+  centinela_aviso: '/sounds/centinela_aviso.mp3',
+  centinela_golpe: '/sounds/centinela_golpe.mp3',
+  centinela_rompe: '/sounds/centinela_rompe.mp3',
+  espectro_carga: '/sounds/espectro_carga.mp3',
+  orbe_disparo: '/sounds/orbe_disparo.mp3',
+  orbe_impacto: '/sounds/orbe_impacto.mp3',
+  espectro_muere: '/sounds/espectro_muere.mp3',
+  dano: '/sounds/dano.mp3',
+  espejo_girar: '/sounds/espejo_girar.mp3',
+  acertijo_resuelto: '/sounds/acertijo_resuelto.mp3',
 });
 
 /** Volúmenes por categoría (se podrán cambiar en Opciones). */

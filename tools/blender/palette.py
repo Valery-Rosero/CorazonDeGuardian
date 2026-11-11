@@ -95,4 +95,9 @@ PALETA = {
     'papel': '#EADCBF',
     'papel_sombra': '#C9B48C',
     'pulso_nucleo': '#FFF3C4',
+    'espectro_cuerpo': '#3C8CD2',
+    'espectro_luz': '#7FC8F5',
+    'espectro_hueco': '#0E2233',
+    'espectro_runa': '#4FB3F0',
+    'espectro_ojo': '#8FD3FF',
 }

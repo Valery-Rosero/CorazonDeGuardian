@@ -30,3 +30,15 @@ export const ESCENARIO = Object.freeze({
   sol_elevacion: 34,
   sol_azimut: 115,
 });
+
+/** Penumbra del santuario (tablero «Santuario» y sección 4.3): niebla azul oscura y poca luz ambiente. */
+export const INTERIOR = Object.freeze({
+  niebla: '#1C2633',
+  densidad: 0.016,
+  // Adentro no llega la luz del cielo (IBL): la penumbra azul la ponen el hemisferio y el ambiente
+  hemisferio: 1.25,
+  cielo: '#8FB0E0',        // luz azul fría que baja del techo
+  suelo: '#4A3F33',
+  ambiente: 0.32,
+  sol: 0.0,
+});

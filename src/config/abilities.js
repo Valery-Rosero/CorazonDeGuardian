@@ -9,6 +9,7 @@ export const PULSO = Object.freeze({
   radio: 0.16,         // m (cuerpo sensor)
   impulso: 40,         // N·s sobre objetos dinámicos (una esfera de 25 kg sale a ~1,6 m/s)
   pool: 16,
+  asistencia: 6,       // grados: el Pulso se corrige hacia un enemigo así de cerca de la retícula
 });
 
 export const ESCUDO = Object.freeze({

@@ -22,6 +22,7 @@ from mathutils import Vector  # noqa: E402
 import bridge_builder  # noqa: E402
 import common  # noqa: E402
 import foliage_builder  # noqa: E402
+import props_builder  # noqa: E402
 import rock_builder  # noqa: E402
 import stats  # noqa: E402
 import temple_builder  # noqa: E402
@@ -337,7 +338,12 @@ def ruinas(k, m, rnd):
     caja_invisible('col_box_terraza', (-12, -160.2, zt), (12, -142.6, z_terraza))
     for n, (a, b) in enumerate(temple_builder.fachada_santuario(k, -156.0, z_terraza, 24, 10, rnd, 2), start=1):
         caja_invisible(f'col_box_fachada_{n}', a, b)
-    caja_invisible('col_box_limite_sur', (-16, -161, zt), (16, -157.5, zt + 20))
+    # Límite sur con el hueco de la puerta: detrás hay un pasadizo oscuro que lleva al santuario
+    caja_invisible('col_box_limite_sur_o', (-16, -161, zt), (-2.2, -157.5, zt + 20))
+    caja_invisible('col_box_limite_sur_e', (2.2, -161, zt), (16, -157.5, zt + 20))
+    pasadizo(k, z_terraza)
+    # Centinela que vigila la escalinata: el primer enemigo, de día y con el Pulso
+    vacio('spawn_centinela_1', (5.0, -137.0, zt), rot_z=mira_a(5.0, -137.0, 0, PUENTE[1]), props={'enemigo': 'centinela'})
     # Antorchas del pórtico
     for s, n in ((1, 5), (-1, 6)):
         k.agregar(prisma(6, 0.12, 2.0, radio_sup=0.09), 'piedra_sombra', 'escenario', colocar((s * 4.0, -152.5, z_terraza + 1.0)))
@@ -377,6 +383,19 @@ def ruinas(k, m, rnd):
                                 rnd.uniform(0, math.tau), rnd.uniform(0.8, 1.1)))
 
 
+def pasadizo(k, z):
+    """Pasadizo oscuro detrás de la puerta del pórtico: al fondo, la transición al santuario."""
+    y0, y1 = -157.5, -161.0
+    k.agregar(caja_biselada(4.4, 3.5, 0.3, 0.05), 'piedra_oscura', 'escenario', colocar((0, (y0 + y1) / 2, z - 0.15)))
+    for sx in (1, -1):
+        k.agregar(caja_biselada(0.6, 3.5, 6.4, 0.05), 'piedra_oscura', 'escenario', colocar((sx * 2.5, (y0 + y1) / 2, z + 3.2)))
+    k.agregar(caja_biselada(5.6, 3.5, 0.6, 0.05), 'piedra_oscura', 'escenario', colocar((0, (y0 + y1) / 2, z + 6.7)))
+    k.agregar(caja_biselada(4.4, 0.4, 6.4, 0.05), 'espectro_hueco', 'escenario', colocar((0, y1 - 0.2, z + 3.2)))
+    caja_invisible('col_box_pasadizo_fondo', (-2.2, y1 - 0.4, z), (2.2, y1, z + 6.4))
+    caja_invisible('trg_box_transicion_santuario', (-2.2, -160.6, z), (2.2, -158.6, z + 3),
+                   props={'evento': 'transicion', 'destino': 'santuario'})
+
+
 def paisaje(k, m, rnd):
     cima = temple_builder.piramide(k, PIRAMIDE, 96, 84, 6, rnd)
     vacio('hint_piramide', (PIRAMIDE[0], PIRAMIDE[1], cima))
@@ -400,20 +419,10 @@ def paisaje(k, m, rnd):
 def checkpoints_y_flores(m):
     puntos = {1: ((-4.0, 7.0, 0.0), 'Claro de entrada'), 2: ((-3.6, -102.4, CORNISA[2]), 'Cornisa'),
               3: ((-3.0, -130.5, MESETA[2]), 'Después del puente')}
-    for n, ((x, y, z), nombre) in puntos.items():
-        p = Constructor(PALETA, semilla=60 + n, variacion=0.03)
-        p.agregar(caja_biselada(0.9, 0.9, 0.3, 0.06), tono_piedra, 'escenario', colocar((0, 0, 0.15)))
-        p.agregar(caja_biselada(0.55, 0.55, 2.2, 0.06, conico=0.7), tono_piedra, 'escenario', colocar((0, 0, 1.4)))
-        p.agregar(prisma(12, 0.34, 0.08), 'oro_brillante', 'escenario', colocar((0, 0, 2.75), (90, 0, 0)), material=1)
-        objeto_suelto(f'pilar_checkpoint_{n}', p, [m['toon'], m['disco']], (x, y, z), {'checkpoint': n})
-        vacio(f'trg_rad_checkpoint_{n}', (x, y, z), props={'radio': 4.0, 'evento': 'checkpoint', 'checkpoint': n, 'nombre': nombre})
-        vacio(f'spawn_checkpoint_{n}', (x + 1.8, y - 0.6, z))
-        caja_invisible(f'col_box_pilar_{n}', (x - 0.45, y - 0.45, z), (x + 0.45, y + 0.45, z + 2.6))
-    for n, (x, y, z) in enumerate(((9.5, -29.0, 0.0), (3.2, -104.6, CORNISA[2]), (6.5, -134.0, MESETA[2])), start=1):
-        f = Constructor(PALETA, semilla=80 + n, variacion=0.04)
-        foliage_builder.flor_solar(f)
-        objeto_suelto(f'flor_{n}', f, [m['toon']], (x, y, z), {'cura': 25})
-        vacio(f'trg_rad_flor_{n}', (x, y, z), props={'radio': 1.3, 'evento': 'flor', 'flor': n})
+    for n, (pos, nombre) in puntos.items():
+        props_builder.pilar_checkpoint(m, n, pos, nombre)
+    for n, pos in enumerate(((9.5, -29.0, 0.0), (3.2, -104.6, CORNISA[2]), (6.5, -134.0, MESETA[2])), start=1):
+        props_builder.flor(m, n, pos)
 
 
 def interactuables(m, rnd):
@@ -430,11 +439,7 @@ def interactuables(m, rnd):
                   {'interactuable': 'brazalete', 'etiqueta': 'Tomar el brazalete', 'flotar': 1})
     # Páginas del diario: hoja con una piedrita encima
     for n, (pos, giro) in {1: ((1.2, -5.6, 0.36), 20), 2: ((8.6, -71.5, 0.0), -35), 3: ((2.6, -129.2, MESETA[2]), 60)}.items():
-        p = Constructor(PALETA, semilla=90 + n, variacion=0.04)
-        p.agregar(caja_biselada(0.32, 0.42, 0.012, 0.004), 'papel', 'escenario', colocar((0, 0, 0.006), (0, 0, giro)))
-        p.agregar(caja_biselada(0.3, 0.06, 0.014, 0.004), 'papel_sombra', 'escenario', colocar((0.01, -0.12, 0.012), (0, 0, giro)))
-        p.agregar(casco(rock_builder.puntos_roca((0.06, 0.08, 0.04), 0.07, rnd)), tono_piedra, 'escenario')
-        objeto_suelto(f'pagina_{n}', p, [m['toon']], pos, {'interactuable': 'pagina', 'pagina': n, 'etiqueta': 'Leer la página'})
+        props_builder.pagina(m, n, pos, giro, rnd)
     # Losa que cierra lo alto de la escalinata de las ruinas: se hunde en la terraza al manipularla
     zt = MESETA[2] + 2.4
     l = Constructor(PALETA, semilla=77, variacion=0.04)
@@ -444,6 +449,12 @@ def interactuables(m, rnd):
     objeto_suelto('dyn_losa_1', l, [m['toon'], m['runa']], (0, -143.0, zt + 1.2),
                   {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa',
                    'etiqueta': 'Mover la losa', 'mover': [0.0, 0.0, -2.45], 'duracion': 1.6})
+    # Puerta del pórtico: se hunde en el suelo con la Manipulación y deja ver el pasadizo
+    pu = Constructor(PALETA, semilla=78, variacion=0.03)
+    temple_builder.puerta_santuario(pu, 2.2, 6.4, 1)
+    objeto_suelto('dyn_puerta_santuario', pu, [m['toon'], m['runa']], (0, -156.4, zt + 3.2),
+                  {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa',
+                   'etiqueta': 'Abrir la puerta del santuario', 'mover': [0.0, 0.0, -6.5], 'duracion': 2.4})
 
 
 def triggers_y_puntos():

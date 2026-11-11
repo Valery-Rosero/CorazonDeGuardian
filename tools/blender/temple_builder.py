@@ -276,14 +276,19 @@ def fachada_santuario(k, centro_y, z_base, ancho, alto, rnd, material_runa):
     # Soles tallados a los lados del pórtico y musgo sobre el muro
     for sgn in (1, -1):
         glifo_sol(k, colocar((sgn * (hueco + 4.6), y - 1.52, z_base + 6.2)), 0.7)
-    k.agregar(caja_biselada(hueco * 2, 0.6, 6.4, 0.08), 'piedra_sombra', 'escenario', colocar((0, y - 0.4, z_base + 3.2)))
-    k.agregar(prisma(12, 1.0, 0.1, radio_sup=1.0), 'cristal_runa', 'escenario',
-              colocar((0, y - 0.75, z_base + 3.6), (90, 0, 0)), material=material_runa)
+    # La puerta es un objeto aparte (puerta_santuario): se hunde en el suelo con la Manipulación
     for sgn in (1, -1):
         columna(k, (sgn * (hueco + 0.7), y - 2.2, z_base), 6.4, 0.45, rnd, liana=(sgn > 0))
     return [((-mitad, y - 1.5, z_base), (-hueco, y + 1.5, z_base + alto)),
             ((hueco, y - 1.5, z_base), (mitad, y + 1.5, z_base + alto)),
-            ((-hueco, y - 0.7, z_base), (hueco, y + 1.5, z_base + 7.0))]
+            ((-hueco, y - 1.5, z_base + 6.4), (hueco, y + 1.5, z_base + 8.0))]   # dintel
+
+
+def puerta_santuario(k, hueco, alto, material_runa):
+    """Puerta de piedra del pórtico (centrada en el origen) con el disco de runas."""
+    k.agregar(caja_biselada(hueco * 2, 0.6, alto, 0.08), 'piedra_sombra', 'escenario')
+    k.agregar(prisma(12, 1.0, 0.1, radio_sup=1.0), 'cristal_runa', 'escenario',
+              colocar((0, -0.35, 0.4), (90, 0, 0)), material=material_runa)
 
 
 def altar(k, centro, material_oro):

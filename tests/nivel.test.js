@@ -87,7 +87,8 @@ test('zona 1: las mallas hijas de un objeto especial no se convierten en objetos
   const sim = await crearSimulacion();
   const nombres = sim.nivel.dinamicos.map((d) => d.malla.name).sort();
   assert.equal(nombres.filter((n) => n.startsWith('dyn_losa')).length, 1, `dinámicos: ${nombres.join(', ')}`);
-  assert.equal(sim.nivel.dinamicos.length, 20 + 3 + 1, 'tablas + esferas + losa');
+  assert.ok(nombres.includes('dyn_puerta_santuario'), 'la puerta del pórtico se abre con la Manipulación');
+  assert.equal(sim.nivel.dinamicos.length, 20 + 3 + 1 + 1, 'tablas + esferas + losa + puerta del santuario');
 });
 
 test('todos los sonidos configurados existen en public/', () => {
@@ -108,4 +109,37 @@ test('zona 1: la selva de la hoja de escenarios (árboles jóvenes, hojas de dob
   // Las cabezas de piedra y los bloques tallados del claro de las ruinas no se atraviesan
   for (const n of ['col_box_cabeza_o', 'col_box_cabeza_e', 'col_box_cabeza_cruce']) assert.ok(nombres.includes(n), n);
   assert.ok(nodos.filter((n) => n.name.startsWith('col_box_bloque_')).length === 8);
+});
+
+test('zona 2: presupuesto, pocas luces a la vez y los datos del acertijo', () => {
+  const { json: s } = leerGlb('public/models/zona_2_santuario.glb');
+  const n = s.nodes.map((x) => x.name);
+  for (const nombre of ['spawn_santuario', 'rayo_origen', 'rayo_sala_min', 'rayo_sala_max', 'prop_cristal_solar',
+    'dyn_puerta_espejos', 'prop_altar_escudo', 'trg_box_sala_espejos', 'trg_box_puerta_arena']) {
+    assert.ok(n.includes(nombre), `falta ${nombre}`);
+  }
+  for (const x of n) assert.ok(!x.includes('.'), `GLTFLoader borra los puntos: ${x}`);
+  // Cada luz puntual cuesta en todos los píxeles: el santuario enciende como mucho 8 a la vez
+  const luces = s.nodes.filter((x) => x.name.startsWith('luz_'));
+  assert.ok(luces.length <= 8, `${luces.length} luces`);
+  for (const l of luces) assert.equal(l.extras.grupo, 2, `${l.name} es del grupo del santuario`);
+  let total = 0;
+  for (const nodo of s.nodes) {
+    if (nodo.mesh === undefined || nodo.name.startsWith('col_') || nodo.name.startsWith('trg_')) continue;
+    total += contar({ meshes: [s.meshes[nodo.mesh]], accessors: s.accessors }).triangulos;
+  }
+  assert.ok(total <= 50000, `${total} triángulos`);
+  // La transición sale del pasadizo del pórtico de la zona 1
+  assert.equal(nodo('trg_box_transicion_santuario').extras.destino, 'santuario');
+});
+
+test('enemigos.glb: centinela y espectro con sus huesos, 12 fragmentos y la máscara suelta', () => {
+  const { json: e } = leerGlb('public/models/enemigos.glb');
+  const n = e.nodes.map((x) => x.name);
+  for (const h of ['centinela', 'cadera', 'torso', 'cabeza', 'brazo_der', 'brazo_izq', 'pierna_der', 'pierna_izq',
+    'espectro', 'esp_cuerpo', 'esp_cabeza', 'esp_brazo_der', 'esp_brazo_izq', 'espectro_mascara']) {
+    assert.ok(n.includes(h), `falta ${h}`);
+  }
+  assert.equal(n.filter((x) => /^centinela_frag_[a-z_]+$/.test(x)).length, 12);
+  assert.equal(new Set(n).size, n.length, 'sin nombres repetidos (GLTFLoader los renombraría)');
 });

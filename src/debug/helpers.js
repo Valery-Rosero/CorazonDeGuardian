@@ -50,6 +50,8 @@ export function crearAtajos(s) {
       case 'Digit1': s.teletransportar('debug_1'); s.nota('Depuración: entrada'); break;
       case 'Digit2': s.teletransportar('debug_2'); s.nota('Depuración: cornisa y puente'); break;
       case 'Digit3': s.teletransportar('debug_3'); s.nota('Depuración: ruinas del pórtico'); break;
+      case 'Digit4': s.teletransportar('debug_4'); s.nota('Depuración: santuario, sala de columnas'); break;
+      case 'Digit5': s.teletransportar('debug_5'); s.nota('Depuración: santuario, sala de los espejos'); break;
       case 'Digit6':
         s.vida.dios = !s.vida.dios;
         s.nota(s.vida.dios ? 'Depuración: invulnerable' : 'Depuración: vulnerable');
