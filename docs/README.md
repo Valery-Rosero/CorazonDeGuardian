@@ -33,6 +33,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 | `npm run preview` | Probar la compilación de producción |
 | `npm run check` | Comprobación de tipos JSDoc |
 | `npm test` | 101 pruebas (`node --test`): lógica, y simulaciones que cargan los `.glb` reales y hacen correr la física |
+| `npm run zfighting` | Busca caras superpuestas en el mismo plano en los tres escenarios (el parpadeo con «dientes» de dos superficies que se pelean) |
 | `npm run assets` | Regenera los `.glb` con Blender y los sonidos y la música con Python. La ruta de Blender se lee de `BLENDER_PATH`. |
 
 ## Documentación

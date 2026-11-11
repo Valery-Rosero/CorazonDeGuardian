@@ -69,8 +69,9 @@ def P(r, ang, z=SUELO):
 
 def pasillo(k):
     x, y0, y1, t = PASILLO['x'], PASILLO['y0'], PASILLO['y1'], PASILLO['techo']
+    # 1 cm por debajo del suelo de la arena: los 3 m que entran en ella no se pelean con el disco
     k.agregar(caja_biselada(2 * x + 2, y0 - y1 + 3, 0.5, 0.05), 'arenisca_sombra', 'escenario',
-              colocar((0, (y0 + y1 - 3) / 2, SUELO - 0.25)))
+              colocar((0, (y0 + y1 - 3) / 2, SUELO - 0.26)))
     caja_invisible('col_box_suelo_pasillo_arena', (-x - 1, y1 - 3, SUELO - 0.5), (x + 1, y0, SUELO))
     for sx in (-1, 1):
         k.agregar(caja_biselada(1.0, y0 - y1 + 3, t, 0.08), ib.tono_arenisca, 'escenario', colocar((sx * (x + 0.5), (y0 + y1 - 3) / 2, SUELO + t / 2)))

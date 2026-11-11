@@ -392,9 +392,11 @@ def ruinas(k, m, rnd):
 def pasadizo(k, z):
     """Pasadizo oscuro detrás de la puerta del pórtico: al fondo, la transición al santuario."""
     y0, y1 = -157.5, -161.0
-    k.agregar(caja_biselada(4.4, 3.5, 0.3, 0.05), 'piedra_oscura', 'escenario', colocar((0, (y0 + y1) / 2, z - 0.15)))
+    # El suelo 1 cm por encima de la terraza (la terraza llega hasta aquí: a la misma altura se peleaban) y los
+    # muros apartados un poco del canto de la fachada
+    k.agregar(caja_biselada(4.4, 3.5, 0.3, 0.05), 'piedra_oscura', 'escenario', colocar((0, (y0 + y1) / 2, z - 0.14)))
     for sx in (1, -1):
-        k.agregar(caja_biselada(0.6, 3.5, 6.4, 0.05), 'piedra_oscura', 'escenario', colocar((sx * 2.5, (y0 + y1) / 2, z + 3.2)))
+        k.agregar(caja_biselada(0.6, 3.48, 6.4, 0.05), 'piedra_oscura', 'escenario', colocar((sx * 2.52, (y0 + y1) / 2 - 0.02, z + 3.2)))
     k.agregar(caja_biselada(5.6, 3.5, 0.6, 0.05), 'piedra_oscura', 'escenario', colocar((0, (y0 + y1) / 2, z + 6.7)))
     k.agregar(caja_biselada(4.4, 0.4, 6.4, 0.05), 'espectro_hueco', 'escenario', colocar((0, y1 - 0.2, z + 3.2)))
     caja_invisible('col_box_pasadizo_fondo', (-2.2, y1 - 0.4, z), (2.2, y1, z + 6.4))

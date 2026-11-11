@@ -108,9 +108,11 @@ def muro_con_banda(k, x0, y0, x1, y1, z0, z1, nombre):
 def vestibulo(k):
     x, y0, y1, t = VEST['x'], VEST['y0'], VEST['y1'], VEST['techo']
     caja(k, -x - GROSOR, y0 + 1, x + GROSOR, y1, -0.5, 0, 'arenisca_sombra', 'suelo_vestibulo')
-    muro_con_banda(k, -x - GROSOR, y0 + 1, -x, y1, 0, t, 'vest_o')
-    muro_con_banda(k, x, y0 + 1, x + GROSOR, y1, 0, t, 'vest_e')
-    caja(k, -x - GROSOR, y0 + 1, x + GROSOR, y1, t, t + 0.8, 'arenisca_oscura', 'vest_techo')
+    # Los muros y el techo acaban donde empieza el muro de la sala de columnas (y1 + GROSOR): si entraran en
+    # él, sus caras del fondo coincidirían con las de la sala y se pelearían (z-fighting)
+    muro_con_banda(k, -x - GROSOR, y0 + 1, -x, y1 + GROSOR, 0, t, 'vest_o')
+    muro_con_banda(k, x, y0 + 1, x + GROSOR, y1 + GROSOR, 0, t, 'vest_e')
+    caja(k, -x - GROSOR, y0 + 1, x + GROSOR, y1 + GROSOR, t, t + 0.8, 'arenisca_oscura', 'vest_techo')
     # Por donde se llega: la luz del día detrás de la puerta (ya no se puede volver)
     caja(k, -x, y0 + 1, x, y0 + 0.6, 0, t, 'arenisca_oscura', 'vest_entrada')
 
@@ -168,10 +170,14 @@ def altar_escudo(k, m):
     x0 = -SALA['x']
     xf = x0 - NICHO['fondo']
     y0, y1 = NICHO['y0'], NICHO['y1']
-    caja(k, xf - GROSOR, y0 + GROSOR, x0, y0, 0, 4.2, nombre='nicho_n')
-    caja(k, xf - GROSOR, y1, x0, y1 - GROSOR, 0, 4.2, nombre='nicho_s')
+    # Los lados y el techo del nicho llegan solo hasta la cara de atrás del muro (x0 - GROSOR): si entraran
+    # en el muro, sus caras delanteras quedarían en el mismo plano que la del muro y se pelearían
+    # píxel a píxel (z-fighting: la franja oscura con «dientes» sobre el nicho)
+    xm = x0 - GROSOR
+    caja(k, xf - GROSOR, y0 + GROSOR, xm, y0, 0, 4.2, nombre='nicho_n')
+    caja(k, xf - GROSOR, y1, xm, y1 - GROSOR, 0, 4.2, nombre='nicho_s')
     caja(k, xf - GROSOR, y0, xf, y1, 0, 4.2, '#1E3A55', 'nicho_fondo')
-    caja(k, xf - GROSOR, y0 + GROSOR, x0, y1 - GROSOR, 4.2, 5.0, 'arenisca_oscura')
+    caja(k, xf - GROSOR, y0 + GROSOR, xm, y1 - GROSOR, 4.2, 5.0, 'arenisca_oscura')
     # Runas del fondo (material de runas: respiran en el juego)
     for i, z in enumerate((1.2, 2.0, 2.8, 3.6)):
         for j, yy in enumerate((-21.8, -23.0, -24.2)):
@@ -194,9 +200,11 @@ def paso_y_sala_espejos(k, m, rnd):
     # Paso entre salas
     x, y0, y1, t = PASO['x'], PASO['y0'], PASO['y1'], PASO['techo']
     caja(k, -x - GROSOR, y0, x + GROSOR, y1, -0.5, 0, 'arenisca_sombra', 'suelo_paso')
-    caja(k, -x - GROSOR, y0, -x, y1, 0, t, nombre='paso_o')
-    caja(k, x, y0, x + GROSOR, y1, 0, t, nombre='paso_e')
-    caja(k, -x - GROSOR, y0, x + GROSOR, y1, t, t + 0.6, 'arenisca_oscura', 'paso_techo')
+    # El paso lo forman los gruesos de los dos muros (sala y espejos) con sus dinteles: aquí solo van los
+    # colisionadores. Dibujados, sus caras coincidían con las de esos muros (z-fighting)
+    caja_invisible('col_box_paso_o', L(-x - GROSOR, y1, 0), L(-x, y0, t))
+    caja_invisible('col_box_paso_e', L(x, y1, 0), L(x + GROSOR, y0, t))
+    caja_invisible('col_box_paso_techo', L(-x - GROSOR, y1, t), L(x + GROSOR, y0, t + 0.6))
 
     x, y0, y1, t = ESP['x'], ESP['y0'], ESP['y1'], ESP['techo']
     caja(k, -x - GROSOR, y0, x + GROSOR, y1 - GROSOR, -0.5, 0, 'piedra_azul', 'suelo_espejos')
@@ -315,7 +323,7 @@ def antesala(k, m, rnd):  # noqa: C901
             yy = y0 - 2 - i * 2.8
             k.agregar(caja_biselada(0.06, 1.6, 0.18, 0.02), 'dorado_solar' if i < 3 else 'oro_brillante', 'escenario',
                       colocar(L(sx * (x - 0.03), yy, z_ante(yy) + 2.2)), material=MAT['oro'] if i >= 3 else 0)
-    caja(k, -x - GROSOR, y0 - GROSOR, x + GROSOR, y1, t - 0.5, t + 0.5, 'arenisca_oscura', 'ante_techo')
+    caja(k, -x, y0 - GROSOR, x, y1, t - 0.5, t + 0.5, 'arenisca_oscura', 'ante_techo')
     # Puerta tallada de la arena con grietas naranjas: se hunde con la Manipulación (detrás, la cámara del sol)
     alto_puerta = t - 0.5 + ANTE['bajada']
     pu = Constructor(PALETA, semilla=62, variacion=0.03)

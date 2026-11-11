@@ -308,4 +308,5 @@ def columna_tallada(k, x, y, alto, radio=0.6):
         k.agregar(prisma(8, r, h), 'arenisca_luz' if i == 2 else 'arenisca', 'escenario', colocar((x, y, alto - 0.7 + i * 0.25 + h / 2)))
     for z in (alto * 0.22, alto * 0.55):
         k.agregar(prisma(12, radio * 1.04, 0.32), 'oro_tallado', 'escenario', colocar((x, y, z)))
-        k.agregar(prisma(12, radio * 1.06, 0.06), 'oro_brillante', 'escenario', colocar((x, y, z + 0.13)), material=ORO)
+        # El anillo brillante acaba 1 cm por debajo de la banda: con las tapas a la misma altura se peleaban
+        k.agregar(prisma(12, radio * 1.06, 0.06), 'oro_brillante', 'escenario', colocar((x, y, z + 0.12)), material=ORO)
