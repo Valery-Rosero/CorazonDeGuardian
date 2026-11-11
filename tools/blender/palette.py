@@ -37,6 +37,7 @@ PALETA = {
     'v_mochila_sombra': '#5C412A',
     'v_mapa': '#EADBB6',
     'v_mapa_sombra': '#CDBB92',
+    'v_rubor': '#DC9479',
     'v_ojos': '#2A1E18',
     'v_brillo_ojo': '#FFF7E8',
     'v_boca': '#5A2A22',

@@ -121,11 +121,13 @@ def preparar(objetos_toon, gema_hex):
     return cam
 
 
-def disparar(cam, ruta, pos, objetivo, escala, res=(800, 1100)):
+def disparar(cam, ruta, pos, objetivo, escala, res=(800, 1100), ajuste='AUTO'):
+    """ajuste='VERTICAL': 'escala' es la altura visible (para encuadrar igual que el boceto)."""
     sc = bpy.context.scene
     cam.location = Vector(pos)
     cam.rotation_euler = (Vector(objetivo) - Vector(pos)).to_track_quat('-Z', 'Y').to_euler()
     cam.data.type = 'ORTHO'
+    cam.data.sensor_fit = ajuste
     cam.data.ortho_scale = escala
     cam.data.clip_start = 0.05
     cam.data.clip_end = 50

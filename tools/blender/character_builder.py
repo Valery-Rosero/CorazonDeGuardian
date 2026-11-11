@@ -3,35 +3,76 @@
   - una malla de cuerpo con pesos rígidos (cada vértice obedece al 100 % a un hueso),
   - y, si el personaje habla, una malla de cabeza aparte con formas de expresión (shape keys).
 
+VICTORIA SE CONSTRUYE DESDE EL BOCETO APROBADO (hoja de personajes, vista de frente y de espalda,
+lienzo de 200 × 420 unidades). Cada pieza usa las coordenadas exactas del dibujo convertidas a metros
+con la misma escala, de modo que la silueta 3D vista de frente y de espalda coincide con el boceto.
+La profundidad (que el dibujo no define) se añade con volúmenes redondeados.
+
 Medidas en metros. El personaje mira hacia -Y; su izquierda ('izq') es +X.
 """
 import math
 
 from mathutils import Vector
 
-from common import (Constructor, agregar_formas, caja_biselada, casco, colocar, crear_armadura,
-                    crear_malla, elipsoide, material_emisivo, material_toon, orientar_hacia,
-                    orientar_radial, prisma, segmento)
+from common import (Constructor, agregar_formas, caja_biselada, casco, colocar, crear_armadura, crear_malla,
+                    elipsoide, material_emisivo, material_toon, orientar_hacia, prisma, segmento)
 
 # ---------------------------------------------------------------------------
-# VICTORIA SOLANO — 1,65 m, 5,5 cabezas
+# Escala del boceto: 402 unidades (del tope del sombrero, v=8, a la suela, v=410) = 1,65 m
 # ---------------------------------------------------------------------------
 
-CABEZA_Z = 1.40          # centro de la cabeza
-OJO_Z = 1.375
-OJO_X = 0.049
-CARA_Y = -0.118          # plano frontal de la cara
-OJO_RX, OJO_RZ = 0.0096, 0.0128
-CEJA_Z = OJO_Z + 0.040
+ESCALA = 1.65 / 402.0
+
+
+def F(u, v):
+    """Punto del boceto DE FRENTE → (x, z) en metros. El lado izquierdo del dibujo es la derecha de Victoria (-X)."""
+    return ((u - 100.0) * ESCALA, (410.0 - v) * ESCALA)
+
+
+def FE(u, v):
+    """Punto del boceto DE ESPALDA → (x, z). En la espalda, el lado izquierdo del dibujo es su izquierda (+X)."""
+    return ((100.0 - u) * ESCALA, (410.0 - v) * ESCALA)
+
+
+def espejo(contorno):
+    """Contorno del lado derecho de Victoria → lado izquierdo (refleja X)."""
+    return [(-x, z) for x, z in reversed(contorno)]
+
+
+def solido(contorno, prof, y0=0.0, capas=((1.0, 1.0, 0.0), (0.93, 0.985, 0.6), (0.74, 0.96, 1.0))):
+    """Volumen redondeado cuya silueta de frente es exactamente 'contorno' (lista de (x, z)).
+    Cada capa (escala_x, escala_z, fracción de profundidad) estrecha el contorno hacia su centro
+    a medida que se aleja del plano medio: queda una pieza tallada de bordes biselados."""
+    cx = sum(p[0] for p in contorno) / len(contorno)
+    cz = sum(p[1] for p in contorno) / len(contorno)
+    pts = []
+    for ex, ez, f in capas:
+        for signo in ((1, -1) if f > 0 else (1,)):
+            for x, z in contorno:
+                pts.append((cx + (x - cx) * ex, y0 + signo * prof * f, cz + (z - cz) * ez))
+    return casco(pts)
+
+
+# ---------------------------------------------------------------------------
+# Medidas derivadas del boceto
+# ---------------------------------------------------------------------------
+
+CARA = [F(72, 52), F(128, 52), F(131, 74), F(122, 94), F(100, 102), F(78, 94), F(69, 74)]
+CARA_Y = -0.115                      # plano frontal de la cara (donde viven ojos, cejas y boca)
+OJO_X, OJO_Z = F(112, 75)            # ojo izquierdo de Victoria (derecha del dibujo)
+OJO_RX, OJO_RZ = 4.2 * ESCALA, 5.6 * ESCALA       # 1,7 × 2,3 cm de radio: los ojos grandes del boceto
+CEJA_Z = F(0, 65.2)[1]
+BOCA_Z = F(0, 92.6)[1]
+CABEZA_Z = 1.37
 
 TRENZA_JUNTAS = [
-    (0.000, 0.100, 1.345),
-    (0.003, 0.170, 1.270),
-    (0.007, 0.270, 1.195),
-    (0.011, 0.295, 1.115),
-    (0.015, 0.300, 1.035),
-    (0.019, 0.262, 0.955),
-    (0.022, 0.222, 0.880),
+    (0.000, 0.105, 1.300),
+    (-0.003, 0.215, 1.215),
+    (-0.006, 0.262, 1.125),
+    (-0.009, 0.266, 1.035),
+    (-0.012, 0.264, 0.945),
+    (-0.014, 0.258, 0.850),
+    (-0.016, 0.250, 0.742),
 ]
 
 FORMAS_CARA = [
@@ -50,214 +91,263 @@ def huesos_victoria():
         h.append((n, cabeza, cola, padre))
 
     b('cadera', (0, 0, 0.84), (0, 0, 0.95))
-    b('torso', (0, 0, 0.88), (0, 0, 1.22), 'cadera')
-    b('cabeza', (0, 0, 1.27), (0, 0, 1.50), 'torso')
-    b('sombrero', (0, 0, 1.46), (0, 0, 1.62), 'cabeza')
+    b('torso', (0, 0, 0.86), (0, 0, 1.20), 'cadera')
+    b('cabeza', (0, 0, 1.25), (0, 0, 1.50), 'torso')
+    b('sombrero', (0, 0, 1.46), (0, 0, 1.64), 'cabeza')
     for lado, s in (('izq', 1), ('der', -1)):
-        x = 0.158 * s
-        b(f'brazo_sup_{lado}', (0.150 * s, 0, 1.20), (x, 0, 0.95), 'torso')
-        b(f'brazo_inf_{lado}', (x, 0, 0.95), (x, 0, 0.79), f'brazo_sup_{lado}')
-        b(f'mano_{lado}', (x, 0, 0.79), (x, 0, 0.68), f'brazo_inf_{lado}')
+        x = 0.157 * s
+        b(f'brazo_sup_{lado}', (x, 0, 1.20), (x, 0, 0.935), 'torso')
+        b(f'brazo_inf_{lado}', (x, 0, 0.935), (x, 0, 0.79), f'brazo_sup_{lado}')
+        b(f'mano_{lado}', (x, 0, 0.79), (x, 0, 0.69), f'brazo_inf_{lado}')
     for lado, s in (('izq', 1), ('der', -1)):
         x = 0.055 * s
-        b(f'pierna_sup_{lado}', (x, 0, 0.84), (x, 0, 0.54), 'cadera')
-        b(f'pierna_inf_{lado}', (x, 0, 0.54), (x, 0, 0.08), f'pierna_sup_{lado}')
-        b(f'bota_{lado}', (x, 0, 0.08), (x, -0.15, 0.03), f'pierna_inf_{lado}')
+        b(f'pierna_sup_{lado}', (x, 0, 0.84), (x, 0, 0.53), 'cadera')
+        b(f'pierna_inf_{lado}', (x, 0, 0.53), (x, 0, 0.07), f'pierna_sup_{lado}')
+        b(f'bota_{lado}', (x, 0, 0.07), (x, -0.15, 0.03), f'pierna_inf_{lado}')
     padre = 'cabeza'
     for k in range(6):
         b(f'trenza_{k + 1}', TRENZA_JUNTAS[k], TRENZA_JUNTAS[k + 1], padre)
         padre = f'trenza_{k + 1}'
-    b('poncho_delante', (0, -0.10, 1.24), (0, -0.14, 0.86), 'torso')
-    b('poncho_detras', (0, 0.10, 1.24), (0, 0.15, 0.86), 'torso')
-    b('mochila', (0, 0.19, 1.22), (0, 0.19, 0.98), 'torso')
-    b('brazalete', (-0.158, 0, 0.87), (-0.158, 0, 0.82), 'brazo_inf_der')
+    b('poncho_delante', (0, -0.10, 1.22), (0, -0.12, 0.82), 'torso')
+    b('poncho_detras', (0, 0.10, 1.22), (0, 0.12, 0.82), 'torso')
+    b('mochila', (0, 0.155, 1.18), (0, 0.155, 0.90), 'torso')
+    b('brazalete', (-0.157, 0, 0.87), (-0.157, 0, 0.82), 'brazo_inf_der')
     return h
+
+
+# ---------------------------------------------------------------------------
+# Poncho: cada franja del boceto es una banda de caras; la profundidad se curva hacia los lados
+# ---------------------------------------------------------------------------
+
+def _x_lado(v, izquierda=True):
+    """Borde lateral del poncho en el boceto: de (60,114) a (50,170) y su espejo."""
+    u = 60 - 10 * (v - 114) / 56
+    return u if izquierda else 200 - u
+
+
+# Polilíneas del boceto (u, v), de izquierda a derecha, que separan las franjas del poncho
+_P_ARRIBA = [(60, 114), (72, 111), (100, 106), (128, 111), (140, 114)]
+_P_FRANJA_A = [(_x_lado(148), 148), (72, 168), (100, 184), (128, 168), (_x_lado(148, False), 148)]
+_P_FRANJA_B = [(_x_lado(153), 153), (72, 173), (100, 189), (128, 173), (_x_lado(153, False), 153)]
+_P_RIBETE = [(_x_lado(162), 162), (74, 186), (100, 203), (126, 186), (_x_lado(162, False), 162)]
+_P_BORDE = [(50, 170), (72, 196), (100, 214), (128, 196), (150, 170)]
+_BANDAS = [(_P_ARRIBA, _P_FRANJA_A, 'v_poncho'), (_P_FRANJA_A, _P_FRANJA_B, 'v_ribete_oscuro'),
+           (_P_FRANJA_B, _P_RIBETE, 'v_poncho'), (_P_RIBETE, _P_BORDE, 'v_ribete')]
+PONCHO_PROF = 0.105   # media profundidad en el centro
+
+
+def _prof_poncho(x):
+    """El poncho es grueso en el centro (cubre el torso) y casi plano en los lados (cae sobre los brazos)."""
+    t = min(1.0, abs(x) / 0.215)
+    return PONCHO_PROF * math.sqrt(max(0.0, 1 - 0.86 * t * t))
+
+
+def _poncho(c):
+    verts, caras, colores = [], [], []
+
+    def v3(u, v, lado):
+        x, z = F(u, v)
+        verts.append(Vector((x, lado * _prof_poncho(x), z)))
+        return len(verts) - 1
+
+    for lado in (-1, 1):  # -1 = delante, +1 = detrás
+        for arriba, abajo, color in _BANDAS:
+            ia = [v3(u, v, lado) for u, v in arriba]
+            ib = [v3(u, v, lado) for u, v in abajo]
+            for i in range(len(ia) - 1):
+                cara = (ia[i], ia[i + 1], ib[i + 1], ib[i])
+                caras.append(cara)
+                colores.append(color)
+    # Paredes que unen delante y detrás siguiendo el contorno (hombros, lados y borde inferior)
+    perimetro = (_P_ARRIBA + [p for p in [(_x_lado(148, False), 148), (_x_lado(153, False), 153),
+                                         (_x_lado(162, False), 162)]] + list(reversed(_P_BORDE))
+                 + [(_x_lado(162), 162), (_x_lado(153), 153), (_x_lado(148), 148)])
+    for i in range(len(perimetro)):
+        (ua, va), (ub, vb) = perimetro[i], perimetro[(i + 1) % len(perimetro)]
+        a0, a1 = v3(ua, va, -1), v3(ua, va, 1)
+        b0, b1 = v3(ub, vb, -1), v3(ub, vb, 1)
+        caras.append((a0, b0, b1, a1))
+        vm = (va + vb) / 2
+        colores.append('v_ribete' if vm >= 162 else 'v_ribete_oscuro' if 148 <= vm <= 153 else 'v_poncho')
+    # Normales hacia afuera (el poncho es convexo alrededor del torso)
+    from common import orientar_hacia_afuera
+    centro = Vector((0, 0, F(0, 150)[1]))
+    caras = orientar_hacia_afuera(verts, caras, centro)
+
+    def hueso(_i, p):
+        if p.z > 1.08:
+            return 'torso'
+        return 'poncho_delante' if p.y < 0 else 'poncho_detras'
+
+    c.agregar((verts, caras), colores, hueso)
+
+    # Escote en V (piel) y rombos del ribete, apenas delante de la tela
+    def placa(puntos_uv, color, adelanto=0.003, hueso_placa='torso', lado=-1):
+        vs = []
+        for u, v in puntos_uv:
+            x, z = F(u, v)
+            vs.append(Vector((x, lado * (_prof_poncho(x) + adelanto), z)))
+        c.agregar((vs, orientar_hacia(vs, [tuple(range(len(vs)))], (0, lado, 0))), color, hueso_placa)
+
+    placa([(91, 106), (109, 106), (100, 122)], 'v_piel_sombra')
+    for lado, hp in ((-1, 'poncho_delante'), (1, 'poncho_detras')):
+        for cu, cv in ((72, 191), (100, 207), (128, 191)):
+            placa([(cu, cv - 4), (cu + 3, cv), (cu, cv + 4), (cu - 3, cv)], 'v_oro_sombra', 0.004, hp, lado)
 
 
 # ---------------------------------------------------------------------------
 # Cuerpo
 # ---------------------------------------------------------------------------
 
-def _poncho(c):
-    """Poncho en rombo: cuello estrecho, hombros que cubren los brazos y punta delante y detrás."""
-    dirs = [0, 45, 90, 135, 180, 225, 270, 315]   # 0 = delante (-Y), 90 = izquierda (+X)
-
-    def d(k):
-        a = math.radians(dirs[k])
-        return Vector((math.sin(a), -math.cos(a), 0))
-
-    cuello = [Vector((d(k).x * 0.078, d(k).y * 0.072, 1.285)) for k in range(8)]
-    hombro_xy = [(0, -0.115), (0.19, -0.10), (0.225, 0), (0.19, 0.10),
-                 (0, 0.118), (-0.19, 0.10), (-0.225, 0), (-0.19, -0.10)]
-    hombro = [Vector((x, y, 1.225 if k in (2, 6) else 1.245)) for k, (x, y) in enumerate(hombro_xy)]
-    puntas = {0: Vector((0, -0.150, 0.800)), 2: Vector((0.235, 0, 0.975)),
-              4: Vector((0, 0.158, 0.830)), 6: Vector((-0.235, 0, 0.975))}
-    borde = []
-    for k in range(8):
-        if k in puntas:
-            borde.append(puntas[k])
-        else:
-            m = (puntas[k - 1] + puntas[(k + 1) % 8]) / 2
-            borde.append(m + d(k) * 0.012)
-    filas = [cuello, hombro]
-    for t in (0.35, 0.65, 0.80, 0.84, 0.88, 1.0):
-        fila = []
-        for k in range(8):
-            p = hombro[k].lerp(borde[k], t)
-            p = p + d(k) * (0.012 * math.sin(math.pi * t))
-            fila.append(p)
-        filas.append(fila)
-    verts = [p for fila in filas for p in fila]
-    caras = []
-    for r in range(len(filas) - 1):
-        for k in range(8):
-            caras.append((r * 8 + k, r * 8 + (k + 1) % 8, (r + 1) * 8 + (k + 1) % 8, (r + 1) * 8 + k))
-    caras = orientar_radial(verts, caras)
-    bandas = ['v_poncho', 'v_poncho', 'v_poncho', 'v_poncho', 'v_ribete_oscuro', 'v_poncho', 'v_ribete']
-    colores = [bandas[r] for r in range(len(filas) - 1) for _ in range(8)]
-
-    def hueso(i, _p):
-        r, k = divmod(i, 8)
-        if r <= 1 or k in (2, 6):
-            return 'torso'
-        return 'poncho_delante' if k in (7, 0, 1) else 'poncho_detras'
-
-    # Exterior, interior (sombra) y tapa del cuello
-    c.agregar((verts, caras), colores, hueso)
-    interior = [tuple(reversed(cf)) for cf in caras]
-    c.agregar((verts, interior), 'v_poncho_sombra', hueso)
-    tapa = orientar_hacia(verts, [tuple(range(8))], (0, 0, 1))
-    c.agregar((verts, tapa), 'v_poncho_sombra', hueso)
+def _pierna(c, lado):
+    """Pierna derecha del boceto (lado izquierdo del dibujo); la izquierda es su espejo."""
+    m = (lambda pts: pts) if lado == 'der' else espejo
+    s = -1 if lado == 'der' else 1
+    c.agregar(solido(m([F(74, 204), F(99, 204), F(98, 286), F(76, 286)]), 0.058), 'v_pantalon', f'pierna_sup_{lado}')
+    c.agregar(solido(m([F(76, 280), F(98, 280), F(97, 352), F(77, 352)]), 0.050), 'v_pantalon', f'pierna_inf_{lado}')
+    # Rodillera (placa delante de la pierna)
+    rod = [Vector((x, -0.058, z)) for x, z in m([F(78, 282), F(96, 282), F(95, 294), F(79, 294)])]
+    c.agregar((rod, orientar_hacia(rod, [(0, 1, 2, 3)], (0, -1, 0))), 'v_pantalon_sombra', f'pierna_inf_{lado}')
+    # Bota: caña, vuelta clara, pie hacia delante y suela
+    c.agregar(solido(m([F(74, 338), F(99, 338), F(99, 398), F(71, 398)]), 0.058), 'v_botas', f'pierna_inf_{lado}')
+    c.agregar(solido(m([F(73, 335), F(100, 335), F(100, 350), F(73, 350)]), 0.062), 'v_botas_luz', f'pierna_inf_{lado}')
+    x = 0.055 * s
+    pie = [(x + dx * s, y, z) for dx, y, z in (
+        (-0.052, 0.055, 0.016), (0.052, 0.055, 0.016), (-0.052, 0.050, 0.085), (0.052, 0.050, 0.085),
+        (-0.058, -0.080, 0.016), (0.056, -0.080, 0.016), (-0.050, -0.070, 0.075), (0.050, -0.070, 0.075),
+        (-0.046, -0.165, 0.016), (0.044, -0.165, 0.016), (-0.032, -0.160, 0.055), (0.032, -0.160, 0.055),
+        (0.000, -0.180, 0.022))]
+    c.agregar(casco(pie), 'v_botas', f'bota_{lado}')
+    c.agregar(caja_biselada(0.120, 0.250, 0.022, 0.008), 'v_suela', f'bota_{lado}', colocar((x, -0.060, 0.011)))
 
 
-def _brazo(c, s, lado):
-    x = 0.158 * s
-    c.agregar(elipsoide(0.040, 0.042, 0.036, 8, 4), 'v_camisa', f'brazo_sup_{lado}', colocar((0.153 * s, 0, 1.19)))
-    c.agregar(caja_biselada(0.064, 0.070, 0.26, 0.02, conico=0.9), 'v_camisa', f'brazo_sup_{lado}',
-              colocar((x, 0, 1.07)))
-    c.agregar(caja_biselada(0.071, 0.075, 0.042, 0.012), 'v_camisa_luz', f'brazo_inf_{lado}', colocar((x, 0, 0.935)))
-    c.agregar(caja_biselada(0.050, 0.054, 0.16, 0.015, conico=0.86), 'v_piel', f'brazo_inf_{lado}',
-              colocar((x, 0, 0.85)))
-    # Mano en manopla, con la palma hacia el cuerpo, y pulgar hacia delante
-    mano = [(x + dx * s, y, z) for dx, y, z in (
-        (-0.016, -0.029, 0.786), (0.014, -0.029, 0.786), (-0.016, 0.027, 0.786), (0.014, 0.027, 0.786),
-        (-0.018, -0.033, 0.735), (0.016, -0.033, 0.735), (-0.018, 0.031, 0.735), (0.016, 0.031, 0.735),
-        (-0.013, -0.024, 0.680), (0.011, -0.024, 0.680), (-0.013, 0.022, 0.680), (0.011, 0.022, 0.680),
-        (-0.008, -0.014, 0.670), (0.006, -0.014, 0.670), (-0.008, 0.012, 0.670), (0.006, 0.012, 0.670))]
-    c.agregar(casco(mano), 'v_piel_luz', f'mano_{lado}')
-    pulgar = [(x + dx * s, y, z) for dx, y, z in (
-        (-0.014, -0.030, 0.775), (0.004, -0.030, 0.775), (-0.012, -0.030, 0.745), (0.004, -0.030, 0.748),
-        (-0.008, -0.050, 0.752), (0.000, -0.050, 0.752), (-0.006, -0.054, 0.740))]
+def _brazo(c, lado):
+    """Brazo derecho del boceto; el izquierdo es su espejo. Cuelga separado del cuerpo, como en el dibujo."""
+    m = (lambda pts: pts) if lado == 'der' else espejo
+    c.agregar(solido(m([F(56, 116), F(70, 116), F(68, 182), F(54, 182)]), 0.031), 'v_camisa', f'brazo_sup_{lado}')
+    c.agregar(solido(m([F(53, 175), F(68, 173), F(68, 190), F(53, 191)]), 0.034), 'v_camisa_luz', f'brazo_inf_{lado}')
+    c.agregar(solido(m([F(54, 188), F(67, 186), F(65, 222), F(53, 222)]), 0.026), 'v_piel', f'brazo_inf_{lado}')
+    c.agregar(solido(m([F(51, 218), F(66, 216), F(68, 232), F(60, 242), F(52, 236)]), 0.020), 'v_piel_luz', f'mano_{lado}')
+    # Pulgar hacia delante
+    xm = F(60, 0)[0] * (1 if lado == 'der' else -1)
+    pulgar = [(xm + dx, y, z) for dx, y, z in (
+        (-0.010, -0.018, 0.775), (0.010, -0.018, 0.775), (-0.008, -0.018, 0.745), (0.008, -0.018, 0.745),
+        (-0.005, -0.038, 0.758), (0.005, -0.038, 0.758))]
     c.agregar(casco(pulgar), 'v_piel', f'mano_{lado}')
 
 
-def _pierna(c, s, lado):
-    x = 0.055 * s
-    # 'conico' escala la cara de arriba: el muslo y la pantorrilla son más anchos arriba
-    c.agregar(caja_biselada(0.092, 0.104, 0.32, 0.022, conico=1.15), 'v_pantalon', f'pierna_sup_{lado}',
-              colocar((x, 0, 0.69)))
-    c.agregar(caja_biselada(0.084, 0.094, 0.30, 0.020, conico=1.08), 'v_pantalon', f'pierna_inf_{lado}',
-              colocar((x, 0, 0.42)))
-    c.agregar(caja_biselada(0.062, 0.012, 0.060, 0.004), 'v_pantalon_sombra', f'pierna_inf_{lado}',
-              colocar((x, -0.053, 0.535)))
-    c.agregar(caja_biselada(0.106, 0.118, 0.24, 0.022, conico=1.06), 'v_botas', f'pierna_inf_{lado}',
-              colocar((x, 0, 0.19)))
-    c.agregar(caja_biselada(0.116, 0.128, 0.042, 0.010), 'v_botas_luz', f'pierna_inf_{lado}',
-              colocar((x, 0, 0.30)))
-    pie = [(x + dx, y, z) for dx, y, z in (
-        (-0.048, 0.055, 0.015), (0.048, 0.055, 0.015), (-0.048, 0.055, 0.090), (0.048, 0.055, 0.090),
-        (-0.050, -0.080, 0.015), (0.050, -0.080, 0.015), (-0.045, -0.060, 0.085), (0.045, -0.060, 0.085),
-        (-0.040, -0.160, 0.015), (0.040, -0.160, 0.015), (-0.030, -0.155, 0.050), (0.030, -0.155, 0.050),
-        (0.000, -0.175, 0.020))]
-    c.agregar(casco(pie), 'v_botas', f'bota_{lado}')
-    c.agregar(caja_biselada(0.106, 0.236, 0.018, 0.006), 'v_suela', f'bota_{lado}', colocar((x, -0.055, 0.009)))
+def _brazalete(c):
+    """En la muñeca derecha, como en el boceto: banda dorada con la gema delante y otra detrás."""
+    c.agregar(solido([F(52, 197), F(67, 195), F(67, 211), F(52, 213)], 0.031), 'v_ribete', 'brazalete')
+    c.agregar(solido([F(52, 206), F(67, 204), F(67, 211), F(52, 213)], 0.032), 'v_oro_sombra', 'brazalete')
+    gx, gz = F(59.5, 203.5)
+    rx, rz = 4.0 * ESCALA, 5.5 * ESCALA
+    for lado in (-1, 1):
+        gema = [(gx - rx, lado * 0.031, gz), (gx + rx, lado * 0.031, gz), (gx, lado * 0.031, gz + rz),
+                (gx, lado * 0.031, gz - rz), (gx, lado * 0.040, gz)]
+        c.agregar(casco(gema), 'gema_pulso', 'brazalete', material=1)
 
 
 def _sombrero(c):
+    """Copa de cinco caras (78,42)-(84,14)-(100,8)-(116,14)-(122,42), cinta dorada y ala ancha."""
     def tono(_c, n):
-        if n.z > 0.5:
+        if n.z > 0.55:
             return 'v_sombrero_luz'
         if n.z < -0.5:
             return 'v_sombrero_sombra'
         return 'v_sombrero'
 
-    c.agregar(prisma(12, 0.170, 0.012), tono, 'sombrero', colocar((0, 0.004, 1.455), (5, 0, 0)))
+    xb, zb = F(122, 42)
+    xm, zm = F(116, 14)
+    _, zt = F(100, 8)
     copa = []
     for i in range(12):
-        a = 2 * math.pi * i / 12
-        copa.append((math.cos(a) * 0.121, math.sin(a) * 0.121, 1.460))
-    for i in range(8):
-        a = 2 * math.pi * i / 8 + math.pi / 8
-        copa.append((math.cos(a) * 0.098, math.sin(a) * 0.092, 1.565))
-    copa += [(0, -0.055, 1.588), (0, 0.062, 1.594)]
+        a = math.tau * i / 12
+        copa.append((math.cos(a) * xb, math.sin(a) * xb * 0.9, zb))
+        copa.append((math.cos(a) * xm, math.sin(a) * xm * 0.88, zm))
+    copa += [(0, -0.030, zt), (0, 0.030, zt), (0.025, 0, zt - 0.004), (-0.025, 0, zt - 0.004)]
     c.agregar(casco(copa), tono, 'sombrero')
-    c.agregar(prisma(12, 0.124, 0.030, radio_sup=0.121), 'v_ribete_oscuro', 'sombrero', colocar((0, 0, 1.478)))
+    _, z_cinta_arriba = F(0, 34)
+    c.agregar(prisma(12, xb * 1.03, z_cinta_arriba - zb + 0.004, radio_sup=xb * 0.99, escala_y=0.9), 'v_ribete', 'sombrero',
+              colocar((0, 0, (zb + z_cinta_arriba) / 2)))
+    # Ala del boceto (52,48)-(78,40)-(122,40)-(148,48)-(140,56)-(60,56): 0,39 m de ancho, con la cara de
+    # arriba inclinada desde la copa (v=40) hasta el borde (v=48) y la de abajo plana (v=56)
+    ala_r = (148 - 100) * ESCALA
+    _, z_arriba_copa = F(0, 40)
+    _, z_borde = F(0, 48)
+    _, z_abajo = F(0, 56)
+    ala = []
+    for i in range(16):
+        a = math.tau * i / 16
+        ca, sa = math.cos(a), math.sin(a)
+        ala.append((ca * ala_r, sa * ala_r * 0.92, z_borde))
+        ala.append((ca * (ala_r - 0.012), sa * (ala_r - 0.012) * 0.92, z_abajo + 0.004))
+        ala.append((ca * xb * 1.05, sa * xb * 0.95, z_arriba_copa))
+        ala.append((ca * xb * 1.05, sa * xb * 0.95, z_abajo))
+    c.agregar(casco(ala), tono, 'sombrero')
 
 
 def _mochila(c):
-    c.agregar(caja_biselada(0.200, 0.100, 0.240, 0.025), 'v_mochila', 'mochila', colocar((0, 0.190, 1.090)))
-    c.agregar(caja_biselada(0.206, 0.106, 0.090, 0.020), 'v_mochila_luz', 'mochila', colocar((0, 0.191, 1.175)))
-    c.agregar(caja_biselada(0.120, 0.020, 0.070, 0.008), 'v_mochila_sombra', 'mochila', colocar((0, 0.245, 1.040)))
-    c.agregar(caja_biselada(0.026, 0.012, 0.032, 0.003), 'v_ribete', 'mochila', colocar((0, 0.247, 1.130)))
-    m, largo = segmento((-0.115, 0.250, 1.060), (0.165, 0.250, 1.385))
-    c.agregar(prisma(8, 0.026, largo), 'v_mapa', 'mochila', m)
+    """Vista de espalda del boceto: mochila, solapa, hebilla, correas y el rollo del mapa cruzado."""
+    yc = 0.158
+    c.agregar(solido([FE(76, 122), FE(124, 122), FE(127, 190), FE(73, 190)], 0.050, yc), 'v_mochila', 'mochila')
+    c.agregar(solido([FE(76, 121), FE(124, 121), FE(121, 150), FE(79, 150)], 0.054, yc), 'v_mochila_luz', 'mochila')
+    hx, hz = FE(100, 149)
+    c.agregar(caja_biselada(0.034, 0.012, 0.040, 0.004), 'v_ribete', 'mochila', colocar((hx, yc + 0.056, hz)))
+    # Correas: solo se ven de espalda, como en el boceto (de frente no aparecen)
+    for u0 in (78, 112):
+        cor = [FE(u0, 110), FE(u0 + 10, 110), FE(u0 + 8, 124), FE(u0 - 2, 124)]
+        c.agregar(solido(cor, 0.012, 0.11), 'v_mochila_sombra', 'torso')
+    # Rollo del mapa: de (46,100) a (112,138) en la espalda; asoma por el hombro izquierdo de frente
+    (ax, az), (bx, bz) = FE(48, 99), FE(112, 138)
+    y_rollo = yc + 0.072
+    mm, largo = segmento((ax, y_rollo, az), (bx, y_rollo, bz))
+    c.agregar(prisma(8, 0.019, largo, giro=22.5), 'v_mapa', 'mochila', mm)
     for t in (0.0, 1.0):
-        p = Vector((-0.115, 0.250, 1.060)).lerp(Vector((0.165, 0.250, 1.385)), t)
-        mm, _ = segmento(p - Vector((0.007, 0, 0.008)), p + Vector((0.007, 0, 0.008)))
-        c.agregar(prisma(8, 0.028, 0.012), 'v_mapa_sombra', 'mochila', mm)
-    mm, _ = segmento((0.018, 0.25, 1.214), (0.030, 0.25, 1.228))
-    c.agregar(prisma(8, 0.028, 0.010), 'v_ribete', 'mochila', mm)
-    # Correas: sobre el cuello del poncho y por el pecho
-    for s in (1, -1):
-        for a, b in (((0.07 * s, -0.098, 1.272), (0.07 * s, 0.0, 1.292)),
-                     ((0.07 * s, 0.0, 1.292), (0.07 * s, 0.150, 1.215)),
-                     ((0.07 * s, -0.100, 1.272), (0.07 * s, -0.143, 1.080))):
-            mm, largo = segmento(a, b)
-            c.agregar(caja_biselada(0.030, 0.010, largo, 0.003), 'v_mochila_sombra', 'torso', mm)
+        p = Vector((ax, y_rollo, az)).lerp(Vector((bx, y_rollo, bz)), t)
+        d = (Vector((bx, y_rollo, bz)) - Vector((ax, y_rollo, az))).normalized()
+        me, _ = segmento(p - d * 0.006, p + d * 0.006)
+        c.agregar(prisma(8, 0.021, 0.012, giro=22.5), 'v_mapa_sombra', 'mochila', me)
+    centro_rollo = Vector((ax, y_rollo, az)).lerp(Vector((bx, y_rollo, bz)), 0.42)
+    me, _ = segmento(centro_rollo - d * 0.006, centro_rollo + d * 0.006)
+    c.agregar(prisma(8, 0.021, 0.010, giro=22.5), 'v_ribete', 'mochila', me)
 
 
 def _trenza(c):
-    radios = [(0.027, 0.023), (0.026, 0.022), (0.025, 0.021), (0.023, 0.020), (0.021, 0.018), (0.019, 0.016)]
+    """Seis eslabones hexagonales alternando dos tonos, de la nuca a la cintura; lazo dorado y mechón."""
+    anchos = [9.0, 8.5, 8.5, 8.0, 7.0, 6.5]   # medio ancho de cada eslabón en el boceto (unidades)
     for k in range(6):
         a, b = Vector(TRENZA_JUNTAS[k]), Vector(TRENZA_JUNTAS[k + 1])
         mm, largo = segmento(a, b)
-        rx, ry = radios[k]
+        r = anchos[k] * ESCALA * 1.3
         tono = 'v_cabello' if k % 2 == 0 else 'v_cabello_luz'
-        c.agregar(elipsoide(rx, ry, largo * 0.62, 6, 4), tono, f'trenza_{k + 1}', mm)
+        # Eslabones gruesos que se tocan (en el boceto no hay huecos entre ellos)
+        c.agregar(elipsoide(r, r * 0.75, largo * 0.68, 6, 4), tono, f'trenza_{k + 1}', mm)
     fin = Vector(TRENZA_JUNTAS[6])
-    mm, _ = segmento(fin + Vector((0, 0.008, 0.012)), fin - Vector((0, 0.008, 0.012)))
-    c.agregar(prisma(6, 0.017, 0.014), 'v_ribete', 'trenza_6', mm)
+    me, _ = segmento(fin + Vector((0, 0.004, 0.012)), fin - Vector((0, 0.004, 0.012)))
+    c.agregar(prisma(6, 6.0 * ESCALA, 0.025), 'v_ribete', 'trenza_6', me)
     mechon = [tuple(fin + Vector(p)) for p in (
-        (-0.016, 0, -0.008), (0.016, 0, -0.008), (0, 0.014, -0.008), (0, -0.014, -0.008),
-        (-0.020, 0.004, -0.050), (0.018, -0.004, -0.052), (0.002, 0.012, -0.062), (0.0, -0.01, -0.058))]
+        (-0.022, 0, -0.012), (0.022, 0, -0.012), (0, 0.014, -0.012), (0, -0.014, -0.012),
+        (-0.024, 0.004, -0.070), (0.026, -0.004, -0.070), (0.004, 0.010, -0.092), (-0.008, -0.008, -0.085))]
     c.agregar(casco(mechon), 'v_cabello', 'trenza_6')
 
 
-def _brazalete(c):
-    x = -0.158
-    c.agregar(prisma(8, 0.033, 0.034, giro=22.5), 'v_ribete', 'brazalete', colocar((x, 0, 0.848)))
-    c.agregar(prisma(8, 0.034, 0.010, giro=22.5), 'v_oro_sombra', 'brazalete', colocar((x, 0, 0.828)))
-    gema = [(x - 0.031, 0, 0.848 + 0.019), (x - 0.031, 0, 0.848 - 0.019),
-            (x - 0.031, -0.014, 0.848), (x - 0.031, 0.014, 0.848), (x - 0.043, 0, 0.848)]
-    c.agregar(casco(gema), 'gema_pulso', 'brazalete', material=1)
-
-
 def construir_cuerpo(paleta):
-    c = Constructor(paleta, semilla=11, variacion=0.03)
-    # Cadera, cinturón y bolsa
-    c.agregar(caja_biselada(0.224, 0.155, 0.130, 0.020, conico=0.95), 'v_pantalon', 'cadera', colocar((0, 0, 0.815)))
-    c.agregar(caja_biselada(0.224, 0.164, 0.030, 0.008), 'v_cinturon', 'cadera', colocar((0, 0, 0.858)))
-    c.agregar(caja_biselada(0.036, 0.072, 0.076, 0.010), 'v_mochila', 'cadera', colocar((0.123, 0, 0.810)))
-    c.agregar(caja_biselada(0.040, 0.077, 0.022, 0.006), 'v_mochila_luz', 'cadera', colocar((0.125, 0, 0.846)))
-    # Torso y cuello
-    c.agregar(caja_biselada(0.200, 0.140, 0.380, 0.030, conico=1.12), 'v_camisa', 'torso', colocar((0, 0, 1.05)))
-    c.agregar(prisma(8, 0.040, 0.090, giro=22.5), 'v_piel_sombra', 'torso', colocar((0, 0.005, 1.270)))
-    c.agregar(prisma(8, 0.052, 0.030, radio_sup=0.046, giro=22.5), 'v_poncho_sombra', 'torso',
-              colocar((0, 0, 1.290)))
+    c = Constructor(paleta, semilla=11, variacion=0.025)
+    # Cadera, cinturón y bolsa (al costado izquierdo de Victoria, derecha del dibujo)
+    c.agregar(solido([F(73, 198), F(127, 198), F(126, 228), F(74, 228)], 0.078), 'v_pantalon', 'cadera')
+    c.agregar(solido([F(72, 204), F(128, 204), F(128, 214), F(72, 214)], 0.082), 'v_cinturon', 'cadera')
+    c.agregar(solido([F(124, 208), F(140, 208), F(139, 230), F(125, 230)], 0.034), 'v_mochila', 'cadera')
+    c.agregar(solido([F(124, 207), F(140, 207), F(140, 214), F(124, 214)], 0.036), 'v_mochila_luz', 'cadera')
+    # Camisa (bajo el poncho) y cuello
+    c.agregar(solido([F(76, 118), F(124, 118), F(128, 206), F(72, 206)], 0.074), 'v_camisa', 'torso')
+    _, zc0 = F(0, 112)
+    _, zc1 = F(0, 96)
+    c.agregar(prisma(8, 7.0 * ESCALA, zc1 - zc0, giro=22.5), 'v_piel_sombra', 'torso', colocar((0, 0.005, (zc0 + zc1) / 2)))
     _poncho(c)
-    for s, lado in ((1, 'izq'), (-1, 'der')):
-        _brazo(c, s, lado)
-        _pierna(c, s, lado)
+    for lado in ('izq', 'der'):
+        _brazo(c, lado)
+        _pierna(c, lado)
     _brazalete(c)
     _sombrero(c)
     _mochila(c)
@@ -269,90 +359,86 @@ def construir_cuerpo(paleta):
 # Cabeza con expresiones
 # ---------------------------------------------------------------------------
 
-def _anillo(z, fy, wf, w, sfy, sby, by, wb):
-    """8 puntos: frente plano, laterales delanteros y traseros, nuca."""
-    return [(-wf, fy, z), (wf, fy, z), (w, sfy, z), (w, sby, z), (wb, by, z), (-wb, by, z), (-w, sby, z), (-w, sfy, z)]
-
-
-def _marco_boca():
-    """Plano inclinado de la mandíbula donde vive la boca: devuelve (centro, eje_u, eje_v, normal)."""
-    j = Vector((0, -0.100, CABEZA_Z - 0.095))
-    k = Vector((0, CARA_Y, CABEZA_Z - 0.040))
-    ev = (k - j).normalized()
-    eu = Vector((1, 0, 0))
-    n = eu.cross(ev)
-    centro = j + ev * ((1.317 - j.z) / ev.z)
-    return centro, eu, ev, n
-
-
-BOCA_BASE = [  # (nombre, u, v) en metros sobre el plano de la boca
-    ('esq_d', -0.024, 0.0), ('sup_d', -0.012, 0.0024), ('sup_c', 0.0, 0.0028), ('sup_i', 0.012, 0.0024),
-    ('esq_i', 0.024, 0.0), ('inf_i', 0.012, -0.0024), ('inf_c', 0.0, -0.0030), ('inf_d', -0.012, -0.0024),
+BOCA_BASE = [  # (nombre, u, v) en metros sobre el plano de la cara, centrados en la boca del boceto
+    ('esq_d', -0.0246, 0.0006), ('sup_d', -0.012, 0.0010), ('sup_c', 0.0, 0.0011), ('sup_i', 0.012, 0.0010),
+    ('esq_i', 0.0246, 0.0006), ('inf_i', 0.012, -0.0040), ('inf_c', 0.0, -0.0075), ('inf_d', -0.012, -0.0040),
 ]
 
 
 def construir_cabeza(paleta):
     # Sin variación de color: los párpados deben fundirse con la piel cuando están en reposo
     h = Constructor(paleta, semilla=23, variacion=0.0)
-    z0 = CABEZA_Z
+    cx = 0.0
+    cz = sum(p[1] for p in CARA) / len(CARA)
     pts = []
-    pts += _anillo(z0 + 0.135, -0.060, 0.040, 0.070, -0.030, 0.040, 0.080, 0.040)
-    pts += _anillo(z0 + 0.060, CARA_Y, 0.070, 0.112, -0.070, 0.070, 0.115, 0.070)
-    pts += _anillo(z0 - 0.040, CARA_Y, 0.075, 0.112, -0.070, 0.070, 0.100, 0.065)
-    pts += _anillo(z0 - 0.095, -0.100, 0.045, 0.080, -0.060, 0.050, 0.070, 0.040)
-    pts += _anillo(z0 - 0.135, -0.085, 0.022, 0.030, -0.060, -0.030, -0.010, 0.020)
+    # La silueta de frente es la cara hexagonal del boceto; el frente es un plano donde van los rasgos
+    for ex, ez, y in ((0.86, 0.93, CARA_Y), (1.0, 1.0, -0.075), (1.0, 1.0, 0.02), (0.84, 0.9, 0.105)):
+        for x, z in CARA:
+            pts.append((cx + (x - cx) * ex, y, cz + (z - cz) * ez))
+    for i in range(8):  # cráneo: queda dentro de la copa del sombrero (radio 0,09 a z 1,51)
+        a = math.tau * i / 8
+        pts.append((math.cos(a) * 0.080, math.sin(a) * 0.072, 1.505))
 
-    def color_cabeza(c, _n):
-        lz = c.z - z0
-        if lz > 0.075 or c.y > 0.015:
-            return 'v_cabello'
-        if abs(c.x) > 0.09 and lz > -0.03 and c.y > -0.09:
+    def color_cabeza(c, n):
+        # Como en el boceto: la frente es piel; el pelo cubre la nuca y lo que queda bajo la copa
+        if c.y > -0.02 or (c.z > 1.49 and n.y > -0.5):
             return 'v_cabello'
         return 'v_piel'
 
     h.agregar(casco(pts), color_cabeza, 'cabeza')
+
+    # Orejas (68,66)-(72,64)-(72,80)-(68,78)
     for s in (1, -1):
-        oreja = [(0.108 * s, -0.012, 1.398), (0.108 * s, 0.016, 1.398), (0.108 * s, -0.010, 1.356),
-                 (0.108 * s, 0.012, 1.356), (0.120 * s, -0.006, 1.392), (0.120 * s, 0.012, 1.388),
-                 (0.118 * s, 0.002, 1.360)]
+        (x0, z0), (x1, z1) = F(72 if s < 0 else 128, 64), F(68 if s < 0 else 132, 80)
+        oreja = [(x0, -0.012, z0), (x0, 0.022, z0), (x0, -0.010, z1), (x0, 0.018, z1),
+                 (x1, -0.004, z0 - 0.006), (x1, 0.014, z0 - 0.006), (x1, 0.004, z1 + 0.004)]
         h.agregar(casco(oreja), 'v_piel_sombra', 'cabeza')
-        frente = [(0.025 * s, -0.124, 1.465), (0.108 * s, -0.113, 1.465), (0.114 * s, -0.104, 1.405),
-                  (0.078 * s, -0.123, 1.430)]
-        mechon = frente + [(p[0], p[1] + 0.020, p[2]) for p in frente]
-        h.agregar(casco(mechon), 'v_cabello', 'cabeza')
-    nariz = [(0, CARA_Y - 0.0005, 1.384), (0.010, CARA_Y - 0.0005, 1.354), (-0.010, CARA_Y - 0.0005, 1.354),
-             (0, -0.129, 1.357), (0.005, -0.1235, 1.352), (-0.005, -0.1235, 1.352)]
-    h.agregar(casco(nariz), 'v_piel', 'cabeza')
+    # Flequillo en las sienes (70,50)-(86,50)-(77,70)-(68,64) y su espejo
+    for mech in ([F(70, 50), F(86, 50), F(77, 70), F(68, 64)], [F(114, 50), F(130, 50), F(132, 64), F(123, 70)]):
+        frente = [(x, CARA_Y - 0.006, z) for x, z in mech]
+        h.agregar(casco(frente + [(x, CARA_Y + 0.03, z) for x, z in mech]), 'v_cabello', 'cabeza')
+    # Nariz (100,78)-(104,87)-(98,87)
+    _, zn0 = F(0, 78)
+    _, zn1 = F(0, 87)
+    xn = 3.2 * ESCALA
+    nariz = [(0, CARA_Y + 0.001, zn0), (xn, CARA_Y + 0.001, zn1), (-xn, CARA_Y + 0.001, zn1), (0, CARA_Y - 0.012, zn1 + 0.006)]
+    h.agregar(casco(nariz), 'v_piel_sombra', 'cabeza')
+    # Rubor de las mejillas
+    for s in (1, -1):
+        bx, bz = F(100 + 18 * s, 85)
+        h.agregar(prisma(8, 1.0, 0.001, giro=22.5), 'v_rubor', 'cabeza',
+                  colocar((bx, CARA_Y - 0.0006, bz), (90, 0, 0), (5.0 * ESCALA, 2.6 * ESCALA, 1)))
 
     # Ojos, brillos, párpados, pestañas y cejas (lado 'izq' = +X)
     for s, lado in ((1, 'izq'), (-1, 'der')):
-        cx = OJO_X * s
-        h.agregar(prisma(8, 1.0, 0.003, giro=22.5), 'v_ojos', 'cabeza',
-                  colocar((cx, CARA_Y - 0.0015, OJO_Z), (90, 0, 0), (OJO_RX, OJO_RZ, 1)), etiqueta=f'ojo_{lado}')
-        h.agregar(prisma(6, 0.0028, 0.0008), 'v_brillo_ojo', 'cabeza',
-                  colocar((cx + 0.003, CARA_Y - 0.00345, OJO_Z + 0.004), (90, 0, 0)), etiqueta=f'ojo_{lado}')
+        ox = OJO_X * s
+        h.agregar(prisma(10, 1.0, 0.003, giro=18), 'v_ojos', 'cabeza',
+                  colocar((ox, CARA_Y - 0.0015, OJO_Z), (90, 0, 0), (OJO_RX, OJO_RZ, 1)), etiqueta=f'ojo_{lado}')
+        h.agregar(prisma(8, 1.3 * ESCALA, 0.0008), 'v_brillo_ojo', 'cabeza',
+                  colocar((ox + 1.6 * ESCALA, CARA_Y - 0.00345, OJO_Z + 2.2 * ESCALA), (90, 0, 0)), etiqueta=f'ojo_{lado}')
+        ancho = OJO_RX * 2 + 0.008
         # Párpados sin bisel: en reposo no deben dibujar ningún borde sobre la piel
-        h.agregar(caja_biselada(0.026, 0.003, 0.013, 0.0001), 'v_piel', 'cabeza',
-                  colocar((cx, CARA_Y - 0.0055, OJO_Z + OJO_RZ + 0.0065)), etiqueta=f'parpado_sup_{lado}')
-        h.agregar(caja_biselada(0.027, 0.0035, 0.0024, 0.0001), 'v_ojos', 'cabeza',
-                  colocar((cx, CARA_Y - 0.0058, OJO_Z + OJO_RZ + 0.0012)), etiqueta=f'pestana_{lado}')
-        h.agregar(caja_biselada(0.024, 0.003, 0.008, 0.0001), 'v_piel', 'cabeza',
-                  colocar((cx, CARA_Y - 0.0055, OJO_Z - OJO_RZ - 0.004)), etiqueta=f'parpado_inf_{lado}')
-        h.agregar(caja_biselada(0.032, 0.006, 0.0065, 0.0015), 'v_cabello_sombra', 'cabeza',
-                  colocar((0.050 * s, CARA_Y - 0.003, CEJA_Z)), etiqueta=f'ceja_{lado}')
+        # El párpado superior es corto para no tapar la ceja; al parpadear, su borde baja 2 radios
+        h.agregar(caja_biselada(ancho, 0.003, OJO_RZ * 0.55, 0.0001), 'v_piel', 'cabeza',
+                  colocar((ox, CARA_Y - 0.0055, OJO_Z + OJO_RZ + OJO_RZ * 0.275)), etiqueta=f'parpado_sup_{lado}')
+        h.agregar(caja_biselada(ancho + 0.002, 0.0035, 0.0028, 0.0001), 'v_ojos', 'cabeza',
+                  colocar((ox, CARA_Y - 0.0058, OJO_Z + OJO_RZ + 0.0014)), etiqueta=f'pestana_{lado}')
+        h.agregar(caja_biselada(ancho, 0.003, OJO_RZ * 0.9, 0.0001), 'v_piel', 'cabeza',
+                  colocar((ox, CARA_Y - 0.0055, OJO_Z - OJO_RZ - OJO_RZ * 0.45)), etiqueta=f'parpado_inf_{lado}')
+        # Ceja del boceto: (81,65)-(94,62.5)-(94.5,65.5)-(81.5,68), con el extremo interior un poco más alto
+        # La ceja va por delante de los párpados para que ninguno la tape
+        h.agregar(caja_biselada(13.5 * ESCALA, 0.006, 3.0 * ESCALA, 0.0015), 'v_cabello_sombra', 'cabeza',
+                  colocar((F(112.4, 0)[0] * s, CARA_Y - 0.0095, CEJA_Z), (0, 8.4 * s, 0)), etiqueta=f'ceja_{lado}')
 
-    # Boca: abanico de 9 vértices sobre el plano de la mandíbula
-    centro, eu, ev, n = _marco_boca()
-
-    def pos(u, v):
-        return centro + eu * u + ev * v + n * 0.0016
-
-    verts = [pos(u, v) for _, u, v in BOCA_BASE] + [pos(0, 0)]
+    # Boca: abanico de 9 vértices en el plano de la cara
+    centro = Vector((0, CARA_Y - 0.0016, BOCA_Z))
+    eu, ev, n = Vector((1, 0, 0)), Vector((0, 0, 1)), Vector((0, -1, 0))
+    verts = [centro + eu * u + ev * v for _, u, v in BOCA_BASE] + [centro.copy()]
     caras = orientar_hacia(verts, [(8, i, (i + 1) % 8) for i in range(8)], n)
     indices = h.agregar((verts, caras), 'v_boca', 'cabeza', etiqueta='boca')
     for i, (nombre, u, v) in zip(indices, BOCA_BASE + [('centro', 0.0, 0.0)]):
         h.meta[i] = (nombre, u, v)
-    h.meta['marco_boca'] = (centro, eu, ev, n)
+    h.meta['marco_boca'] = (centro - n * 0.0, eu, ev, n * 0.0)
     return h
 
 
@@ -380,33 +466,35 @@ def formas_victoria(h):
         return [i for i in indices if (v[i].z < centro_z) == abajo]
 
     lados = ('izq', 'der')
-    # Párpados
-    for nombre, baja in (('parpadeo', 2 * OJO_RZ), ('parpado_sup', 0.009)):
+    # Párpados (proporcionales al tamaño del ojo)
+    for nombre, baja in (('parpadeo', 2 * OJO_RZ), ('parpado_sup', 0.75 * OJO_RZ)):
         f = nueva(nombre)
         for lado in lados:
             mover(f, mitad(h.etiquetas[f'parpado_sup_{lado}'], True), dz(-baja))
             mover(f, h.etiquetas[f'pestana_{lado}'], dz(-baja))
     f = nueva('parpado_inf')
     for lado in lados:
-        mover(f, mitad(h.etiquetas[f'parpado_inf_{lado}'], False), dz(0.008))
+        mover(f, mitad(h.etiquetas[f'parpado_inf_{lado}'], False), dz(0.65 * OJO_RZ))
 
     # Cejas: 'interior' = extremo cercano a la nariz
+    cx_ceja = abs(F(112.4, 0)[0])
+    medio = 13.5 * ESCALA / 2
+
     def ceja(alto, inclinacion):
         def fn(p, _i):
-            cx = 0.050 if p.x > 0 else -0.050
-            interior = (cx - p.x) / 0.016 if p.x > 0 else (p.x - cx) / 0.016
+            interior = (cx_ceja - p.x) / medio if p.x > 0 else (p.x + cx_ceja) / medio
             p.z += alto + inclinacion * interior
             return p
         return fn
 
-    for nombre, alto, incl in (('cejas_arriba', 0.012, 0.0), ('cejas_ceno', -0.003, -0.008),
-                               ('cejas_tristes', 0.003, 0.008)):
+    for nombre, alto, incl in (('cejas_arriba', 0.014, 0.0), ('cejas_ceno', -0.004, -0.010),
+                               ('cejas_tristes', 0.004, 0.010)):
         f = nueva(nombre)
         for lado in lados:
             mover(f, h.etiquetas[f'ceja_{lado}'], ceja(alto, incl))
 
     # Mirada
-    for nombre, d in (('mirada_izq', 0.0035), ('mirada_der', -0.0035)):
+    for nombre, d in (('mirada_izq', 0.005), ('mirada_der', -0.005)):
         f = nueva(nombre)
         for lado in lados:
             def fx(p, _i, d=d):
@@ -415,10 +503,10 @@ def formas_victoria(h):
             mover(f, h.etiquetas[f'ojo_{lado}'], fx)
 
     # Boca: cada forma transforma (u, v) de los 8 puntos del contorno
-    centro, eu, ev, n = h.meta['marco_boca']
+    centro, eu, ev, _ = h.meta['marco_boca']
 
     def pos(u, vv):
-        return centro + eu * u + ev * vv + n * 0.0016
+        return centro + eu * u + ev * vv
 
     def boca(nombre, fn):
         f = nueva(nombre)
@@ -428,11 +516,10 @@ def formas_victoria(h):
             if parte == 'centro':
                 continue
             nuevos[parte] = fn(parte, u, vv)
-        cu = 0.0
         cv = (nuevos['sup_c'][1] + nuevos['inf_c'][1]) / 2
         for i in h.etiquetas['boca']:
             parte = h.meta[i][0]
-            u, vv = (cu, cv) if parte == 'centro' else nuevos[parte]
+            u, vv = (0.0, cv) if parte == 'centro' else nuevos[parte]
             f[i] = pos(u, vv)
 
     def es_esq(p):
@@ -454,17 +541,17 @@ def formas_victoria(h):
             return (u * escala_lado, vv + inf)
         return fn
 
-    boca('boca_ancha', ajuste(1.33, 1.33))
-    boca('boca_sonrisa', ajuste(1.08, 1.04, esq_v=0.0065, sup=0.0025, sup_c=0.0005, inf=-0.0005, inf_c=-0.002))
-    boca('boca_triste', ajuste(0.95, 0.97, esq_v=-0.0055, sup=-0.001, sup_c=0.0008, inf=-0.0035, inf_c=-0.0015))
-    boca('vis_A', ajuste(0.85, 0.92, esq_v=-0.002, sup=0.002, sup_c=0.0025, inf=-0.010, inf_c=-0.013))
-    boca('vis_E', ajuste(1.15, 1.10, sup=0.001, sup_c=0.001, inf=-0.006, inf_c=-0.007))
-    boca('vis_I', ajuste(1.25, 1.18, esq_v=0.0015, sup=0.0005, sup_c=0.0005, inf=-0.003, inf_c=-0.0035))
-    boca('vis_O', ajuste(0.50, 0.60, sup=0.003, sup_c=0.0045, inf=-0.008, inf_c=-0.011))
-    boca('vis_U', ajuste(0.38, 0.45, sup=0.0015, sup_c=0.002, inf=-0.004, inf_c=-0.005))
-    boca('vis_MBP', lambda parte, u, vv: (u * (0.96 if es_esq(parte) else 1.0), vv * 0.25))
+    boca('boca_ancha', ajuste(1.30, 1.30, inf=0.001, inf_c=0.002))
+    boca('boca_sonrisa', ajuste(1.10, 1.05, esq_v=0.007, sup=0.0025, sup_c=0.0005, inf=0.0, inf_c=-0.001))
+    boca('boca_triste', ajuste(0.92, 0.95, esq_v=-0.006, sup=-0.0005, sup_c=0.001, inf=0.002, inf_c=0.004))
+    boca('vis_A', ajuste(0.85, 0.92, esq_v=-0.002, sup=0.002, sup_c=0.0025, inf=-0.008, inf_c=-0.010))
+    boca('vis_E', ajuste(1.15, 1.10, sup=0.001, sup_c=0.001, inf=-0.004, inf_c=-0.004))
+    boca('vis_I', ajuste(1.25, 1.18, esq_v=0.0015, sup=0.0005, sup_c=0.0005, inf=0.0, inf_c=0.0))
+    boca('vis_O', ajuste(0.50, 0.60, sup=0.003, sup_c=0.0045, inf=-0.006, inf_c=-0.007))
+    boca('vis_U', ajuste(0.38, 0.45, sup=0.0015, sup_c=0.002, inf=-0.001, inf_c=-0.001))
+    boca('vis_MBP', lambda parte, u, vv: (u * (0.96 if es_esq(parte) else 1.0), vv * 0.15))
 
-    assert list(formas.keys()) and set(formas.keys()) == set(FORMAS_CARA), sorted(formas.keys())
+    assert set(formas.keys()) == set(FORMAS_CARA), sorted(formas.keys())
     return {nombre: formas[nombre] for nombre in FORMAS_CARA}
 
 

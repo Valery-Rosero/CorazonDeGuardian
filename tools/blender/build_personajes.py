@@ -64,6 +64,11 @@ def renders_victoria(arm, cuerpo, cabeza):
     # pero sí recibe la sombra del sombrero.
     cabeza.visible_shadow = False
     r = lambda n: os.path.join(PREVIEWS, f'victoria_{n}.png')  # noqa: E731
+    # Mismo encuadre que el boceto (lienzo de 200 × 420 unidades): sirve para superponerlos
+    alto = 420 * character_builder.ESCALA
+    zc = (410 - 210) * character_builder.ESCALA
+    preview.disparar(cam, r('boceto_frente'), (0, -6, zc), (0, 0, zc), alto, (400, 840), 'VERTICAL')
+    preview.disparar(cam, r('boceto_espalda'), (0, 6, zc), (0, 0, zc), alto, (400, 840), 'VERTICAL')
     preview.disparar(cam, r('frente'), (0, -6, 0.85), (0, 0, 0.85), 1.95)
     preview.disparar(cam, r('espalda'), (0, 6, 0.85), (0, 0, 0.85), 1.95)
     preview.disparar(cam, r('lado'), (6, 0, 0.85), (0, 0, 0.85), 1.95)
