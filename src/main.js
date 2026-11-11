@@ -30,7 +30,7 @@ import { crearAyudasVisuales } from './debug/helpers.js';
 import { MateoNPC } from './player/mateo_npc.js';
 import { Dialogos } from './ui/dialogue_player.js';
 import { InterfazFinal } from './ui/endgame_ui.js';
-import { chispaEn, crearEstela, crearParticulasDeEmisor, crearRafagas, rafagaEn } from './fx/particle_presets.js';
+import { chispaEn, crearBrasas, crearEstela, crearParticulasDeEmisor, crearPolvoDerrumbe, crearRafagas, rafagaEn } from './fx/particle_presets.js';
 import { texturaPunto } from './fx/particles.js';
 import { Interactuables } from './interaction/interactables.js';
 import { Portales } from './interaction/portal.js';
@@ -185,7 +185,12 @@ async function iniciar() {
   const particulas = nivel.emisores.flatMap((em) => crearParticulasDeEmisor(em, textura, calidad.particulas));
   const rafagas = crearRafagas(textura);
   const estela = crearEstela(textura);
-  particulas.push(rafagas, estela);
+  // Brasas de la fase 3 y polvo del derrumbe: los mueve y enciende el juego
+  /** @type {import('./fx/particle_presets.js').FuenteParticulas} */
+  const fuenteBrasas = { pos: new THREE.Vector3(), activo: false };
+  /** @type {import('./fx/particle_presets.js').FuenteParticulas} */
+  const fuentePolvo = { pos: new THREE.Vector3(), activo: false };
+  particulas.push(rafagas, estela, crearBrasas(textura, calidad.particulas, fuenteBrasas), crearPolvoDerrumbe(textura, calidad.particulas, fuentePolvo));
   for (const p of particulas) escena.add(p.puntos);
 
   // ---------------- Interfaz
@@ -712,6 +717,10 @@ async function iniciar() {
       // La zona (luces, atmósfera, ambiente) sigue a Victoria esté donde esté (teletransportes de depuración incluidos)
       if (!transicion.activa) aplicarZona(zonaDe(jugador.posicion));
       enemigos.actualizar(dt, t, jugador.posicion, !muerta);
+      fuenteBrasas.activo = actoFinal.etapa === 'combate' && actoFinal.combate.actor.fase === 3;
+      fuenteBrasas.pos.copy(actoFinal.centro);
+      fuentePolvo.activo = actoFinal.etapa === 'escape';
+      fuentePolvo.pos.copy(jugador.posicion);
       if (actoFinal.actualizar(dt, t, cine.activo) === 'agotado') {
         ui.textosDerrota('El templo se derrumbó', 'Reintenta desde el inicio del escape.');
         morir();

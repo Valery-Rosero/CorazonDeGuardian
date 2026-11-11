@@ -221,7 +221,7 @@ def tiza(k, x, y, z, normal, escala=1.0, torcida=0.0):
         b = Vector((x + tx * u1 * escala + nx * 0.02, y + ty * u1 * escala + ny * 0.02, z + v1 * escala))
         d = b - a
         largo = d.length
-        k.agregar(caja_biselada(largo, 0.01, 0.045 * escala, 0.002), 'tiza', 'escenario',
+        k.agregar(caja_biselada(largo, 0.012, 0.075 * escala, 0.002), 'tiza', 'escenario',
                   colocar(((a + b) / 2), (0, -math.degrees(math.atan2(d.z, math.hypot(d.x, d.y))), _giro(d.x, d.y) if math.hypot(d.x, d.y) > 1e-4 else _giro(tx, ty))))
     t = torcida
     trazo(-0.5, 0 + t * 0.1, 0.4, 0 - t * 0.1)

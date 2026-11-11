@@ -158,3 +158,61 @@ export function rafagaEn(s, pos, cantidad, hex, fuerza = 4) {
       0.7 + R() * 0.7, 0.2 + R() * 0.25, 1, c[0], c[1], c[2]);
   });
 }
+
+/**
+ * Fuente de un sistema que el juego mueve y enciende (brasas de la fase 3, polvo del derrumbe).
+ * @typedef {{pos: THREE.Vector3, activo: boolean}} FuenteParticulas
+ */
+
+/** Mientras la fuente está apagada, las partículas que renacen quedan invisibles y lejos. */
+function apagada(s, i) {
+  s.colocar(i, 0, -1000, 0, 0, 0, 0, 0.2 + R() * 0.3, 0.01, 0, 0, 0, 0);
+}
+
+const BRASA = rgb('#FF6A2A');
+const BRASA_CLARA = rgb(PALETA.oro_brillante);
+
+/**
+ * Brasas de la fase 3 (sección 7.2, «Furia»): suben del suelo de la arena girando, naranjas y rojas.
+ * @param {THREE.Texture} tex @param {number} escala @param {FuenteParticulas} fuente  centro de la arena
+ */
+export function crearBrasas(tex, escala, fuente) {
+  return new SistemaParticulas({
+    capacidad: Math.round(160 * escala), textura: tex, aditivo: true, gravedad: -0.9, arrastre: 0.4, perfil: 'aparecer_desvanecer',
+    nacer: (s, i) => {
+      if (!fuente.activo) { apagada(s, i); return; }
+      const a = R() * Math.PI * 2;
+      const r = Math.sqrt(R()) * 13;
+      const c = R() < 0.3 ? BRASA_CLARA : BRASA;
+      s.colocar(i, fuente.pos.x + Math.cos(a) * r, fuente.pos.y + R() * 0.4, fuente.pos.z + Math.sin(a) * r,
+        0, 0.4 + R() * 0.9, 0, 2.2 + R() * 2.2, 0.2 + R() * 0.16, 1.0, c[0], c[1], c[2]);
+    },
+    moverExtra: (s, i, dt, t) => {
+      const k = i * 3;
+      const f = s.semilla[i];
+      s.vel[k] += Math.sin(t * 1.7 + f) * 0.8 * dt;
+      s.vel[k + 2] += Math.cos(t * 1.3 + f * 1.7) * 0.8 * dt;
+    },
+  });
+}
+
+const POLVO = rgb('#D8C08E');
+
+/**
+ * Polvo del derrumbe (escape): cae del techo alrededor de Victoria, con algún grano más grueso.
+ * @param {THREE.Texture} tex @param {number} escala @param {FuenteParticulas} fuente  Victoria
+ */
+export function crearPolvoDerrumbe(tex, escala, fuente) {
+  return new SistemaParticulas({
+    capacidad: Math.round(220 * escala), textura: tex, gravedad: 2.6, arrastre: 1.6, perfil: 'aparecer_desvanecer',
+    nacer: (s, i) => {
+      if (!fuente.activo) { apagada(s, i); return; }
+      const a = R() * Math.PI * 2;
+      const r = Math.sqrt(R()) * 9;
+      const grueso = R() < 0.12;
+      s.colocar(i, fuente.pos.x + Math.cos(a) * r, fuente.pos.y + 4 + R() * 4, fuente.pos.z + Math.sin(a) * r,
+        (R() - 0.5) * 0.3, -0.5 - R(), (R() - 0.5) * 0.3, 1.6 + R() * 1.4, grueso ? 0.22 : 0.09 + R() * 0.1, grueso ? 0.9 : 0.55,
+        POLVO[0] * (0.8 + R() * 0.2), POLVO[1] * (0.8 + R() * 0.2), POLVO[2] * (0.8 + R() * 0.2));
+    },
+  });
+}

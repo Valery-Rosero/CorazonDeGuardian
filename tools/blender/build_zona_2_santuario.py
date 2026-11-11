@@ -356,7 +356,7 @@ def ornamentar(k, rnd):
         for y in (-2.0, -7.5):
             ib.raiz(k, *L(lado * x, y + r.uniform(-0.6, 0.6))[:2], t, n, r.uniform(2.5, 3.6), r)
     ib.campamento(k, *L(-1.2, -4.6)[:2], 8)
-    ib.tiza(k, *L(VEST['x'], -7.2)[:2], 1.45, (-1.0, 0.0), escala=0.9)
+    ib.tiza(k, *L(VEST['x'], -7.2)[:2], 1.3, (-1.0, 0.0), escala=1.4)
     ib.duna(k, *L(1.2, -1.6)[:2], 0.9, 0.6, 0.18)
     mm, largo = segmento(Vector(L(0.5, -4.2, t)), Vector(L(0.1, -5.0, 0.03)))
     k.agregar(prisma(8, 0.35, largo, radio_sup=0.7), 'oro_brillante', 'escenario', mm, material=MAT['rayo'])
@@ -416,8 +416,8 @@ def ornamentar(k, rnd):
         for lado in (-1, 1):
             pos = ib.brasero(k, *L(lado * (x - 0.35), y)[:2], z_ante(y) + ORIGEN[2], 0.9)
             vacio(f'emit_fuego_ante_{j}_{"e" if lado > 0 else "o"}', pos, props={'tipo': 'fuego'})
-    ib.tiza(k, *L(-x, -58.6)[:2], z_ante(-58.6) + 1.45, (1.0, 0.0), escala=0.85, torcida=0.4)
-    ib.tiza(k, *L(x, -66.0)[:2], z_ante(-66.0) + 1.1, (-1.0, 0.0), escala=0.8, torcida=1.2)
+    ib.tiza(k, *L(-x, -58.6)[:2], z_ante(-58.6) + 1.45, (1.0, 0.0), escala=1.3, torcida=0.4)
+    ib.tiza(k, *L(x, -66.0)[:2], z_ante(-66.0) + 1.1, (-1.0, 0.0), escala=1.25, torcida=1.2)
 
 
 def objetos_de_juego(m, rnd):
