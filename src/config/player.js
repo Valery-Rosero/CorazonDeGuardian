@@ -16,6 +16,8 @@ export const PLAYER = Object.freeze({
   masa: 60,                    // kg
   amortiguacion: 0.3,          // linearDamping
   giro: 12,                    // rapidez con la que Victoria gira hacia donde se mueve
+  giro_apuntar: 28,            // apuntando, gira casi al instante hacia donde mira la cámara
+  factor_apuntar: 0.6,         // apuntando camina al 60 % de la velocidad normal
 });
 
 /** Vida y daño (sección 5.4). */

@@ -8,10 +8,12 @@
 | Correr | Shift |
 | Saltar | Espacio |
 | Esquivar | C |
-| Pulso solar | Clic izquierdo |
+| Apuntar | Mantener clic derecho: la cámara va sobre el hombro, Victoria mira hacia donde apuntas y camina de lado sin dejar de apuntar; la mira se pone roja sobre un enemigo |
+| Pulso solar | Clic izquierdo (apuntando va justo a la mira; sin apuntar, Victoria se gira y dispara) |
 | Escudo arcano | Q |
 | Manipulación ancestral, leer páginas, usar pilares | E |
-| Mirar | Ratón (la vista queda capturada al hacer clic en el juego) |
+| Mirar | Ratón (la vista queda capturada al hacer clic en el juego). La cámara se queda donde la dejas |
+| Cámara detrás de Victoria | R o botón central del ratón |
 | Pausa | P o Esc |
 | Modo foto | F (o el botón de la pausa); F o Esc para volver |
 | Saltar una cinemática | Mantener Espacio 1 segundo |
@@ -20,7 +22,7 @@ Los poderes se desbloquean en orden. El Pulso solar y la Manipulación se obtien
 
 ## Opciones (menú principal)
 
-Volumen general, de música, de efectos y de voces; sensibilidad del ratón; sacudida de cámara; subtítulos; calidad gráfica (automática, baja, media o alta). La calidad se aplica al volver a cargar la página.
+Volumen general, de música, de efectos y de voces; sensibilidad del ratón; sacudida de cámara; subtítulos; que la cámara vuelva sola detrás de Victoria (apagado por defecto); calidad gráfica (automática, baja, media o alta). La calidad se aplica al volver a cargar la página.
 
 ## Depuración (en `npm run dev` o con `?debug` en la dirección)
 

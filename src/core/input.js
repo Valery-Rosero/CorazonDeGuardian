@@ -23,14 +23,26 @@ export class Entrada {
     });
     window.addEventListener('keyup', (e) => this.abajo.delete(e.code));
     window.addEventListener('blur', () => this.abajo.clear());
+    // Botones del ratón: el izquierdo dispara; el central y el derecho se leen como teclas
+    // ('Mouse1' recentra la cámara, 'Mouse2' apunta) para poder ponerlos en el mapa de controles
     window.addEventListener('mousedown', (e) => {
       if (e.button === 0) {
         this.clic = true;
         this.clicPulsado = true;
+      } else {
+        const codigo = `Mouse${e.button}`;
+        if (!this.abajo.has(codigo)) this.pulsadas.add(codigo);
+        this.abajo.add(codigo);
+        if (e.button === 1) e.preventDefault();   // sin el desplazamiento automático del navegador
       }
     });
     window.addEventListener('mouseup', (e) => {
       if (e.button === 0) this.clic = false;
+      else this.abajo.delete(`Mouse${e.button}`);
+    });
+    // Sin menú contextual: el clic derecho apunta
+    window.addEventListener('contextmenu', (e) => {
+      if (/** @type {HTMLElement} */ (e.target)?.tagName === 'CANVAS' || document.pointerLockElement) e.preventDefault();
     });
   }
 

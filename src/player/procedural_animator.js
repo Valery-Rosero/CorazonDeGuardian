@@ -73,6 +73,12 @@ const GESTOS = {
   manipular: { duracion: 0.6, huesos: {
     brazo_sup_der: [-1.25, 0, 0.08], brazo_inf_der: [-0.25, 0, 0], mano_der: [-0.35, 0, 0], cabeza: [0.12, 0, 0],
     poncho_delante: [-0.3, 0, 0] } },
+  // Apuntar (clic derecho mantenido): el brazo del brazalete extendido hacia el blanco, el otro lo
+  // acompaña, el torso girado. El brazo y la cabeza siguen la inclinación de la cámara (inclinarApuntado)
+  apuntar: { duracion: 1e6, huesos: {
+    brazo_sup_der: [-1.5, 0, -0.08], brazo_inf_der: [-0.12, 0, 0], mano_der: [-0.15, 0, 0],
+    brazo_sup_izq: [-0.9, 0, -0.45], brazo_inf_izq: [-1.1, 0, 0], torso: [0, -0.28, 0], cabeza: [0, 0.22, 0],
+    poncho_delante: [-0.35, 0, 0] } },
   chisporroteo: { duracion: 0.35, huesos: {
     brazo_sup_der: [-0.9, 0, 0.1], brazo_inf_der: [-0.6, 0, 0], mano_der: [0.3, 0, 0], poncho_delante: [-0.2, 0, 0] } },
   // Mateo (tablero «Mateo Solano»): liberado, de rodillas con los hombros caídos; y en el final se acomoda las gafas
@@ -100,6 +106,19 @@ const GESTOS = {
     pierna_sup_der: [-0.95, 0, 0], pierna_inf_der: [1.4, 0, 0], brazo_sup_izq: [-0.9, 0, 0.25], brazo_sup_der: [-0.9, 0, -0.25],
     brazo_inf_izq: [-1.0, 0, 0], brazo_inf_der: [-1.0, 0, 0] } },
 };
+
+/**
+ * Inclinación vertical del apuntado: el brazo y la cabeza siguen a la cámara (radianes; arriba > 0).
+ * Cambia los valores del gesto en su sitio: los pares del animador apuntan a estos mismos arreglos.
+ * @param {number} inclinacion
+ */
+export function inclinarApuntado(inclinacion) {
+  const h = GESTOS.apuntar.huesos;
+  const i = Math.max(-0.9, Math.min(0.9, inclinacion));
+  h.brazo_sup_der[0] = -1.5 - i;
+  h.brazo_sup_izq[0] = -0.9 - i * 0.8;
+  h.cabeza[0] = -i * 0.6;
+}
 
 /**
  * Animación procedural de Victoria por capas: locomoción, aire, respiración y movimiento secundario.

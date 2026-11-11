@@ -115,6 +115,13 @@ export class InterfazFinal {
       guardarOpciones(opciones);
       acciones.opciones(opciones);
     });
+    const rec = /** @type {HTMLInputElement} */ ($('opcion-recentrar'));
+    rec.checked = opciones.recentrar;
+    rec.addEventListener('change', () => {
+      opciones.recentrar = rec.checked;
+      guardarOpciones(opciones);
+      acciones.opciones(opciones);
+    });
     const cal = /** @type {HTMLSelectElement} */ ($('opcion-calidad'));
     cal.value = opciones.calidad;
     cal.addEventListener('change', () => {
@@ -140,13 +147,13 @@ const CLAVE = 'templo-del-sol-opciones';
 /**
  * Opciones del jugador (sección 10). La calidad se aplica al recargar (el renderizador se crea al empezar).
  * @typedef {{volumen: number, musica: number, efectos: number, voces: number, sensibilidad: number, sacudida: number,
- *            subtitulos: boolean, calidad: string}} Opciones
+ *            subtitulos: boolean, recentrar: boolean, calidad: string}} Opciones
  */
 
 /** @returns {Opciones} */
 export function cargarOpciones() {
   /** @type {Opciones} */
-  const base = { volumen: 1, musica: 0.7, efectos: 0.9, voces: 1, sensibilidad: 1, sacudida: 1, subtitulos: true, calidad: 'auto' };
+  const base = { volumen: 1, musica: 0.7, efectos: 0.9, voces: 1, sensibilidad: 1, sacudida: 1, subtitulos: true, recentrar: false, calidad: 'auto' };
   try {
     const g = JSON.parse(localStorage.getItem(CLAVE) ?? '{}');
     return { ...base, ...g };

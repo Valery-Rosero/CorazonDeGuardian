@@ -41,7 +41,7 @@ import { PoolPulsos } from './player/abilities/solar_pulse.js';
 import { AnimadorCara } from './player/face_animator.js';
 import { Vida } from './player/health.js';
 import { ControladorJugador } from './player/player_controller.js';
-import { AnimadorProcedural } from './player/procedural_animator.js';
+import { AnimadorProcedural, inclinarApuntado } from './player/procedural_animator.js';
 import { PanelCartografa } from './ui/cartographer_panel.js';
 import { PanelDiario } from './ui/diary_panel.js';
 import { Hud } from './ui/hud.js';
@@ -334,8 +334,10 @@ async function iniciar() {
     rayoMira.intersectObjects(objetivosMira, true, impactosMira);
     if (impactosMira.length) mira.copy(impactosMira[0].point);
     else mira.copy(rayoMira.ray.origin).addScaledVector(rayoMira.ray.direction, PULSO.alcance);
-    // Sale de la mano derecha (la del brazalete), a la altura del pecho
-    derecha.set(Math.cos(jugador.orientacion), 0, -Math.sin(jugador.orientacion));
+    // Sale de la mano derecha (la del brazalete), a la altura del pecho, del lado hacia el que apunta
+    // la cámara: Victoria se gira hacia allí al disparar, aunque esté mirando a otro lado
+    const rumboTiro = rumboCamara();
+    derecha.set(Math.cos(rumboTiro), 0, -Math.sin(rumboTiro));
     origenPulso.copy(jugador.posicion).addScaledVector(derecha, -0.3);
     origenPulso.y += 1.3;
     camara.getWorldDirection(dirCamara);
@@ -345,8 +347,14 @@ async function iniciar() {
     const asistido = actoFinal.asistencia(origenPulso, dirPulso) ?? enemigos.asistencia(origenPulso, dirPulso, PULSO.asistencia, PULSO.alcance);
     if (asistido) dirPulso.copy(asistido);
     pulsos.disparar(origenPulso, dirPulso);
-    animador.gesto('disparo');
-    jugador.mirarHacia(rumboCamara(), 0.45);
+    if (jugador.apuntando) {
+      // Apuntando ya está en pose y alineada con la cámara: solo un pequeño retroceso
+      rig.sacudida.agregar(0.05);
+    } else {
+      // Disparo sin apuntar: Victoria se gira hacia la mira y dispara
+      animador.gesto('disparo');
+      jugador.mirarHacia(rumboCamara(), 0.45);
+    }
     audio.efecto('pulso_disparo', 0.8);
     rafagaEn(rafagas, origenPulso, 8, PALETA.oro_brillante, 2);
     brilloGema = 1;
@@ -574,8 +582,47 @@ async function iniciar() {
   luces.registrar(actoFinal.combate.actor.luz, 3, actoFinal.combate.actor.raiz);
 
   /** @param {number} dt */
+  /** Sensibilidad del ratón elegida en Opciones (al apuntar se multiplica por CAMERA_LIMITES.sensibilidad_apuntar). */
+  let sensibilidad = 1;
+  /** @type {object | null} el gesto de apuntar en curso */
+  let gestoApuntar = null;
+  let enBlanco = false;
+  const dirMira = new THREE.Vector3();
   const usarPoderes = (dt) => {
     poderes.actualizar(dt);
+    // Apuntar (clic derecho mantenido, con el Pulso ya desbloqueado): cámara sobre el hombro, Victoria
+    // alineada con la cámara, pose de apuntar, ratón más preciso y la mira roja sobre un enemigo
+    const apuntaba = jugador.apuntando;
+    jugador.apuntando = entrada.mantiene('apuntar') && poderes.tiene('pulso') && !muerta && !jugador.bloqueado && !cine.activo;
+    if (jugador.apuntando !== apuntaba) {
+      document.body.classList.toggle('apuntando', jugador.apuntando);
+      rig.controles.pointerSpeed = sensibilidad * (jugador.apuntando ? CAMERA_LIMITES.sensibilidad_apuntar : 1);
+      if (jugador.apuntando) {
+        animador.gesto('apuntar');
+        gestoApuntar = animador.gestoActual;
+      } else if (animador.gestoActual === gestoApuntar) {
+        animador.gestoActual = null;
+      }
+    }
+    if (jugador.apuntando) {
+      // Si otro gesto interrumpió la pose (esquiva, escudo), vuelve en cuanto termina
+      if (!animador.gestoActual) {
+        animador.gesto('apuntar');
+        gestoApuntar = animador.gestoActual;
+      }
+      camara.getWorldDirection(dirMira);
+      inclinarApuntado(Math.asin(Math.max(-1, Math.min(1, dirMira.y))));
+      const blanco = (actoFinal.asistencia(camara.position, dirMira) ?? enemigos.asistencia(camara.position, dirMira, PULSO.asistencia, PULSO.alcance + 8)) != null;
+      if (blanco !== enBlanco) {
+        enBlanco = blanco;
+        document.body.classList.toggle('en-blanco', blanco);
+      }
+    } else if (enBlanco) {
+      enBlanco = false;
+      document.body.classList.remove('en-blanco');
+    }
+    // R o botón central: la cámara vuelve detrás de Victoria
+    if (entrada.pulso('recentrar') && !cine.activo) rig.recentrar(jugador.orientacion);
     if (muerta || jugador.bloqueado) return;
     if (entrada.clicPulsado && poderes.usar('pulso')) dispararPulso();
     if (entrada.pulso('escudo')) {
@@ -1028,7 +1075,9 @@ async function iniciar() {
       audio.ponerVolumen('ambiente', o.efectos * 0.9);
       audio.ponerVolumen('voces', o.voces);
       document.body.classList.toggle('sin-subtitulos', !o.subtitulos);
-      rig.controles.pointerSpeed = o.sensibilidad;
+      rig.recentrarAuto = o.recentrar;
+      sensibilidad = o.sensibilidad;
+      rig.controles.pointerSpeed = sensibilidad * (jugador.apuntando ? CAMERA_LIMITES.sensibilidad_apuntar : 1);
       rig.sacudida.intensidad = o.sacudida;
     },
   });

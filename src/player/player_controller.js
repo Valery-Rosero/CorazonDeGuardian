@@ -53,6 +53,8 @@ export class ControladorJugador {
     this.cuerpoSuelo = null;
     /** Mientras está muerta o en una cinemática, el jugador no controla a Victoria. */
     this.bloqueado = false;
+    /** Mantiene el clic derecho: la cámara va sobre el hombro y Victoria mira hacia donde apunta. */
+    this.apuntando = false;
     /** Posición de los pies (para la cámara, el HUD y los triggers). */
     this.posicion = new THREE.Vector3();
 
@@ -157,8 +159,9 @@ export class ControladorJugador {
     const hayEntrada = this._dir.lengthSq() > 1e-4;
     if (hayEntrada) this._dir.normalize();
 
-    this.corriendo = hayEntrada && e.mantiene('correr');
-    const vmax = this.corriendo ? cfg.velocidad_correr : cfg.velocidad_caminar;
+    // Apuntando (clic derecho) no corre y camina más despacio, de lado o hacia atrás sin dejar de apuntar
+    this.corriendo = hayEntrada && e.mantiene('correr') && !this.apuntando;
+    const vmax = this.apuntando ? cfg.velocidad_caminar * cfg.factor_apuntar : this.corriendo ? cfg.velocidad_correr : cfg.velocidad_caminar;
     const acel = this.enSuelo ? (hayEntrada ? cfg.aceleracion : cfg.frenado) : cfg.aceleracion_aire;
     if (this._esquivaT > 0) {
       this._esquivaT -= dt;
@@ -178,8 +181,11 @@ export class ControladorJugador {
     }
     if (!this.enSuelo && b.velocity.y < 0) b.velocity.y -= GRAVEDAD * (cfg.gravedad_extra_caida - 1) * dt;
 
-    // Orientación del modelo: hacia donde apunta (si está disparando) o hacia donde se mueve
-    if (this._tForzado > 0) {
+    // Orientación del modelo: apuntando, siempre hacia donde mira la cámara (como en los juegos de
+    // acción en tercera persona); si no, hacia donde dispara o hacia donde se mueve
+    if (this.apuntando && this._esquivaT <= 0) {
+      this.orientacion += anguloMasCorto(this.orientacion, Math.atan2(this._adelante.x, this._adelante.z)) * (1 - Math.exp(-dt * cfg.giro_apuntar));
+    } else if (this._tForzado > 0) {
       this._tForzado -= dt;
       this.orientacion += anguloMasCorto(this.orientacion, this._rumboForzado) * (1 - Math.exp(-dt * cfg.giro * 2));
     } else if (this._esquivaT > 0) {
