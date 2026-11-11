@@ -46,6 +46,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 | [CONTROLES.md](CONTROLES.md) | Teclas de juego y de depuración |
 | [EJECUTAR_Y_PUBLICAR.md](EJECUTAR_Y_PUBLICAR.md) | Compilar, publicar y probar en otra computadora |
 | [GUION_DIALOGOS.md](GUION_DIALOGOS.md) | Todas las líneas de diálogo, con su código y emoción |
+| [PRESENTACION.md](PRESENTACION.md) | Material para las diapositivas: números, propuesta de diapositivas, cómo funciona cada parte y datos curiosos |
 | [GUION_EPILOGO.md](GUION_EPILOGO.md) | Guion gráfico del epílogo «La marcha» |
 | [GUION_VIDEO.md](GUION_VIDEO.md) | Guion del video corto de la entrega |
 | [FICHA_CONCEPTO.md](FICHA_CONCEPTO.md) | Borrador de la ficha del concepto (una página) |

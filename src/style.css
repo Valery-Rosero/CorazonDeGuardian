@@ -465,7 +465,7 @@ body.en-foto #hud, body.en-foto #cartografa, body.en-foto #poderes, body.en-foto
 body.en-foto #pausa, body.en-foto .lil-gui, body.en-foto #depuracion-info, body.en-foto #depuracion-fps { visibility: hidden !important; }
 
 /* ---------- Modo demostración (sección 1.4) ---------- */
-#demo { position: fixed; top: 12px; right: 12px; bottom: 12px; width: min(340px, calc(100vw - 24px)); z-index: 40; overflow-y: auto;
+#demo { position: fixed; top: 12px; right: 12px; bottom: 12px; width: min(400px, calc(100vw - 24px)); z-index: 40; overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 8px;
   background: rgba(18, 22, 20, 0.88); color: #e8ede9; font: 14px/1.45 Georgia, serif; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); }
 #demo.oculto { display: none; }
@@ -482,6 +482,12 @@ body.en-foto #pausa, body.en-foto .lil-gui, body.en-foto #depuracion-info, body.
 .demo-lista button.activo { background: rgba(255, 212, 94, 0.22); border-color: #ffd45e; }
 .demo-ficha { padding: 10px 12px; border-left: 3px solid #ffd45e; background: rgba(255, 255, 255, 0.05); }
 .demo-mira { color: #cfe3d6; }
+.demo-idea { font-style: italic; color: #f0e7d6; }
+.demo-puntos { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 8px; }
+.demo-puntos li { padding-left: 10px; border-left: 2px solid rgba(255, 212, 94, 0.35); }
+.demo-puntos li p { margin: 0 0 2px; }
+.demo-metodo { font-size: 12px; color: #b9c9be; }
+.demo-metodo code { font: 600 11.5px monospace; color: #ffd45e; background: rgba(0, 0, 0, 0.3); padding: 1px 4px; border-radius: 3px; }
 .demo-controles { display: grid; gap: 6px; }
 .demo-controles label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
 .demo-controles button { cursor: pointer; padding: 7px 10px; border-radius: 5px; border: 1px solid #8a6b3a; background: transparent; color: #f0e7d6; font: inherit; }
