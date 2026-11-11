@@ -92,14 +92,15 @@ export class InterfazFinal {
   }
 
   /**
-   * Menú principal: Jugar y Opciones (volumen, sensibilidad, sacudida; se guardan en localStorage).
-   * @param {{jugar: () => void, opciones: (o: {volumen: number, sensibilidad: number, sacudida: number}) => void}} acciones
+   * Menú principal: Jugar, Opciones (volúmenes, ratón, sacudida, subtítulos y calidad; se guardan en
+   * localStorage) y Demostración técnica.
+   * @param {{jugar: () => void, opciones: (o: Opciones) => void}} acciones
    */
   menu(acciones) {
     const opciones = cargarOpciones();
-    const entradas = /** @type {const} */ ([['volumen', 'opcion-volumen'], ['sensibilidad', 'opcion-sensibilidad'], ['sacudida', 'opcion-sacudida']]);
-    for (const [clave, id] of entradas) {
-      const input = /** @type {HTMLInputElement} */ ($(id));
+    const deslizadores = /** @type {const} */ (['volumen', 'musica', 'efectos', 'voces', 'sensibilidad', 'sacudida']);
+    for (const clave of deslizadores) {
+      const input = /** @type {HTMLInputElement} */ ($(`opcion-${clave}`));
       input.value = String(opciones[clave]);
       input.addEventListener('input', () => {
         opciones[clave] = Number(input.value);
@@ -107,6 +108,20 @@ export class InterfazFinal {
         acciones.opciones(opciones);
       });
     }
+    const subt = /** @type {HTMLInputElement} */ ($('opcion-subtitulos'));
+    subt.checked = opciones.subtitulos;
+    subt.addEventListener('change', () => {
+      opciones.subtitulos = subt.checked;
+      guardarOpciones(opciones);
+      acciones.opciones(opciones);
+    });
+    const cal = /** @type {HTMLSelectElement} */ ($('opcion-calidad'));
+    cal.value = opciones.calidad;
+    cal.addEventListener('change', () => {
+      opciones.calidad = cal.value;
+      guardarOpciones(opciones);
+      $('opcion-calidad-nota').textContent = 'Se aplica al volver a cargar la página.';
+    });
     acciones.opciones(opciones);
     $('boton-jugar').addEventListener('click', acciones.jugar);
     $('boton-opciones').addEventListener('click', () => {
@@ -122,9 +137,16 @@ export class InterfazFinal {
 
 const CLAVE = 'templo-del-sol-opciones';
 
-/** @returns {{volumen: number, sensibilidad: number, sacudida: number}} */
+/**
+ * Opciones del jugador (sección 10). La calidad se aplica al recargar (el renderizador se crea al empezar).
+ * @typedef {{volumen: number, musica: number, efectos: number, voces: number, sensibilidad: number, sacudida: number,
+ *            subtitulos: boolean, calidad: string}} Opciones
+ */
+
+/** @returns {Opciones} */
 export function cargarOpciones() {
-  const base = { volumen: 1, sensibilidad: 1, sacudida: 1 };
+  /** @type {Opciones} */
+  const base = { volumen: 1, musica: 0.7, efectos: 0.9, voces: 1, sensibilidad: 1, sacudida: 1, subtitulos: true, calidad: 'auto' };
   try {
     const g = JSON.parse(localStorage.getItem(CLAVE) ?? '{}');
     return { ...base, ...g };
@@ -133,7 +155,7 @@ export function cargarOpciones() {
   }
 }
 
-/** @param {{volumen: number, sensibilidad: number, sacudida: number}} o */
+/** @param {Opciones} o */
 function guardarOpciones(o) {
   try {
     localStorage.setItem(CLAVE, JSON.stringify(o));

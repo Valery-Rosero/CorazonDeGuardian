@@ -21,7 +21,10 @@ export function detectarCalidad(gl) {
 export function crearRenderer(lienzo, calidadForzada) {
   const prueba = lienzo.getContext('webgl2', { powerPreference: 'high-performance' });
   if (!prueba) throw new Error('Este navegador no tiene WebGL 2. Usa Chrome o Edge con la aceleración por hardware activa.');
-  const nombreCalidad = calidadForzada && QUALITY[calidadForzada] ? calidadForzada : detectarCalidad(prueba);
+  let guardada = null;
+  try { guardada = JSON.parse(localStorage.getItem('templo-del-sol-opciones') ?? '{}').calidad ?? null; } catch { /* sin almacenamiento */ }
+  const pedida = calidadForzada ?? guardada;
+  const nombreCalidad = pedida && QUALITY[pedida] ? pedida : detectarCalidad(prueba);
   const calidad = QUALITY[nombreCalidad];
 
   const renderer = new THREE.WebGLRenderer({ canvas: lienzo, context: prueba, antialias: calidad.antialias });

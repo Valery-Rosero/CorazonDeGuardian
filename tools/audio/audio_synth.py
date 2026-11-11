@@ -682,6 +682,8 @@ EFECTOS_DIA5 = {
 VOCES_DIA5 = {f'voz/{c}': (lambda c=c: murmullo(LINEAS[c][1], LINEAS[c][2], LINEAS[c][0], LINEAS[c][3])) for c in LINEAS}
 
 
+import music_synth  # noqa: E402  (la música: su propio azar, no cambia nada de lo anterior)
+
 # Día 6: la voz que se oye detrás de la puerta de los espejos (la gema susurra, sin subtítulo)
 VOCES_DIA6 = {'voz/gem_susurro_puerta': lambda: murmullo('Vi… to… ri… a…', 3.0, 'gema', True)}
 
@@ -703,6 +705,11 @@ def main():
     os.makedirs(os.path.join(SALIDA, 'voz'), exist_ok=True)
     for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, {**EFECTOS_DIA5, **VOCES_DIA5}), ({}, VOCES_DIA6)):
         generar(bucles, efectos, ffmpeg)
+    # Música: los bucles en .wav (un .mp3 añade silencio al empezar y el bucle se oiría cortado)
+    for nombre, fn in music_synth.PIEZAS.items():
+        ruta = os.path.join(SALIDA, f'{nombre}.wav')
+        guardar_wav(ruta, fn(), music_synth.SR)
+        print(f'[audio] música {nombre}.wav ({os.path.getsize(ruta) / 1024:.0f} KB)')
 
 
 def generar(bucles, efectos, ffmpeg):

@@ -6,6 +6,12 @@ import { LINEAS } from './dialogues.js';
  * Los bucles van en .wav (sin silencio al repetir); los efectos cortos, en .mp3.
  */
 export const SONIDOS = Object.freeze({
+  // Música (tools/audio/music_synth.py): bucles .wav y el tema completo
+  musica_selva: '/sounds/musica_selva.wav',
+  musica_santuario: '/sounds/musica_santuario.wav',
+  musica_jefe: '/sounds/musica_jefe.wav',
+  musica_escape: '/sounds/musica_escape.wav',
+  musica_tema: '/sounds/musica_tema.wav',
   cascada: '/sounds/cascada.wav',
   antorcha: '/sounds/antorcha.wav',
   ambiente_selva: '/sounds/ambiente_selva.wav',
@@ -64,6 +70,7 @@ export const VOLUMEN = Object.freeze({
   musica: 0.7,
   efectos: 0.9,
   ambiente: 0.8,
+  voces: 1.0,
 });
 
 /** Audio posicional (requisito 3). Con el modelo lineal el volumen llega a 0 en 'maximo'. */

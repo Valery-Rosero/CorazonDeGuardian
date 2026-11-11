@@ -73,8 +73,21 @@
       </div>
       <div class="opciones oculto" id="opciones">
         <label>Volumen general <input type="range" id="opcion-volumen" min="0" max="1" step="0.05" value="1"></label>
+        <label>Música <input type="range" id="opcion-musica" min="0" max="1" step="0.05" value="0.7"></label>
+        <label>Efectos <input type="range" id="opcion-efectos" min="0" max="1" step="0.05" value="0.9"></label>
+        <label>Voces <input type="range" id="opcion-voces" min="0" max="1" step="0.05" value="1"></label>
         <label>Sensibilidad del ratón <input type="range" id="opcion-sensibilidad" min="0.3" max="2" step="0.05" value="1"></label>
         <label>Sacudida de cámara <input type="range" id="opcion-sacudida" min="0" max="1" step="0.05" value="1"></label>
+        <label class="casilla">Subtítulos <input type="checkbox" id="opcion-subtitulos" checked></label>
+        <label>Calidad gráfica
+          <select id="opcion-calidad">
+            <option value="auto">Automática (según la tarjeta gráfica)</option>
+            <option value="baja">Baja</option>
+            <option value="media">Media</option>
+            <option value="alta">Alta</option>
+          </select>
+        </label>
+        <p class="nota-opcion" id="opcion-calidad-nota"></p>
         <button type="button" class="boton" id="boton-opciones-volver">Volver</button>
       </div>
       <p class="controles">WASD moverse · Shift correr · Espacio saltar · C esquivar · Clic Pulso · Q Escudo · E Manipular · Esc pausa</p>

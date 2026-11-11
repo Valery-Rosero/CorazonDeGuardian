@@ -50,6 +50,8 @@ import { Puente } from './world/bridge.js';
 import { Checkpoints } from './world/checkpoints.js';
 import { crearAmbienteSelva, crearLucesNivel } from './world/environment.js';
 import { ResolucionDinamica } from './core/dynamic_resolution.js';
+import { Musica } from './core/music.js';
+import { crearPosproceso } from './fx/postprocess.js';
 import { combinarNiveles, construirNivel } from './world/level_loader.js';
 import { aplicarMaterialesPersonaje, crearRampaToon } from './world/materials.js';
 import { Santuario } from './world/sanctuary.js';
@@ -92,9 +94,12 @@ async function iniciar() {
   const camara = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 600);
   camara.rotation.order = 'YXZ';
   ajustarAlRedimensionar(renderer, camara);
+  // Posprocesado según la calidad: bloom (media y alta) y profundidad de campo en cinemáticas (alta)
+  const posproceso = crearPosproceso(renderer, escena, camara, calidad);
+  window.addEventListener('resize', () => posproceso.tamano());
   // Resolución dinámica: si no llega a ~55 FPS dibuja a menos resolución (hasta el 67 %)
   const pixelRatioBase = renderer.getPixelRatio();
-  const resolucion = new ResolucionDinamica((e) => renderer.setPixelRatio(pixelRatioBase * e));
+  const resolucion = new ResolucionDinamica((e) => { renderer.setPixelRatio(pixelRatioBase * e); posproceso.tamano(); });
   resolucion.activa = !MEDIR && params.get('resolucion') !== 'fija';
   const oyente = new THREE.AudioListener();
   camara.add(oyente);
@@ -121,6 +126,17 @@ async function iniciar() {
   const nivel = { ...combinarNiveles([construirNivel(modelos.zona, escena, fisica, triggers, opcionesNivel), nivelSantuario, nivelCamara]),
     raizCamara: nivelCamara.raiz };
   const luces = crearLucesNivel(escena, nivel.luces, calidad.luces);
+  // SpotLight del santuario (requisito 1): un foco cálido desde lo alto del nicho sobre el altar del
+  // escudo. Siempre en la escena (el número de luces no cambia: sin recompilar); solo luce en la zona 2.
+  const focoAltar = new THREE.SpotLight(PALETA.oro_brillante, 0, 14, 0.42, 0.75, 2);
+  const altarEscudo = nivel.raiz.getObjectByName('prop_altar_escudo') ?? nivelSantuario.raiz.getObjectByName('prop_altar_escudo');
+  if (altarEscudo) {
+    altarEscudo.getWorldPosition(focoAltar.target.position);
+    focoAltar.position.copy(focoAltar.target.position).add(new THREE.Vector3(1.6, 6.5, 0));
+  }
+  focoAltar.castShadow = calidad.sombras >= 2048;
+  focoAltar.shadow.mapSize.set(512, 512);
+  escena.add(focoAltar, focoAltar.target);
 
   // ---------------- Victoria
   const rampa = crearRampaToon();
@@ -154,6 +170,8 @@ async function iniciar() {
 
   // ---------------- Audio (requisito 3)
   const audio = new GestorAudio(oyente, buffers, escena);
+  const musica = new Musica(audio, oyente);
+  let etapaMusica = '';
   const ambienteSelva = audio.bucleGlobal('ambiente_selva', 0.55);
   const ambienteSantuario = audio.bucleGlobal('ambiente_santuario', 0);
   const rumorDerrumbe = audio.bucleGlobal('derrumbe', 0);
@@ -214,6 +232,7 @@ async function iniciar() {
     zonaActual = zona;
     if ((antes > 1) !== (zona > 1)) ambiente.ponerInterior(zona > 1);
     luces.encenderGrupo(zona);
+    focoAltar.intensity = zona === 2 ? 55 : 0;
     audio.volumenBucle(ambienteSelva, zona === 1 ? 0.55 : 0);
     audio.volumenBucle(ambienteSantuario, zona === 2 ? 0.6 : zona === 3 ? 0.3 : 0);
   };
@@ -770,6 +789,14 @@ async function iniciar() {
     hud: (dt) => {
       resolucion.actualizar(dt);
       camLibre.actualizar();
+      // Música: la pieza del momento de la historia; el tema completo al llegar al amanecer
+      const etapa = actoFinal.etapa;
+      musica.poner(etapa === 'combate' ? 'jefe' : etapa === 'escape' ? 'escape'
+        : etapa === 'despertar' || etapa === 'derrota' || etapa === 'final' || etapa === 'fin' ? null
+          : zonaActual === 1 ? 'selva' : zonaActual === 2 ? 'santuario' : null);
+      if (etapa === 'final' && etapaMusica !== 'final') musica.tema();
+      etapaMusica = etapa;
+      musica.actualizar(dt);
       demo.actualizar(dt);
       if (enMenu) {
         // Menú principal (el juego está en pausa): vista lenta del claro hacia la cima dorada de la pirámide
@@ -789,7 +816,9 @@ async function iniciar() {
       depuracion?.fin(dt);
     },
     render: () => {
-      renderer.render(escena, camara);
+      // En las cinemáticas, la profundidad de campo enfoca lo que mira la cámara (calidad alta)
+      posproceso.enfocar(cine.activo && cine.distanciaMira > 0 ? cine.distanciaMira : null);
+      posproceso.render();
       // &stats: llamadas, triángulos, luces puntuales encendidas y mallas con sombra en el título (para medir sin ventana)
       if (MEDIR) {
         let luces = 0;
@@ -901,7 +930,7 @@ async function iniciar() {
   if (AUTOMATICO) {
     pantallas.ocultarInicio();
     document.getElementById('pantalla-carga').classList.add('oculto');
-    if (params.has('intro')) setTimeout(() => historia.introduccion(), 300);
+    if (params.has('intro')) setTimeout(() => { historia.introduccion(); musica.tema(); }, 300);
     if (params.has('hablar')) setTimeout(() => decir('Te dije que llegaría antes que tú.', 'ternura'), 400);
     // &final=derrota o &final=amanecer salta al final del combate o al amanecer (para revisar las cinemáticas)
     if (params.get('final') === 'derrota') {
@@ -958,9 +987,15 @@ async function iniciar() {
       pantallas.ocultarInicio();
       rig.controles.lock();
       historia.introduccion();
+      musica.tema();
     },
     opciones: (o) => {
       oyente.setMasterVolume(o.volumen);
+      audio.ponerVolumen('musica', o.musica);
+      audio.ponerVolumen('efectos', o.efectos);
+      audio.ponerVolumen('ambiente', o.efectos * 0.9);
+      audio.ponerVolumen('voces', o.voces);
+      document.body.classList.toggle('sin-subtitulos', !o.subtitulos);
       rig.controles.pointerSpeed = o.sensibilidad;
       rig.sacudida.intensidad = o.sacudida;
     },

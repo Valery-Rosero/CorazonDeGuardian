@@ -490,3 +490,9 @@ body.en-demo .lil-gui { display: none; }
 #cartografa.resaltado { outline: 3px solid #ffd45e; outline-offset: 4px; animation: resaltar 1.2s ease-in-out infinite alternate; }
 @keyframes resaltar { from { outline-color: rgba(255, 212, 94, 0.25); } to { outline-color: #ffd45e; } }
 @media (prefers-reduced-motion: reduce) { #cartografa.resaltado { animation: none; } }
+
+/* Opciones */
+.opciones select { font: 15px Georgia, serif; padding: 4px 6px; border-radius: 4px; background: #2a2118; color: #f0e7d6; border: 1px solid #8a6b3a; }
+.opciones .casilla { display: flex; align-items: center; gap: 10px; }
+.nota-opcion { margin: 0; min-height: 1.2em; font: italic 13px Georgia, serif; color: #e6c98a; }
+body.sin-subtitulos #subtitulo { display: none !important; }

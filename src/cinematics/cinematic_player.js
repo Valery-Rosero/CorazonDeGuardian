@@ -45,6 +45,8 @@ export class ReproductorCine {
     this.reloj = 0;
     /** Depuración (?auto&tcine=N): la próxima cinemática empieza N segundos adelantada. */
     this.adelanto = 0;
+    /** Distancia de la cámara a lo que mira (enfoque de la profundidad de campo). */
+    this.distanciaMira = 0;
     /** Mezcla con la cámara de juego al terminar (sección 9.4). */
     this.salida = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), fov: 70, t: 0, d: 0 };
   }
@@ -131,6 +133,7 @@ export class ReproductorCine {
     if (sac > 0) _p.add(_m.set(Math.sin(this.reloj * 37) * sac, Math.sin(this.reloj * 29 + 1) * sac, Math.sin(this.reloj * 31 + 2) * sac));
     this.camara.position.copy(_p);
     punto(this.curvas, plano.mira, u, _m);
+    this.distanciaMira = _p.distanceTo(_m);
     this.camara.up.set(0, 1, 0);
     this.camara.lookAt(_m);
     if (plano.holandes) this.camara.rotateZ(THREE.MathUtils.degToRad(plano.holandes));

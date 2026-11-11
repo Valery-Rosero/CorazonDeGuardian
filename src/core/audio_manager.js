@@ -97,14 +97,23 @@ export class GestorAudio {
     }
   }
 
-  /** Efecto global sin posición. @param {string} nombre @param {number} [volumen] */
+  /**
+   * Cambia el volumen de una categoría (Opciones) y lo aplica a los bucles que ya suenan.
+   * @param {string} categoria @param {number} v
+   */
+  ponerVolumen(categoria, v) {
+    this.volumen[categoria] = v;
+    for (const b of this.bucles) b.audio.setVolume(b.base * this._vol(b.categoria));
+  }
+
+  /** Efecto global sin posición (las voces van por su propia categoría). @param {string} nombre @param {number} [volumen] */
   efecto(nombre, volumen = 1) {
     if (!this.iniciado || !this.buffers[nombre]) return;
     const a = this.globales[this.iGlobal];
     this.iGlobal = (this.iGlobal + 1) % TAM_POOL;
     if (a.isPlaying) a.stop();
     a.setBuffer(this.buffers[nombre]);
-    a.setVolume(volumen * this._vol('efectos'));
+    a.setVolume(volumen * this._vol(nombre.startsWith('voz/') ? 'voces' : 'efectos'));
     a.play();
   }
 
