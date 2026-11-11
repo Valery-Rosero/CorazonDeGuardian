@@ -20,6 +20,7 @@ from mathutils import Vector  # noqa: E402
 
 import common  # noqa: E402
 import stats  # noqa: E402
+import interior_builder as ib  # noqa: E402
 import temple_builder  # noqa: E402
 from common import (Constructor, caja_biselada, caja_invisible, colocar, objeto_suelto, orientar_hacia, prisma,  # noqa: E402
                     segmento, vacio)
@@ -68,11 +69,11 @@ def P(r, ang, z=SUELO):
 
 def pasillo(k):
     x, y0, y1, t = PASILLO['x'], PASILLO['y0'], PASILLO['y1'], PASILLO['techo']
-    k.agregar(caja_biselada(2 * x + 2, y0 - y1 + 3, 0.5, 0.05), 'piedra_sombra', 'escenario',
+    k.agregar(caja_biselada(2 * x + 2, y0 - y1 + 3, 0.5, 0.05), 'arenisca_sombra', 'escenario',
               colocar((0, (y0 + y1 - 3) / 2, SUELO - 0.25)))
     caja_invisible('col_box_suelo_pasillo_arena', (-x - 1, y1 - 3, SUELO - 0.5), (x + 1, y0, SUELO))
     for sx in (-1, 1):
-        k.agregar(caja_biselada(1.0, y0 - y1 + 3, t, 0.08), tono_piedra, 'escenario', colocar((sx * (x + 0.5), (y0 + y1 - 3) / 2, SUELO + t / 2)))
+        k.agregar(caja_biselada(1.0, y0 - y1 + 3, t, 0.08), ib.tono_arenisca, 'escenario', colocar((sx * (x + 0.5), (y0 + y1 - 3) / 2, SUELO + t / 2)))
         caja_invisible(f'col_box_pasillo_arena_{"e" if sx > 0 else "o"}', (sx * x if sx > 0 else -x - 1, y1 - 3, SUELO),
                        (x + 1 if sx > 0 else -x, y0, SUELO + t))
         # Franjas doradas que llevan hacia la luz de la arena
@@ -80,7 +81,7 @@ def pasillo(k):
             yy = y0 - 1.2 - i * 1.8
             k.agregar(caja_biselada(0.06, 1.2, 0.16, 0.02), 'oro_brillante', 'escenario', colocar((sx * (x - 0.03), yy, SUELO + 2.4)),
                       material=MAT['oro'])
-    k.agregar(caja_biselada(2 * x + 2, y0 - y1 + 3, 0.6, 0.05), 'piedra_oscura', 'escenario', colocar((0, (y0 + y1 - 3) / 2, SUELO + t + 0.3)))
+    k.agregar(caja_biselada(2 * x + 2, y0 - y1 + 3, 0.6, 0.05), 'arenisca_oscura', 'escenario', colocar((0, (y0 + y1 - 3) / 2, SUELO + t + 0.3)))
 
 
 def arena(k, m, rnd):
@@ -88,7 +89,7 @@ def arena(k, m, rnd):
     # Suelo: disco facetado con losas en anillos
     verts = [Vector((cx, cy, SUELO))] + [Vector(P(MURO, math.tau * i / SEGMENTOS)) for i in range(SEGMENTOS)]
     caras = [(0, 1 + i, 1 + (i + 1) % SEGMENTOS) for i in range(SEGMENTOS)]
-    k.agregar((verts, orientar_hacia(verts, caras, (0, 0, 1))), ['piedra' if i % 2 else 'piedra_sombra' for i in range(SEGMENTOS)], 'escenario')
+    k.agregar((verts, orientar_hacia(verts, caras, (0, 0, 1))), ['arenisca' if i % 2 else 'arenisca_sombra' for i in range(SEGMENTOS)], 'escenario')
     caja_invisible('col_box_suelo_arena', (cx - MURO, cy - MURO, SUELO - 0.6), (cx + MURO, cy + MURO, SUELO))
     # Anillos de runas (cada uno con su material: se encienden por fase)
     for n, r in enumerate(ANILLOS):
@@ -112,7 +113,7 @@ def arena(k, m, rnd):
         x0, y0, _ = P(MURO + 0.5, am)
         ancho = 2 * (MURO + 0.5) * math.sin(math.pi / SEGMENTOS) + 0.1
         giro = math.degrees(am) + 90
-        k.agregar(caja_biselada(ancho, 1.0, ALTO_MURO, 0.1), tono_piedra, 'escenario', colocar((x0, y0, SUELO + ALTO_MURO / 2), (0, 0, giro)))
+        k.agregar(caja_biselada(ancho, 1.0, ALTO_MURO, 0.1), ib.tono_arenisca, 'escenario', colocar((x0, y0, SUELO + ALTO_MURO / 2), (0, 0, giro)))
         caja_invisible(f'col_box_muro_arena_{i}', (x0 - ancho / 2, y0 - 0.5, SUELO), (x0 + ancho / 2, y0 + 0.5, SUELO + ALTO_MURO),
                        rot=(0, 0, giro))
         if i % 3 == 0:
@@ -133,7 +134,7 @@ def arena(k, m, rnd):
             centro = Vector((cx, cy, SUELO + 4))
             caras = [(0, 1, 2, 3)]
             nc = (q[0] + q[2]) / 2
-            k.agregar((q, orientar_hacia(q, caras, centro - nc)), 'piedra_sombra' if (i + j) % 2 else 'piedra_oscura', 'escenario')
+            k.agregar((q, orientar_hacia(q, caras, centro - nc)), 'arenisca_sombra' if (i + j) % 2 else 'arenisca_oscura', 'escenario')
     # Haz del óculo sobre el trono
     tx, ty = TRONO
     mm, largo = segmento(Vector((cx, cy + 0.5, SUELO + CUPULA)), Vector((tx, ty + 1.0, SUELO + 0.1)))
@@ -141,18 +142,85 @@ def arena(k, m, rnd):
     # Columnas de referencia detrás del borde del combate
     for i in range(COLUMNAS):
         a = math.tau * i / COLUMNAS + 0.26
+        if i % 3 == 1:
+            continue   # aquí va un guardián colosal (ornamentar)
         x, y, _ = P(R_COLUMNA, a)
-        temple_builder.columna(k, (x, y, SUELO), ALTO_MURO, 0.6, rnd, liana=False)
+        k.agregar(caja_biselada(1.6, 1.6, 0.01, 0.0), 'arenisca_sombra', 'escenario', colocar((x, y, SUELO)))
+        ib.columna_tallada(k, x, y, ALTO_MURO, 0.6)
         caja_invisible(f'col_cyl_columna_arena_{i}', (x - 0.7, y - 0.7, SUELO), (x + 0.7, y + 0.7, SUELO + ALTO_MURO))
     # Trono
-    k.agregar(caja_biselada(6, 3.4, 1.6, 0.12), tono_piedra, 'escenario', colocar((tx, ty - 0.5, SUELO + 0.8)))
-    k.agregar(caja_biselada(6, 0.8, 4.5, 0.12), tono_piedra, 'escenario', colocar((tx, ty - 2.2 + 0.4, SUELO + 2.25)))
+    k.agregar(caja_biselada(6, 3.4, 1.6, 0.12), ib.tono_arenisca, 'escenario', colocar((tx, ty - 0.5, SUELO + 0.8)))
+    k.agregar(caja_biselada(6, 0.8, 4.5, 0.12), ib.tono_arenisca, 'escenario', colocar((tx, ty - 2.2 + 0.4, SUELO + 2.25)))
     for sx in (-1, 1):
-        k.agregar(caja_biselada(0.8, 3.2, 2.6, 0.08), tono_piedra, 'escenario', colocar((tx + sx * 2.8, ty - 0.5, SUELO + 1.3)))
+        k.agregar(caja_biselada(0.8, 3.2, 2.6, 0.08), ib.tono_arenisca, 'escenario', colocar((tx + sx * 2.8, ty - 0.5, SUELO + 1.3)))
     temple_builder.glifo_sol(k, colocar((tx, ty - 1.79 + 0.4 + 0.42, SUELO + 3.6), (0, 0, 180)), 0.6, 'dorado_solar')
     caja_invisible('col_box_trono', (tx - 3, ty - 2.2, SUELO), (tx + 3, ty + 1.2, SUELO + 1.6))
     caja_invisible('col_box_trono_respaldo', (tx - 3, ty - 2.2, SUELO), (tx + 3, ty - 1.4, SUELO + 4.5))
     caja_invisible('col_box_cupula', (cx - MURO, cy - MURO, SUELO + CUPULA - 0.5), (cx + MURO, cy + MURO, SUELO + CUPULA + 0.5))
+
+
+def ornamentar(k, rnd):
+    """Detalle de la arena según la hoja «Interiores del templo»: sobrecogimiento."""
+    cx, cy = CENTRO
+    # Guardianes colosales de rodillas mirando al centro: los que se volvieron piedra antes que Mateo
+    for i in range(COLUMNAS):
+        if i % 3 != 1:
+            continue
+        a = math.tau * i / COLUMNAS + 0.26
+        x, y, _ = P(16.0, a)
+        ib.guardian_de_rodillas(k, x, y, math.degrees(a) - 90, alto=9.0, z=SUELO)
+        caja_invisible(f'col_box_coloso_{i}', (x - 1.9, y - 1.9, SUELO), (x + 1.9, y + 1.9, SUELO + 6.0), rot=(0, 0, math.degrees(a) - 90))
+    # Friso de soles y cornisa escalonada en cada tramo del muro (por dentro)
+    for i in range(SEGMENTOS):
+        a0, a1 = math.tau * i / SEGMENTOS, math.tau * (i + 1) / SEGMENTOS
+        am = (a0 + a1) / 2
+        if abs(math.degrees(am) - 90) < 9:
+            continue
+        pa, pb = P(MURO - 0.02, a0)[:2], P(MURO - 0.02, a1)[:2]
+        n = (-math.cos(am), -math.sin(am))
+        ib.friso_soles(k, pa, pb, n, SUELO + 3.2, paso=2.2)
+        ib.cornisa(k, pa, pb, n, SUELO + ALTO_MURO - 0.66)
+        ib.banda(k, pa, pb, n, SUELO, SUELO + 0.5, 0.14, 'arenisca_oscura')
+    # Nervios dorados de la cúpula, del muro al óculo
+    for i in range(8):
+        a = math.tau * i / 8 + math.pi / 8
+        prev = None
+        for j in range(6):
+            t = j / 5
+            r = MURO + 0.3 - (MURO + 0.5 - OCULO) * math.sin(t * math.pi / 2)
+            z = SUELO + ALTO_MURO + (CUPULA - ALTO_MURO) * (1 - math.cos(t * math.pi / 2)) ** 0.8 - 0.25
+            q = Vector(P(r - 0.15, a, z))
+            if prev is not None:
+                mm, largo = segmento(prev, q)
+                k.agregar(prisma(4, 0.18, largo, giro=45), 'oro_tallado', 'escenario', mm)
+            prev = q
+    # El gran sol tallado en el muro, detrás del trono
+    sx, sy, _ = P(MURO - 0.3, math.radians(270))
+    k.agregar(prisma(16, 2.3, 0.3), 'oro_tallado', 'escenario', colocar((sx, sy, SUELO + 6.3), (90, 0, 0)))
+    k.agregar(prisma(16, 1.4, 0.36), 'oro_brillante', 'escenario', colocar((sx, sy + 0.05, SUELO + 6.3), (90, 0, 0)), material=MAT['oro'])
+    for i in range(12):
+        t = i * math.tau / 12
+        k.agregar(caja_biselada(0.35, 0.25, 1.4, 0.03), 'oro_tallado', 'escenario',
+                  colocar((sx + math.cos(t) * 3.1, sy + 0.05, SUELO + 6.3 + math.sin(t) * 3.1), (0, -math.degrees(t) + 90, 0)))
+    # Braseros alrededor del muro (fuego con partículas; las luces las reparte el juego)
+    for j, ang in enumerate((60, 120, 200, 340)):
+        x, y, _ = P(14.6, math.radians(ang))
+        pos = ib.brasero(k, x, y, SUELO, 1.2)
+        vacio(f'emit_fuego_arena_{j}', pos, props={'tipo': 'fuego'})
+        caja_invisible(f'col_cyl_brasero_arena_{j}', (x - 0.45, y - 0.45, SUELO), (x + 0.45, y + 0.45, SUELO + 1.5))
+    # Anillo de losas claras que marca el borde del combate
+    for i in range(SEGMENTOS * 2):
+        a = math.tau * i / (SEGMENTOS * 2)
+        x, y, _ = P(15.0, a)
+        k.agregar(caja_biselada(2.2, 0.5, 0.03, 0.01), 'arenisca_luz', 'escenario', colocar((x, y, SUELO + 0.012), (0, 0, math.degrees(a) + 90)))
+    ib.escombros(k, *P(11.5, math.radians(160))[:2], rnd, 6, 1.0)
+    ib.escombros(k, *P(12.0, math.radians(20))[:2], rnd, 5, 0.9)
+    # El pasillo de entrada: pilastras y friso hacia la luz
+    for sx in (-1, 1):
+        a, b = (sx * PASILLO['x'], PASILLO['y0']), (sx * PASILLO['x'], PASILLO['y1'] - 2.5)
+        ib.friso_soles(k, a, b, (-sx, 0.0), SUELO + 3.6, paso=1.6)
+        for yy in (PASILLO['y0'] - 0.6, PASILLO['y1'] - 1.8):
+            ib.pilastra(k, sx * PASILLO['x'], yy, (-sx, 0.0), PASILLO['techo'], 0.6)
 
 
 def pilares(m):
@@ -160,9 +228,9 @@ def pilares(m):
     for n, a in enumerate(PILARES, start=1):
         x, y, _ = P(R_PILAR, math.radians(a))
         p = Constructor(PALETA, semilla=80 + n, variacion=0.03)
-        p.agregar(caja_biselada(1.5, 1.5, 0.4, 0.06), tono_piedra, 'escenario', colocar((0, 0, 0.2)))
-        p.agregar(caja_biselada(0.9, 0.9, 3.0, 0.06, conico=0.75), tono_piedra, 'escenario', colocar((0, 0, 1.9)))
-        p.agregar(caja_biselada(1.2, 1.2, 0.3, 0.06), 'piedra_luz', 'escenario', colocar((0, 0, 3.55)))
+        p.agregar(caja_biselada(1.5, 1.5, 0.4, 0.06), ib.tono_arenisca, 'escenario', colocar((0, 0, 0.2)))
+        p.agregar(caja_biselada(0.9, 0.9, 3.0, 0.06, conico=0.75), ib.tono_arenisca, 'escenario', colocar((0, 0, 1.9)))
+        p.agregar(caja_biselada(1.2, 1.2, 0.3, 0.06), 'arenisca_luz', 'escenario', colocar((0, 0, 3.55)))
         from common import casco
         pts = [(0, 0, 3.75), (0, 0, 4.85), (0.32, 0, 4.3), (-0.32, 0, 4.3), (0, 0.32, 4.3), (0, -0.32, 4.3)]
         p.agregar(casco(pts), 'oro_brillante', 'escenario', material=1)
@@ -202,8 +270,8 @@ def triggers_y_puntos():
 def braseros(k):
     for sx in (-1, 1):
         x, y = sx * 4.5, -684.5
-        k.agregar(prisma(8, 0.35, 1.2, radio_sup=0.25), 'piedra_sombra', 'escenario', colocar((x, y, SUELO + 0.6)))
-        k.agregar(prisma(8, 0.4, 0.3, radio_sup=0.55), 'piedra_sombra', 'escenario', colocar((x, y, SUELO + 1.35)))
+        k.agregar(prisma(8, 0.35, 1.2, radio_sup=0.25), 'arenisca_sombra', 'escenario', colocar((x, y, SUELO + 0.6)))
+        k.agregar(prisma(8, 0.4, 0.3, radio_sup=0.55), 'arenisca_sombra', 'escenario', colocar((x, y, SUELO + 1.35)))
         caja_invisible(f'col_cyl_brasero_{"e" if sx > 0 else "o"}', (x - 0.5, y - 0.5, SUELO), (x + 0.5, y + 0.5, SUELO + 1.5))
 
 
@@ -215,6 +283,7 @@ def main():
     pasillo(k)
     arena(k, m, rnd)
     braseros(k)
+    ornamentar(k, random.Random(5151))
     pilares(m)
     triggers_y_puntos()
     principal = common.crear_malla('camara_escenario', k, [m['toon'], m['oro'], m['rayo']], grupos=False)

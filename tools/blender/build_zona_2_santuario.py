@@ -22,6 +22,7 @@ from mathutils import Vector  # noqa: E402
 import common  # noqa: E402
 import props_builder  # noqa: E402
 import stats  # noqa: E402
+import interior_builder as ib  # noqa: E402
 import temple_builder  # noqa: E402
 from common import (Constructor, caja_biselada, caja_invisible, casco, colocar, objeto_suelto, prisma,  # noqa: E402
                     segmento, vacio)
@@ -85,7 +86,7 @@ def materiales():
 MAT = {'toon': 0, 'oro': 1, 'runa': 2, 'rayo': 3}
 
 
-def caja(k, x0, y0, x1, y1, z0, z1, color=tono_piedra, nombre=None, bisel=0.08, material=0):
+def caja(k, x0, y0, x1, y1, z0, z1, color=ib.tono_arenisca, nombre=None, bisel=0.08, material=0):
     """Bloque de piedra entre dos esquinas (locales) y, si lleva nombre, su colisionador."""
     ax, ay, az = L(min(x0, x1), min(y0, y1), z0)
     bx, by, bz = L(max(x0, x1), max(y0, y1), z1)
@@ -99,32 +100,30 @@ def muro_con_banda(k, x0, y0, x1, y1, z0, z1, nombre):
     """Muro con zócalo oscuro y una cornisa clara: la piedra del templo no es una pared lisa."""
     caja(k, x0, y0, x1, y1, z0, z1, nombre=nombre)
     dx, dy = (0.12 if x1 - x0 < 1.5 else 0), (0.12 if y1 - y0 < 1.5 else 0)
-    caja(k, x0 - dx, y0 - dy, x1 + dx, y1 + dy, z0, z0 + 0.6, 'piedra_sombra')
+    caja(k, x0 - dx, y0 - dy, x1 + dx, y1 + dy, z0, z0 + 0.6, 'arenisca_sombra')
     if z1 - z0 > 5:
-        caja(k, x0 - dx, y0 - dy, x1 + dx, y1 + dy, z1 - 1.6, z1 - 1.2, 'piedra_luz')
+        caja(k, x0 - dx, y0 - dy, x1 + dx, y1 + dy, z1 - 1.6, z1 - 1.2, 'arenisca_luz')
 
 
 def vestibulo(k):
     x, y0, y1, t = VEST['x'], VEST['y0'], VEST['y1'], VEST['techo']
-    caja(k, -x - GROSOR, y0 + 1, x + GROSOR, y1, -0.5, 0, 'piedra_sombra', 'suelo_vestibulo')
+    caja(k, -x - GROSOR, y0 + 1, x + GROSOR, y1, -0.5, 0, 'arenisca_sombra', 'suelo_vestibulo')
     muro_con_banda(k, -x - GROSOR, y0 + 1, -x, y1, 0, t, 'vest_o')
     muro_con_banda(k, x, y0 + 1, x + GROSOR, y1, 0, t, 'vest_e')
-    caja(k, -x - GROSOR, y0 + 1, x + GROSOR, y1, t, t + 0.8, 'piedra_oscura', 'vest_techo')
+    caja(k, -x - GROSOR, y0 + 1, x + GROSOR, y1, t, t + 0.8, 'arenisca_oscura', 'vest_techo')
     # Por donde se llega: la luz del día detrás de la puerta (ya no se puede volver)
-    caja(k, -x, y0 + 1, x, y0 + 0.6, 0, t, 'piedra_oscura', 'vest_entrada')
-    for y in (-3, -6, -9):
-        for sx in (-1, 1):
-            caja(k, sx * x - 0.15, y - 0.3, sx * x + 0.15, y + 0.3, 0, t, 'piedra')
+    caja(k, -x, y0 + 1, x, y0 + 0.6, 0, t, 'arenisca_oscura', 'vest_entrada')
+
 
 
 def sala_columnas(k, m, rnd):
     x, y0, y1, t = SALA['x'], SALA['y0'], SALA['y1'], SALA['techo']
-    caja(k, -x - GROSOR, y0, x + GROSOR, y1, -0.5, 0, 'piedra_sombra', 'suelo_sala')
+    caja(k, -x - GROSOR, y0, x + GROSOR, y1, -0.5, 0, 'arenisca_oscura', 'suelo_sala')
     # Losas del suelo en damero suave
     for i, yy in enumerate(range(y0, y1, -2)):
         for j, xx in enumerate(range(int(-x), int(x), 2)):
             if (i + j) % 2 == 0:
-                k.agregar(caja_biselada(1.9, 1.9, 0.04, 0.02), 'piedra', 'escenario', colocar(L(xx + 1, yy - 1, 0.02)))
+                k.agregar(caja_biselada(1.9, 1.9, 0.04, 0.02), 'arenisca_sombra', 'escenario', colocar(L(xx + 1, yy - 1, 0.02)))
     # Muro de la entrada (con el hueco del vestíbulo) y muro del fondo (con el paso)
     for sx in (-1, 1):
         caja(k, sx * VEST['x'], y0 + GROSOR, sx * (x + GROSOR), y0, 0, t, nombre=f'sala_n_{"e" if sx > 0 else "o"}')
@@ -149,15 +148,15 @@ def sala_columnas(k, m, rnd):
     muro_con_banda(k, -x - GROSOR, NICHO['y1'], -x, y1, 0, t, 'sala_o_2')
     caja(k, -x - GROSOR, NICHO['y0'], -x, NICHO['y1'], 4.2, t)
     altar_escudo(k, m)
-    caja(k, -x - GROSOR, y0, x + GROSOR, y1, t, t + 1, 'piedra_oscura', 'sala_techo')
+    caja(k, -x - GROSOR, y0, x + GROSOR, y1, t, t + 1, 'arenisca_oscura', 'sala_techo')
     for (cx, cy) in COLUMNAS:
-        temple_builder.columna(k, L(cx, cy, 0), t, 0.55, rnd, liana=False)
+        ib.columna_tallada(k, *L(cx, cy, 0)[:2], t, 0.6)
         caja_invisible(f'col_cyl_columna_s_{abs(cy)}_{"e" if cx > 0 else "o"}', L(cx - 0.65, cy - 0.65, 0), L(cx + 0.65, cy + 0.65, t))
     # Antorchas en el muro del fondo
     for sx in (-1, 1):
         px, py = sx * 3.2, y1 + 0.35
-        k.agregar(prisma(6, 0.12, 2.0, radio_sup=0.09), 'piedra_sombra', 'escenario', colocar(L(px, py, 1.0)))
-        k.agregar(prisma(8, 0.28, 0.25, radio_sup=0.36), 'piedra_sombra', 'escenario', colocar(L(px, py, 2.1)))
+        k.agregar(prisma(6, 0.12, 2.0, radio_sup=0.09), 'arenisca_sombra', 'escenario', colocar(L(px, py, 1.0)))
+        k.agregar(prisma(8, 0.28, 0.25, radio_sup=0.36), 'arenisca_sombra', 'escenario', colocar(L(px, py, 2.1)))
         vacio(f'emit_fuego_s{"e" if sx > 0 else "o"}', L(px, py, 2.3), props={'tipo': 'fuego'})
     vacio('luz_sala_fondo', L(0, y1 + 1.5, 3.0), props={'color': PALETA['fuego'], 'intensidad': 5.0, 'distancia': 12.0,
                                                        'parpadeo': 1, 'grupo': 2})
@@ -172,7 +171,7 @@ def altar_escudo(k, m):
     caja(k, xf - GROSOR, y0 + GROSOR, x0, y0, 0, 4.2, nombre='nicho_n')
     caja(k, xf - GROSOR, y1, x0, y1 - GROSOR, 0, 4.2, nombre='nicho_s')
     caja(k, xf - GROSOR, y0, xf, y1, 0, 4.2, '#1E3A55', 'nicho_fondo')
-    caja(k, xf - GROSOR, y0 + GROSOR, x0, y1 - GROSOR, 4.2, 5.0, 'piedra_oscura')
+    caja(k, xf - GROSOR, y0 + GROSOR, x0, y1 - GROSOR, 4.2, 5.0, 'arenisca_oscura')
     # Runas del fondo (material de runas: respiran en el juego)
     for i, z in enumerate((1.2, 2.0, 2.8, 3.6)):
         for j, yy in enumerate((-21.8, -23.0, -24.2)):
@@ -180,7 +179,7 @@ def altar_escudo(k, m):
                 k.agregar(caja_biselada(0.05, 0.35, 0.35, 0.03), 'cristal_runa', 'escenario',
                           colocar(L(xf + 0.03, yy, z), (45, 0, 0)), material=MAT['runa'])
     caja(k, xf + 0.4, -22.3, x0 - 0.2, -23.7, 0, 1.0, nombre='altar_pedestal')
-    caja(k, xf + 0.3, -22.2, x0 - 0.1, -23.8, 1.0, 1.15, 'piedra_luz')
+    caja(k, xf + 0.3, -22.2, x0 - 0.1, -23.8, 1.0, 1.15, 'arenisca_luz')
     # El escudo: medallón azul que flota y se toma con E
     e = Constructor(PALETA, semilla=33, variacion=0.02)
     e.agregar(prisma(12, 0.42, 0.08), 'cristal_runa', 'escenario', colocar((0, 0, 0), (0, 90, 0)), material=1)
@@ -194,13 +193,13 @@ def altar_escudo(k, m):
 def paso_y_sala_espejos(k, m, rnd):
     # Paso entre salas
     x, y0, y1, t = PASO['x'], PASO['y0'], PASO['y1'], PASO['techo']
-    caja(k, -x - GROSOR, y0, x + GROSOR, y1, -0.5, 0, 'piedra_sombra', 'suelo_paso')
+    caja(k, -x - GROSOR, y0, x + GROSOR, y1, -0.5, 0, 'arenisca_sombra', 'suelo_paso')
     caja(k, -x - GROSOR, y0, -x, y1, 0, t, nombre='paso_o')
     caja(k, x, y0, x + GROSOR, y1, 0, t, nombre='paso_e')
-    caja(k, -x - GROSOR, y0, x + GROSOR, y1, t, t + 0.6, 'piedra_oscura', 'paso_techo')
+    caja(k, -x - GROSOR, y0, x + GROSOR, y1, t, t + 0.6, 'arenisca_oscura', 'paso_techo')
 
     x, y0, y1, t = ESP['x'], ESP['y0'], ESP['y1'], ESP['techo']
-    caja(k, -x - GROSOR, y0, x + GROSOR, y1 - GROSOR, -0.5, 0, 'piedra_sombra', 'suelo_espejos')
+    caja(k, -x - GROSOR, y0, x + GROSOR, y1 - GROSOR, -0.5, 0, 'piedra_azul', 'suelo_espejos')
     for sx in (-1, 1):
         caja(k, sx * PASO['x'], y0, sx * (x + GROSOR), y0 + GROSOR, 0, t, nombre=f'espejos_n_{"e" if sx > 0 else "o"}')
         caja(k, sx * PUERTA_ESPEJOS['x'], y1, sx * (x + GROSOR), y1 - GROSOR, 0, t,
@@ -216,7 +215,7 @@ def paso_y_sala_espejos(k, m, rnd):
     k.agregar(caja_biselada(0.1, 1.0, 0.7, 0.03), 'oro_brillante', 'escenario', colocar(L(x + 0.6, vy, ALTURA_RAYO)),
               material=MAT['oro'])
     muro_con_banda(k, -x - GROSOR, y0, -x, y1, 0, t, 'espejos_o')
-    caja(k, -x - GROSOR, y0, x + GROSOR, y1 - GROSOR, t, t + 1, 'piedra_oscura', 'espejos_techo')
+    caja(k, -x - GROSOR, y0, x + GROSOR, y1 - GROSOR, t, t + 1, 'arenisca_oscura', 'espejos_techo')
     mural(k)
     # Incrustaciones doradas del suelo: la ruta del sol
     ruta = [VENTANA_RAYO, ESPEJOS['A'], ESPEJOS['B'], ESPEJOS['C'], CRISTAL]
@@ -226,8 +225,8 @@ def paso_y_sala_espejos(k, m, rnd):
                   mm @ colocar(escala=(1, 0.15, 1)))
     # Pedestales y espejos (el espejo es un objeto aparte: gira con E)
     for i, (nombre, (ex, ey)) in enumerate(ESPEJOS.items()):
-        k.agregar(prisma(8, 0.34, 2.45, radio_sup=0.28), tono_piedra, 'escenario', colocar(L(ex, ey, 1.225)))
-        k.agregar(prisma(8, 0.45, 0.25), 'piedra_luz', 'escenario', colocar(L(ex, ey, 0.125)))
+        k.agregar(prisma(8, 0.34, 2.45, radio_sup=0.28), ib.tono_arenisca, 'escenario', colocar(L(ex, ey, 1.225)))
+        k.agregar(prisma(8, 0.45, 0.25), 'arenisca_luz', 'escenario', colocar(L(ex, ey, 0.125)))
         caja_invisible(f'col_cyl_pedestal_{nombre}', L(ex - 0.45, ey - 0.45, 0), L(ex + 0.45, ey + 0.45, 2.6))
         e = Constructor(PALETA, semilla=50 + i, variacion=0.02)
         e.agregar(caja_biselada(1.4, 0.1, 0.9, 0.02), 'agua_espuma', 'escenario', material=1)
@@ -252,20 +251,20 @@ def paso_y_sala_espejos(k, m, rnd):
            (0.25, 0.18, 0.28), (-0.25, -0.18, 0.28), (0.25, -0.18, -0.28), (-0.25, 0.18, -0.28)]
     c.agregar(casco(pts), 'oro_brillante', 'escenario', material=1)
     objeto_suelto('prop_cristal_solar', c, [m['toon'], m['cristal']], L(CRISTAL[0], CRISTAL[1] + 0.35, ALTURA_RAYO), {'cristal': 1})
-    k.agregar(caja_biselada(1.3, 0.3, 0.25, 0.04), 'piedra_luz', 'escenario', colocar(L(0, y1 + 0.2, ALTURA_RAYO - 0.75)))
+    k.agregar(caja_biselada(1.3, 0.3, 0.25, 0.04), 'arenisca_luz', 'escenario', colocar(L(0, y1 + 0.2, ALTURA_RAYO - 0.75)))
     vacio('luz_cristal', L(0, y1 + 1.2, ALTURA_RAYO), props={'color': PALETA['oro_brillante'], 'intensidad': 0.0,
                                                            'distancia': 10.0, 'grupo': 2, 'cristal': 1})
     # Puerta de los espejos: baja al resolver el acertijo
     pu = Constructor(PALETA, semilla=61, variacion=0.03)
-    pu.agregar(caja_biselada(PUERTA_ESPEJOS['x'] * 2, 0.5, PUERTA_ESPEJOS['alto'], 0.06), 'piedra_sombra', 'escenario')
+    pu.agregar(caja_biselada(PUERTA_ESPEJOS['x'] * 2, 0.5, PUERTA_ESPEJOS['alto'], 0.06), 'arenisca_sombra', 'escenario')
     temple_builder.glifo_sol(pu, colocar((0, -0.26, 0.2)), 0.4, 'dorado_solar')
     objeto_suelto('dyn_puerta_espejos', pu, [m['toon']], L(0, y1 - 0.5, PUERTA_ESPEJOS['alto'] / 2),
                   {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'mover': [0.0, 0.0, -2.65], 'duracion': 2.2})
     # Antorchas
     for sx in (-1, 1):
         px, py = sx * 6.0, y0 - 0.4
-        k.agregar(prisma(6, 0.12, 2.0, radio_sup=0.09), 'piedra_sombra', 'escenario', colocar(L(px, py, 1.0)))
-        k.agregar(prisma(8, 0.28, 0.25, radio_sup=0.36), 'piedra_sombra', 'escenario', colocar(L(px, py, 2.1)))
+        k.agregar(prisma(6, 0.12, 2.0, radio_sup=0.09), 'arenisca_sombra', 'escenario', colocar(L(px, py, 1.0)))
+        k.agregar(prisma(8, 0.28, 0.25, radio_sup=0.36), 'arenisca_sombra', 'escenario', colocar(L(px, py, 2.1)))
         vacio(f'emit_fuego_e{"e" if sx > 0 else "o"}', L(px, py, 2.3), props={'tipo': 'fuego'})
     vacio('luz_espejos', L(0, y0 - 2.0, 3.5), props={'color': PALETA['fuego'], 'intensidad': 5.0, 'distancia': 14.0,
                                                    'parpadeo': 1, 'grupo': 2})
@@ -275,7 +274,7 @@ def paso_y_sala_espejos(k, m, rnd):
 def mural(k):
     """Mural del oeste: la ruta del sol dibujada en oro sobre piedra oscura (la pista del acertijo)."""
     x = -ESP['x'] + 0.06
-    k.agregar(caja_biselada(0.1, 6.0, 3.4, 0.03), 'piedra_oscura', 'escenario', colocar(L(x, -46, 3.4)))
+    k.agregar(caja_biselada(0.1, 6.0, 3.4, 0.03), 'arenisca_oscura', 'escenario', colocar(L(x, -46, 3.4)))
     # La sala en miniatura (escala 1:4) mirada desde el oeste: la ruta va de la ventana al cristal
     esc = 0.25
 
@@ -307,7 +306,7 @@ def antesala(k, m, rnd):  # noqa: C901
     for i in range(n):
         ya, yb = y0 - largo * i / n, y0 - largo * (i + 1) / n
         za, zb = z_ante(ya), z_ante(yb)
-        k.agregar(caja_biselada(2 * x, largo / n * 1.02, 0.5, 0.04), 'piedra' if i % 2 else 'piedra_sombra', 'escenario',
+        k.agregar(caja_biselada(2 * x, largo / n * 1.02, 0.5, 0.04), 'arenisca' if i % 2 else 'arenisca_sombra', 'escenario',
                   colocar(L(0, (ya + yb) / 2, (za + zb) / 2 - 0.25), (inclinacion, 0, 0)))
     for sx in (-1, 1):
         caja(k, sx * x, y0 - GROSOR, sx * (x + GROSOR), y1, -ANTE['bajada'] - 0.5, t, nombre=f'ante_{"e" if sx > 0 else "o"}')
@@ -316,11 +315,11 @@ def antesala(k, m, rnd):  # noqa: C901
             yy = y0 - 2 - i * 2.8
             k.agregar(caja_biselada(0.06, 1.6, 0.18, 0.02), 'dorado_solar' if i < 3 else 'oro_brillante', 'escenario',
                       colocar(L(sx * (x - 0.03), yy, z_ante(yy) + 2.2)), material=MAT['oro'] if i >= 3 else 0)
-    caja(k, -x - GROSOR, y0 - GROSOR, x + GROSOR, y1, t - 0.5, t + 0.5, 'piedra_oscura', 'ante_techo')
+    caja(k, -x - GROSOR, y0 - GROSOR, x + GROSOR, y1, t - 0.5, t + 0.5, 'arenisca_oscura', 'ante_techo')
     # Puerta tallada de la arena con grietas naranjas: se hunde con la Manipulación (detrás, la cámara del sol)
     alto_puerta = t - 0.5 + ANTE['bajada']
     pu = Constructor(PALETA, semilla=62, variacion=0.03)
-    pu.agregar(caja_biselada(2 * x, GROSOR * 0.8, alto_puerta, 0.08), 'piedra_sombra', 'escenario')
+    pu.agregar(caja_biselada(2 * x, GROSOR * 0.8, alto_puerta, 0.08), 'arenisca_sombra', 'escenario')
     temple_builder.glifo_sol(pu, colocar((0, -GROSOR * 0.4 - 0.02, -alto_puerta / 2 + 2.0)), 0.7, 'dorado_solar')
     for (a, b) in (((-0.4, 0.4), (-0.1, 1.2)), ((0.3, 0.2), (0.6, 1.4)), ((-1.2, 2.6), (-0.6, 3.4))):
         mm, largo2 = segmento(Vector((a[0], -GROSOR * 0.4 - 0.03, -alto_puerta / 2 + a[1])),
@@ -335,6 +334,90 @@ def antesala(k, m, rnd):  # noqa: C901
         vacio(f'luz_antesala_{i + 1}', L(0, yy, z_ante(yy) + 2.6),
               props={'color': PALETA['fuego'] if i < 2 else PALETA['flor_centro'], 'intensidad': 3.0 + i * 1.5,
                      'distancia': 8.0, 'parpadeo': 1, 'grupo': 2})
+
+
+def _muro(lado, y0, y1, x):
+    """Tramo de muro lateral (x = ±x) entre y0 e y1 con la normal hacia dentro, en coordenadas de Blender."""
+    a, b = L(lado * x, y0)[:2], L(lado * x, y1)[:2]
+    return a, b, (-lado, 0.0)
+
+
+def ornamentar(k, rnd):
+    """Detalle de cada sala según la hoja: el recorrido de la esperanza al sobrecogimiento."""
+    r = random.Random(4242)   # su propio azar: no cambia nada de lo que ya estaba
+    # ---- Vestíbulo: esperanza. Pilastras, friso, raíces, el campamento de Mateo y su primera flecha
+    x, y0, y1, t = VEST['x'], VEST['y0'] - 1, VEST['y1'], VEST['techo']
+    for lado in (-1, 1):
+        a, b, n = _muro(lado, y0, y1, x)
+        ib.friso_soles(k, a, b, n, 2.35, paso=1.5)
+        ib.banda(k, a, b, n, 0, 0.45, 0.12, 'arenisca_sombra')
+        for y in (-3, -6, -9):
+            ib.pilastra(k, *L(lado * x, y)[:2], n, t, 0.6)
+        for y in (-2.0, -7.5):
+            ib.raiz(k, *L(lado * x, y + r.uniform(-0.6, 0.6))[:2], t, n, r.uniform(2.5, 3.6), r)
+    ib.campamento(k, *L(-1.2, -4.6)[:2], 8)
+    ib.tiza(k, *L(VEST['x'], -7.2)[:2], 1.45, (-1.0, 0.0), escala=0.9)
+    ib.duna(k, *L(1.2, -1.6)[:2], 0.9, 0.6, 0.18)
+    mm, largo = segmento(Vector(L(0.5, -4.2, t)), Vector(L(0.1, -5.0, 0.03)))
+    k.agregar(prisma(8, 0.35, largo, radio_sup=0.7), 'oro_brillante', 'escenario', mm, material=MAT['rayo'])
+
+    # ---- Sala de columnas: asombro. Frisos, cornisas, pilastras entre ventanas, sacerdotes del sol
+    x, y0, y1, t = SALA['x'], SALA['y0'], SALA['y1'], SALA['techo']
+    for lado in (-1, 1):
+        a, b, n = _muro(lado, y0, y1, x)
+        ib.friso_soles(k, a, b, n, 6.9, paso=2.0)
+        ib.cornisa(k, a, b, n, 9.9)
+        ib.banda(k, a, b, n, 0, 0.6, 0.14, 'arenisca_sombra')
+        for y in (-13.6, -20.0, -26.0, -32.4):
+            if lado < 0 and NICHO['y1'] - 0.6 < y < NICHO['y0'] + 0.6:
+                continue
+            ib.pilastra(k, *L(lado * x, y)[:2], n, 6.8, 0.9)
+    for yy, nn in ((y0, (0.0, -1.0)), (y1, (0.0, 1.0))):
+        ib.friso_soles(k, L(-x, yy)[:2], L(x, yy)[:2], nn, 6.9, paso=2.0)
+        ib.cornisa(k, L(-x, yy)[:2], L(x, yy)[:2], nn, 9.9)
+    for sx in (-1, 1):
+        ib.sacerdote(k, *L(sx * 4.6, y1 + 1.0)[:2], 180, 5.0)
+        caja_invisible(f'col_box_sacerdote_sala_{"e" if sx > 0 else "o"}', L(sx * 4.6 - 0.8, y1 + 0.2, 0), L(sx * 4.6 + 0.8, y1 + 1.8, 4.0))
+    ib.portal(k, *L(0, y1)[:2], (0.0, 1.0), PASO['x'] * 2, PASO['techo'])
+    ib.escombros(k, *L(5.6, -18.5)[:2], r, 7, 1.2)
+    ib.duna(k, *L(-6.6, -13.5)[:2], 1.3, 0.9, 0.22)
+    ib.duna(k, *L(6.8, -33.0)[:2], 1.0, 0.8, 0.2)
+    for y in (-15.0, -30.5):
+        ib.raiz(k, *L(-x, y)[:2], t, (1.0, 0.0), r.uniform(4, 6), r)
+
+    # ---- Sala de los espejos: misterio. Mosaico del sol, la leyenda pintada, pilastras y sacerdotes
+    x, y0, y1, t = ESP['x'], ESP['y0'], ESP['y1'], ESP['techo']
+    ib.mosaico_sol(k, *L(0, -45.0)[:2], 0, 3.2)
+    ib.mural(k, L(x, -43.5)[:2], L(x, -55.0)[:2], (-1.0, 0.0), 1.2, 4.6)
+    for lado in (-1, 1):
+        a, b, n = _muro(lado, y0, y1, x)
+        ib.friso_soles(k, a, b, n, 6.2, paso=2.2)
+        ib.cornisa(k, a, b, n, 11.6)
+        for y in (-37.5, -42.0) if lado > 0 else (-37.5, -41.2, -51.5, -55.0):
+            ib.pilastra(k, *L(lado * x, y)[:2], n, 6.0, 0.8)
+    for yy, nn in ((y0, (0.0, -1.0)), (y1, (0.0, 1.0))):
+        ib.friso_soles(k, L(-x, yy)[:2], L(x, yy)[:2], nn, 6.2, paso=2.2)
+    for sx in (-1, 1):
+        ib.sacerdote(k, *L(sx * 4.3, y1 + 1.0)[:2], 180, 6.0)
+        caja_invisible(f'col_box_sacerdote_espejos_{"e" if sx > 0 else "o"}', L(sx * 4.3 - 0.95, y1 + 0.05, 0), L(sx * 4.3 + 0.95, y1 + 1.95, 4.8))
+    ib.portal(k, *L(0, y1)[:2], (0.0, 1.0), PUERTA_ESPEJOS['x'] * 2, PUERTA_ESPEJOS['alto'], glifo=False)
+    ib.escombros(k, *L(8.0, -54.0)[:2], r, 5, 0.9)
+
+    # ---- Antesala: inquietud. Braseros, vetas de oro cada vez más densas, flechas de tiza torcidas
+    x, y0, y1 = ANTE['x'], ANTE['y0'], ANTE['y1']
+    tramos = [(y0 - 0.5, y0 - 6.5), (y0 - 6.5, y0 - 12.5), (y0 - 12.5, y1)]
+    for i, (ya, yb) in enumerate(tramos):
+        za = z_ante((ya + yb) / 2)
+        for lado in (-1, 1):
+            a, b, n = _muro(lado, ya, yb, x)
+            ib.banda(k, a, b, n, za + 3.05, za + 3.3, 0.1, 'oro_tallado')
+            ib.vetas(k, a, b, n, za + 1.6, r, n=1 + i * 2)
+    for j, y in enumerate((-59.5, -64.5, -69.5)):
+        for lado in (-1, 1):
+            pos = ib.brasero(k, *L(lado * (x - 0.35), y)[:2], z_ante(y) + ORIGEN[2], 0.9)
+            vacio(f'emit_fuego_ante_{j}_{"e" if lado > 0 else "o"}', pos, props={'tipo': 'fuego'})
+    ib.tiza(k, *L(-x, -58.6)[:2], z_ante(-58.6) + 1.45, (1.0, 0.0), escala=0.85, torcida=0.4)
+    ib.tiza(k, *L(x, -66.0)[:2], z_ante(-66.0) + 1.1, (-1.0, 0.0), escala=0.8, torcida=1.2)
 
 
 def objetos_de_juego(m, rnd):
@@ -384,6 +467,7 @@ def main():
     sala_columnas(k, m, rnd)
     paso_y_sala_espejos(k, m, rnd)
     antesala(k, m, rnd)
+    ornamentar(k, rnd)
     objetos_de_juego(m, rnd)
     triggers_y_puntos()
     principal = common.crear_malla('santuario_escenario', k, [m['toon'], m['oro'], m['runa'], m['rayo']], grupos=False)
