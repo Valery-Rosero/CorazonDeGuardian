@@ -51,6 +51,7 @@ import { Checkpoints } from './world/checkpoints.js';
 import { crearAmbienteSelva, crearLucesNivel } from './world/environment.js';
 import { ResolucionDinamica } from './core/dynamic_resolution.js';
 import { Musica } from './core/music.js';
+import { MuralVivo } from './world/living_mural.js';
 import { crearPosproceso } from './fx/postprocess.js';
 import { combinarNiveles, construirNivel } from './world/level_loader.js';
 import { aplicarMaterialesPersonaje, crearRampaToon } from './world/materials.js';
@@ -281,7 +282,21 @@ async function iniciar() {
     },
     estela: (p) => chispaEn(estela, p, PALETA.oro_brillante, 1, 0.22),
   });
+  // Mural vivo de la sala de los espejos: la leyenda animada (VideoTexture) con su canto (PositionalAudio)
+  const mural = new MuralVivo(escena, oyente, buffers.mural_canto);
+  nivel.interactuables.push(mural.malla);
   const interactuables = new Interactuables(nivel.interactuables, MANIPULACION);
+  // Las esferas rituales suenan al chocar, más fuerte cuanto más rápido es el golpe (evento 'collide')
+  for (const d of nivel.dinamicos) {
+    if (d.datos.forma !== 'esfera') continue;
+    let ultimo = -1;
+    d.cuerpo.addEventListener('collide', (/** @type {any} */ e) => {
+      const v = Math.abs(e.contact.getImpactVelocityAlongNormal());
+      if (v < 1.5 || reloj - ultimo < 0.15) return;
+      ultimo = reloj;
+      audio.efectoEn('roca_cae', d.malla.position, Math.min(1, v / 8));
+    });
+  }
   const losas = new Losas(nivel.dinamicos);
   const panelDiario = new PanelDiario();
   /** @type {Set<number>} */
@@ -411,6 +426,13 @@ async function iniciar() {
     const o = interactuables.objetivo;
     if (o && o.tipo === 'brazalete') {
       tomarBrazalete(o);
+      return;
+    }
+    // El mural se despierta y se duerme con E, sin gastar la Manipulación
+    if (o && o.tipo === 'mural') {
+      const despierto = mural.alternar();
+      audio.efecto(despierto ? 'acertijo_resuelto' : 'pagina', 0.5);
+      if (despierto) hud.nota('El mural cuenta la leyenda de la gema', 3);
       return;
     }
     if (!poderes.tiene('manipulacion')) return;
@@ -934,7 +956,7 @@ async function iniciar() {
 
   // ---------------- Inicio, pausa y derrota
   // Depuración: acceso desde la consola (y desde los scripts de medición y de revisión de cinemáticas)
-  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, jugador, teletransportar, mateo, rig, nivel, bucle } });
+  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, mural, jugador, teletransportar, mateo, rig, nivel, bucle } });
   bucle.pausado = !AUTOMATICO && !demo.activo;
   bucle.iniciar();
   if (AUTOMATICO) {

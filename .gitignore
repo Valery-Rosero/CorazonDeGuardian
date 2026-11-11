@@ -7,3 +7,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *.log
+
+# Material de clase descargado (no forma parte del proyecto)
+drive-download-*.zip

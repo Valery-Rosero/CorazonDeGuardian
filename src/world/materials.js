@@ -49,12 +49,15 @@ function agregarLuzDeContorno(material, color, fuerza) {
 export function aplicarMaterialesPersonaje(raiz, rampa) {
   const toon = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: rampa });
   agregarLuzDeContorno(toon, PALETA.oro_brillante, 0.32);
-  const gema = new THREE.MeshStandardMaterial({
+  // La gema lleva una capa de barniz brillante (clearcoat de MeshPhysicalMaterial, semana 4 del curso)
+  const gema = new THREE.MeshPhysicalMaterial({
     color: PALETA.gema_pulso,
     emissive: PALETA.gema_pulso,
     emissiveIntensity: 2.2,
     roughness: 0.25,
     metalness: 0.1,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.08,
   });
   raiz.traverse((o) => {
     const m = /** @type {THREE.Mesh} */ (o);

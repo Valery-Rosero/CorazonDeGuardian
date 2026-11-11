@@ -219,7 +219,27 @@ def musica_tema():
     return normalizar(s * cola, 0.75)
 
 
+def mural_canto():
+    """Canto del mural vivo (PositionalAudio): un coro suave en «a», con la vocal que se abre y cierra.
+    Bucle de 8 s con un número entero de ciclos de cada voz (sin chasquido al repetir)."""
+    largo = 8.0
+    n = int(largo * SR)
+    t = np.arange(n) / SR
+    s = np.zeros(n)
+    for f0, amp in ((N['A3'], 1.0), (N['E4'], 0.7), (N['A4'], 0.45), (N['C5'], 0.3)):
+        for d in (-0.003, 0.0, 0.004):
+            f = round(f0 * (1 + d) * largo) / largo
+            fase = 2 * np.pi * f * t
+            # Formantes de la «a» (700 y 1220 Hz) que dan la voz
+            voz = sum((1.0 / k) * np.sin(fase * k) * (np.exp(-((f * k - 700) / 260) ** 2) + 0.6 * np.exp(-((f * k - 1220) / 300) ** 2) + 0.15)
+                      for k in range(1, 9))
+            s += voz * amp
+    respira = 0.65 + 0.35 * np.sin(2 * np.pi * t / largo) ** 2
+    return normalizar(s * respira, 0.6)
+
+
 PIEZAS = {
     'musica_selva': musica_selva, 'musica_santuario': musica_santuario, 'musica_jefe': musica_jefe,
     'musica_escape': musica_escape, 'musica_tema': musica_tema,
+    'mural_canto': mural_canto,
 }

@@ -35,4 +35,10 @@ if (audio.status !== 0) {
   console.error('✖ La síntesis de audio falló (necesita Python 3 con numpy)');
   process.exit(audio.status ?? 1);
 }
-console.log('\n✔ Recursos generados en public/models/ y public/sounds/');
+console.log('\n▶ tools/video/video_leyenda.py');
+const video = spawnSync(python, ['tools/video/video_leyenda.py'], { stdio: 'inherit' });
+if (video.status !== 0) {
+  console.error('✖ El video del mural falló (necesita Python 3 con Pillow y ffmpeg)');
+  process.exit(video.status ?? 1);
+}
+console.log('\n✔ Recursos generados en public/models/, public/sounds/ y public/videos/');

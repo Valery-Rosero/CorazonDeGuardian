@@ -40,6 +40,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 | Documento | Contenido |
 |---|---|
 | [REQUISITOS_CURSO.md](REQUISITOS_CURSO.md) | Los 8 requisitos del curso: archivo, función y cómo demostrarlos |
+| [CHECKLIST_CURSO.md](CHECKLIST_CURSO.md) | Todo lo visto en las semanas 1 a 10 y cómo está en el juego |
 | [FUNCIONALIDADES.md](FUNCIONALIDADES.md) | Lo que tiene el juego y cómo se probó |
 | [CONTROLES.md](CONTROLES.md) | Teclas de juego y de depuración |
 | [EJECUTAR_Y_PUBLICAR.md](EJECUTAR_Y_PUBLICAR.md) | Compilar, publicar y probar en otra computadora |

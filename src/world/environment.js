@@ -131,6 +131,21 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
     sonda.sh.coefficients.forEach((c, i) => CIELO_SH.coef.value[i].copy(c));
   };
   medirCielo();
+  // Calidad media y alta: además, el mapa de entorno (IBL, semana 7 del curso) generado del mismo cielo
+  // con PMREMGenerator. Da también los reflejos del cielo; entonces la luz difusa la pone él y los
+  // armónicos se apagan (la cantidad de luz es la misma). En baja solo hay armónicos: es mucho más barato.
+  const ibl = calidad.bloom;
+  const pmrem = ibl ? new THREE.PMREMGenerator(renderer) : null;
+  /** @type {THREE.Texture | null} */
+  let entorno = null;
+  const generarEntorno = () => {
+    if (!pmrem) return;
+    entorno?.dispose();
+    entorno = pmrem.fromScene(escenaCielo).texture;
+    escena.environment = entorno;
+  };
+  generarEntorno();
+  CIELO_SH.fuerza.value = ibl ? 0 : 1;
 
   escena.fog = new THREE.FogExp2(PALETA.niebla_selva, ESCENARIO.niebla_selva);
 
@@ -176,7 +191,8 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
         else ul[k].value = u[k].value;
       }
       medirCielo();
-      CIELO_SH.fuerza.value = 1;
+      generarEntorno();
+      CIELO_SH.fuerza.value = ibl ? 0 : 1;
       const niebla = /** @type {THREE.FogExp2} */ (escena.fog);
       niebla.color.set('#F0BFB4');
       niebla.density = exterior.densidad * 0.8;
@@ -205,7 +221,8 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
       ambiente.intensity = dentro ? INTERIOR.ambiente : exterior.ambiente;
       sol.intensity = dentro ? INTERIOR.sol : exterior.sol;
       sol.castShadow = !dentro;
-      CIELO_SH.fuerza.value = dentro ? 0 : 1;
+      CIELO_SH.fuerza.value = dentro || ibl ? 0 : 1;
+      escena.environment = dentro ? null : entorno;
       escena.background = dentro ? new THREE.Color(INTERIOR.niebla) : null;
     },
     /** La cámara de sombras sigue a Victoria para mantener sombras nítidas. @param {THREE.Vector3} pos */

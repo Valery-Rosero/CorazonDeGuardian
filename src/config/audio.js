@@ -12,6 +12,7 @@ export const SONIDOS = Object.freeze({
   musica_jefe: '/sounds/musica_jefe.wav',
   musica_escape: '/sounds/musica_escape.wav',
   musica_tema: '/sounds/musica_tema.wav',
+  mural_canto: '/sounds/mural_canto.wav',
   cascada: '/sounds/cascada.wav',
   antorcha: '/sounds/antorcha.wav',
   ambiente_selva: '/sounds/ambiente_selva.wav',
