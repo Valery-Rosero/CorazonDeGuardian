@@ -69,7 +69,7 @@
       <div class="menu" id="menu-principal">
         <button type="button" class="boton" id="boton-jugar">Jugar</button>
         <button type="button" class="boton secundario" id="boton-opciones">Opciones</button>
-        <button type="button" class="boton secundario" id="boton-demo" disabled title="Llega el día 6">Demostración técnica</button>
+        <button type="button" class="boton secundario" id="boton-demo">Demostración técnica</button>
       </div>
       <div class="opciones oculto" id="opciones">
         <label>Volumen general <input type="range" id="opcion-volumen" min="0" max="1" step="0.05" value="1"></label>
@@ -83,6 +83,7 @@
     <div id="cine-franjas" aria-hidden="true"><div class="franja arriba"></div><div class="franja abajo"></div></div>
     <div id="cine-saltar" class="oculto" aria-hidden="true"><span class="anillo"></span>Mantén Espacio para saltar</div>
     <div id="rotulo" class="oculto" aria-hidden="true"></div>
+    <p id="foto-pista" aria-live="polite">Modo foto · arrastra para girar · rueda para acercar · botón derecho para desplazar · F o Esc para volver</p>
     <div id="titulo-intro" class="oculto" aria-hidden="true"></div>
 
     <div id="victoria" class="pantalla oculto">
@@ -124,6 +125,7 @@
       <div class="menu">
         <button type="button" class="boton" id="boton-continuar">Continuar</button>
         <button type="button" class="boton" id="boton-checkpoint">Volver al último pilar solar</button>
+        <button type="button" class="boton secundario" id="boton-foto">Modo foto (F)</button>
         <button type="button" class="boton secundario" id="boton-inicio">Reiniciar la aventura</button>
       </div>
       <p class="controles">WASD moverse · Shift correr · Espacio saltar · C esquivar · Clic Pulso · Q Escudo · E Manipular</p>

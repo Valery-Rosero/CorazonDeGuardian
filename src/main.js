@@ -24,6 +24,9 @@ import { ReproductorCine } from './cinematics/cinematic_player.js';
 import { GestorEnemigos } from './enemies/enemy_manager.js';
 import { ActoFinal } from './game/final_act.js';
 import { Historia } from './game/story.js';
+import { ModoDemo } from './game/demo_mode.js';
+import { CamaraLibre } from './camera/free_camera.js';
+import { crearAyudasVisuales } from './debug/helpers.js';
 import { MateoNPC } from './player/mateo_npc.js';
 import { Dialogos } from './ui/dialogue_player.js';
 import { InterfazFinal } from './ui/endgame_ui.js';
@@ -140,6 +143,8 @@ async function iniciar() {
   // ---------------- Cámara
   const perfiles = structuredClone(/** @type {any} */ (CAMERA_PROFILES));
   const rig = new CamaraTerceraPersona(camara, document.body, perfiles, { ...CAMERA_LIMITES });
+  // Cámara libre con OrbitControls: modo foto y demostración (requisito 2)
+  const camLibre = new CamaraLibre(camara, renderer.domElement);
   rig.colisionables = nivel.colisionables;
   const oclusion = new Oclusion(nivel.ocluibles, CAMERA_LIMITES.ocultar_opacidad);
 
@@ -734,7 +739,8 @@ async function iniciar() {
       }
     },
     camara: (dt) => {
-      if (cine.activo) cine.actualizar(dt, entrada.mantiene('saltar'));
+      if (camLibre.activa) { /* la mueve OrbitControls (etapa del HUD, también en pausa) */ }
+      else if (cine.activo) cine.actualizar(dt, entrada.mantiene('saltar'));
       else {
         rig.actualizar(dt, jugador.posicion, jugador);
         cine.mezclar(dt);
@@ -763,6 +769,8 @@ async function iniciar() {
     },
     hud: (dt) => {
       resolucion.actualizar(dt);
+      camLibre.actualizar();
+      demo.actualizar(dt);
       if (enMenu) {
         // Menú principal (el juego está en pausa): vista lenta del claro hacia la cima dorada de la pirámide
         const r = performance.now() / 1000;
@@ -796,7 +804,7 @@ async function iniciar() {
         if (!caja) {
           caja = document.createElement('div');
           caja.id = 'stats';
-          caja.style.cssText = 'position:fixed;left:0;right:0;top:40%;z-index:99;font:bold 40px monospace;color:#0f0;background:#000;padding:12px;text-align:center';
+          caja.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:8px;z-index:99;font:600 13px monospace;color:#9f9;background:rgba(0,0,0,0.65);padding:4px 10px;border-radius:4px;pointer-events:none';
           document.body.appendChild(caja);
         }
         caja.textContent = texto;
@@ -808,10 +816,87 @@ async function iniciar() {
     },
   });
 
+  // ---------------- Modo foto (F o desde la pausa): congela el juego y orbita alrededor de Victoria
+  let modoFoto = false;
+  const _objetivoFoto = new THREE.Vector3();
+  const entrarFoto = () => {
+    if (modoFoto || camLibre.activa || cine.activo || muerta || enMenu || amanecer) return;
+    modoFoto = true;
+    bucle.pausado = true;
+    pantallas.pausa(false);
+    document.body.classList.add('en-foto');
+    camLibre.activar(_objetivoFoto.copy(jugador.posicion).setY(jugador.posicion.y + 1.2));
+    if (rig.controles.isLocked) rig.controles.unlock();
+  };
+  const salirFoto = () => {
+    if (!modoFoto) return;
+    modoFoto = false;
+    camLibre.desactivar();
+    cine.mezclarDesde();
+    document.body.classList.remove('en-foto');
+    rig.controles.lock();
+  };
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyF' && !e.repeat) { if (modoFoto) salirFoto(); else if (!demo.activo) entrarFoto(); }
+    else if (e.code === 'Escape' && modoFoto) salirFoto();
+  });
+
+  // ---------------- Modo demostración (sección 1.4): menú «Demostración técnica» o ?demo
+  const _irPos = new THREE.Vector3();
+  /** @param {{spawn?: string, pos?: [number, number, number], rumbo?: number}} d */
+  const irA = (d) => {
+    if (camLibre.activa) { camLibre.desactivar(); demo.casillaLibre.checked = false; jugador.bloqueado = false; }
+    if (d.spawn) { teletransportar(d.spawn); return; }
+    if (!d.pos) return;
+    const r = THREE.MathUtils.degToRad(d.rumbo ?? 0);
+    // Medio metro más arriba: el terreno no es plano y la física la deja en el suelo
+    _irPos.set(d.pos[0], d.pos[1] + 0.6, d.pos[2]);
+    jugador.colocar(_irPos, r);
+    rig.reorientar(r);
+    aplicarZona(zonaDe(_irPos));
+  };
+  const demo = new ModoDemo({
+    renderer,
+    ir: irA,
+    ayudas: () => crearAyudasVisuales(escena, triggers, nivel.colisionables),
+    camaraLibre: (si) => {
+      if (si) {
+        jugador.bloqueado = true;
+        camLibre.activar(_objetivoFoto.copy(jugador.posicion).setY(jugador.posicion.y + 1.2));
+        if (rig.controles.isLocked) rig.controles.unlock();
+      } else {
+        camLibre.desactivar();
+        cine.mezclarDesde();
+        jugador.bloqueado = false;
+      }
+    },
+    salir: () => location.reload(),
+  });
+  const iniciarDemo = () => {
+    enMenu = false;
+    document.body.classList.remove('en-menu');
+    oyente.context.resume();
+    audio.iniciar();
+    pantallas.ocultarInicio();
+    document.getElementById('pantalla-carga')?.classList.add('oculto');
+    for (const p of ['pulso', 'escudo', 'manipulacion']) poderes.desbloquear(p);
+    huesoBrazalete.scale.setScalar(1);
+    vida.invulnerable = Infinity;   // en la demostración nada interrumpe la explicación
+    bucle.pausado = false;
+    demo.activar();
+    demo.mostrar(0);
+  };
+  document.getElementById('boton-demo')?.addEventListener('click', iniciarDemo);
+  if (params.has('demo')) {
+    // Sin un clic todavía no hay audio: se activa con la primera interacción
+    window.addEventListener('pointerdown', () => { oyente.context.resume(); audio.iniciar(); }, { once: true });
+    iniciarDemo();
+  }
+
   // ---------------- Inicio, pausa y derrota
   // Depuración: acceso desde la consola (y desde los scripts de medición y de revisión de cinemáticas)
-  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, jugador, teletransportar, mateo, rig, nivel, bucle } });
-  bucle.pausado = !AUTOMATICO;
+  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, jugador, teletransportar, mateo, rig, nivel, bucle } });
+  bucle.pausado = !AUTOMATICO && !demo.activo;
   bucle.iniciar();
   if (AUTOMATICO) {
     pantallas.ocultarInicio();
@@ -858,9 +943,12 @@ async function iniciar() {
     for (const codigo of (params.get('tecla') ?? '').split(',').filter(Boolean)) entrada.abajo.add(codigo);
     return;
   }
-  pantallas.mostrarInicio();
-  enMenu = true;
-  document.body.classList.add('en-menu');
+  // Con ?demo la partida empieza ya en la demostración: sin menú
+  if (!demo.activo) {
+    pantallas.mostrarInicio();
+    enMenu = true;
+    document.body.classList.add('en-menu');
+  }
   ui.menu({
     jugar: () => {
       enMenu = false;
@@ -888,6 +976,7 @@ async function iniciar() {
       reaparecer();
       rig.controles.lock();
     },
+    foto: () => entrarFoto(),
     inicio: () => location.reload(),
   });
   rig.controles.addEventListener('lock', () => {
@@ -896,6 +985,8 @@ async function iniciar() {
   });
   rig.controles.addEventListener('unlock', () => {
     if (amanecer) return;   // la pantalla de victoria deja el juego de fondo
+    // En el modo foto la pausa es la propia foto; en la demostración, el panel queda a mano sin pausar
+    if (modoFoto || demo.activo) return;
     bucle.pausado = true;
     if (panelDiario.abierto) panelDiario.cerrar();
     if (!muerta) pantallas.pausa(true);

@@ -114,9 +114,9 @@ export class Hud {
     });
   }
 
-  /** Botones del menú de pausa. @param {{continuar: () => void, checkpoint: () => void, inicio: () => void}} fn */
+  /** Botones del menú de pausa. @param {{continuar: () => void, checkpoint: () => void, foto: () => void, inicio: () => void}} fn */
   menuPausa(fn) {
-    for (const [id, accion] of [['boton-continuar', fn.continuar], ['boton-checkpoint', fn.checkpoint], ['boton-inicio', fn.inicio]]) {
+    for (const [id, accion] of [['boton-continuar', fn.continuar], ['boton-checkpoint', fn.checkpoint], ['boton-foto', fn.foto], ['boton-inicio', fn.inicio]]) {
       $(/** @type {string} */ (id)).addEventListener('click', (e) => {
         e.stopPropagation();
         /** @type {() => void} */ (accion)();

@@ -83,3 +83,23 @@ test('arena: tiene el trono, la entrada, el inicio del escape y los espectros de
   const tipos = sim.interactuables.lista.filter((o) => o.tipo === 'pilar_solar').map((o) => o.datos.pilar).sort();
   assert.deepEqual(tipos, [1, 2, 3]);
 });
+
+test('Guardián: despierto baja del trono y camina hacia Victoria; en el golpe sísmico salta antes de caer', () => {
+  const { combate } = crearCombate();
+  combate.empezarCombate();
+  combate.levantar(1);
+  const lejos = new THREE.Vector3(0, -3, 685);   // Victoria en la entrada, a ~24 m del trono
+  const inicio = combate.actor.raiz.position.clone();
+  let maxAlto = 0;
+  let sismicos = 0;
+  for (let t = 0; t < 14; t += DT) {
+    combate.actualizar(DT, t, lejos, true);
+    maxAlto = Math.max(maxAlto, combate.actor.pose.alto);
+    if (combate.logica.ataque?.tipo === 'sismico') sismicos++;
+  }
+  const avance = inicio.distanceTo(combate.actor.raiz.position);
+  assert.ok(avance > 3, `se movió ${avance.toFixed(2)} m desde el trono`);
+  assert.ok(combate.actor.raiz.position.z < inicio.z, 'hacia la entrada');
+  assert.ok(sismicos > 0, 'hubo al menos un golpe sísmico');
+  assert.ok(maxAlto > 1, `salto del golpe sísmico: ${maxAlto.toFixed(2)} m`);
+});

@@ -456,3 +456,37 @@ body.en-cine #cartografa, body.en-cine #poderes, body.en-cine #vida { opacity: 0
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
 }
+
+/* ---------- Modo foto (requisito 2: OrbitControls) ---------- */
+#foto-pista { display: none; position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 30; margin: 0;
+  padding: 6px 14px; border-radius: 4px; background: rgba(20, 14, 8, 0.6); color: #f0e7d6; font: 14px Georgia, serif; pointer-events: none; }
+body.en-foto #foto-pista { display: block; }
+body.en-foto #hud, body.en-foto #cartografa, body.en-foto #poderes, body.en-foto #vida, body.en-foto #subtitulo,
+body.en-foto #pausa, body.en-foto .lil-gui, body.en-foto #depuracion-info { visibility: hidden !important; }
+
+/* ---------- Modo demostración (sección 1.4) ---------- */
+#demo { position: fixed; top: 12px; right: 12px; bottom: 12px; width: min(340px, calc(100vw - 24px)); z-index: 40; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 8px;
+  background: rgba(18, 22, 20, 0.88); color: #e8ede9; font: 14px/1.45 Georgia, serif; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); }
+#demo.oculto { display: none; }
+#demo h2 { margin: 2px 0 0; font: 600 20px Georgia, serif; color: #ffd45e; }
+#demo h3 { margin: 0 0 6px; font: 600 16px Georgia, serif; color: #ffd45e; }
+#demo p { margin: 0 0 6px; }
+.demo-etiqueta { font: 600 11px monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #9fb3a8; }
+.demo-stats { font: 600 13px monospace; color: #9f9; background: rgba(0, 0, 0, 0.35); padding: 6px 8px; border-radius: 4px; }
+.demo-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.demo-lista button { width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; cursor: pointer; padding: 7px 10px;
+  border: 1px solid rgba(255, 212, 94, 0.25); border-radius: 5px; background: rgba(255, 255, 255, 0.04); color: inherit; font: inherit; }
+.demo-lista button span { font: 600 12px monospace; color: #ffd45e; min-width: 1.2em; }
+.demo-lista button:hover, .demo-lista button:focus-visible { background: rgba(255, 212, 94, 0.12); outline: none; }
+.demo-lista button.activo { background: rgba(255, 212, 94, 0.22); border-color: #ffd45e; }
+.demo-ficha { padding: 10px 12px; border-left: 3px solid #ffd45e; background: rgba(255, 255, 255, 0.05); }
+.demo-mira { color: #cfe3d6; }
+.demo-controles { display: grid; gap: 6px; }
+.demo-controles label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.demo-controles button { cursor: pointer; padding: 7px 10px; border-radius: 5px; border: 1px solid #8a6b3a; background: transparent; color: #f0e7d6; font: inherit; }
+.demo-pista { font-size: 12px; color: #9fb3a8; }
+body.en-demo .lil-gui { display: none; }
+#cartografa.resaltado { outline: 3px solid #ffd45e; outline-offset: 4px; animation: resaltar 1.2s ease-in-out infinite alternate; }
+@keyframes resaltar { from { outline-color: rgba(255, 212, 94, 0.25); } to { outline-color: #ffd45e; } }
+@media (prefers-reduced-motion: reduce) { #cartografa.resaltado { animation: none; } }

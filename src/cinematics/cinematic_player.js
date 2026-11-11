@@ -145,6 +145,15 @@ export class ReproductorCine {
     }
   }
 
+  /** Vuelve a la cámara de juego desde donde esté ahora (al salir del modo foto o de la cámara libre). @param {number} [d] */
+  mezclarDesde(d = 0.9) {
+    this.salida.pos.copy(this.camara.position);
+    this.salida.quat.copy(this.camara.quaternion);
+    this.salida.fov = this.camara.fov;
+    this.salida.t = 0;
+    this.salida.d = d;
+  }
+
   /**
    * Después de que la cámara de juego se colocó: la acerca a la última pose de la cinemática
    * y la suelta poco a poco, en lugar de saltar. @param {number} dt

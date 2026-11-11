@@ -21,29 +21,7 @@ import * as THREE from 'three';
 export function crearAtajos(s) {
   /** @type {THREE.Group | null} */
   let ayudas = null;
-  const crearAyudas = () => {
-    const g = new THREE.Group();
-    for (const t of s.triggers.cajas) {
-      const color = t.datos.evento === 'muerte' ? 0xff3b30 : t.datos.evento === 'portal' ? 0x3198db : t.datos.perfil_camara ? 0xb36bff : 0xddaa36;
-      g.add(new THREE.Box3Helper(t.caja, color));
-    }
-    for (const t of s.triggers.radios) {
-      const anillo = new THREE.Mesh(new THREE.TorusGeometry(t.radio, 0.04, 6, 48), new THREE.MeshBasicMaterial({ color: 0x4cd964 }));
-      anillo.rotation.x = Math.PI / 2;
-      anillo.position.copy(t.centro).add(new THREE.Vector3(0, 0.1, 0));
-      g.add(anillo);
-    }
-    const alambre = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true });
-    for (const c of s.colisionables) {
-      const m = /** @type {THREE.Mesh} */ (c);
-      if (!m.isMesh) continue;
-      const copia = new THREE.Mesh(m.geometry, alambre);
-      m.matrixWorld.decompose(copia.position, copia.quaternion, copia.scale);
-      g.add(copia);
-    }
-    s.escena.add(g);
-    return g;
-  };
+  const crearAyudas = () => crearAyudasVisuales(s.escena, s.triggers, s.colisionables);
 
   window.addEventListener('keydown', (e) => {
     switch (e.code) {
@@ -78,4 +56,37 @@ export function crearAtajos(s) {
       default:
     }
   });
+}
+
+/**
+ * Ayudas visuales (requisito 4 y modo demostración): cajas Box3Helper de los triggers AABB,
+ * anillos de los triggers radiales y los colisionadores físicos en malla de alambre.
+ * Se crean una sola vez, al pedirlas por primera vez.
+ * @param {THREE.Scene} escena
+ * @param {import('../world/triggers.js').SistemaTriggers} triggers
+ * @param {THREE.Object3D[]} colisionables
+ */
+export function crearAyudasVisuales(escena, triggers, colisionables) {
+  const g = new THREE.Group();
+  g.name = 'ayudas_depuracion';
+  for (const t of triggers.cajas) {
+    const color = t.datos.evento === 'muerte' ? 0xff3b30 : t.datos.evento === 'portal' ? 0x3198db : t.datos.perfil_camara ? 0xb36bff : 0xddaa36;
+    g.add(new THREE.Box3Helper(t.caja, color));
+  }
+  for (const t of triggers.radios) {
+    const anillo = new THREE.Mesh(new THREE.TorusGeometry(t.radio, 0.04, 6, 48), new THREE.MeshBasicMaterial({ color: 0x4cd964 }));
+    anillo.rotation.x = Math.PI / 2;
+    anillo.position.copy(t.centro).add(new THREE.Vector3(0, 0.1, 0));
+    g.add(anillo);
+  }
+  const alambre = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true });
+  for (const c of colisionables) {
+    const m = /** @type {THREE.Mesh} */ (c);
+    if (!m.isMesh) continue;
+    const copia = new THREE.Mesh(m.geometry, alambre);
+    m.matrixWorld.decompose(copia.position, copia.quaternion, copia.scale);
+    g.add(copia);
+  }
+  escena.add(g);
+  return g;
 }

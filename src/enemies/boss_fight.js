@@ -151,12 +151,18 @@ export class CombateGuardian {
     const pose = this.actor.pose;
     const a = l.ataque;
     const objetivo = { brazos: 0, golpe: 0, giro: 0, rugido: 0 };
+    let alto = 0;
     if (a) {
       const aviso = l.aviso(a.tipo);
       const u = Math.min(1, a.t / aviso);
       if (a.tipo === 'sismico' || a.tipo === 'rocas') {
         objetivo.brazos = a.golpeo ? 0 : u;
         objetivo.golpe = a.golpeo ? 1 : 0;
+      }
+      if (a.tipo === 'sismico') {
+        // Se agacha, salta con los brazos en alto y aterriza cuando nace el anillo
+        const s = Math.max(0, (u - 0.35) / 0.65);
+        alto = a.golpeo ? 0 : u < 0.35 ? -0.35 * (u / 0.35) : 1.6 * Math.sin(Math.PI * s) - 0.35 * (1 - s);
       } else if (a.tipo === 'barrido') {
         objetivo.giro = a.golpeo ? -0.9 : 0.9 * u;
       } else if (a.tipo === 'invocacion') {
@@ -169,9 +175,15 @@ export class CombateGuardian {
     for (const k of /** @type {const} */ (['brazos', 'golpe', 'giro', 'rugido'])) {
       pose[k] += (objetivo[k] - pose[k]) * Math.min(1, dt * (k === 'golpe' || k === 'giro' ? 14 : 6));
     }
+    pose.alto = alto;
     this.actor.actualizar(dt, jugador, {
       mover: this.estado === 'combate' && !a, nucleoAbierto: l.nucleoAbierto, rapidez: l.ritmo,
     }, this.d.centro);
+    // Pisadas pesadas: suenan y hacen temblar la cámara si Victoria está cerca
+    if (this.actor.pisada) {
+      this.d.avisos.sonido('roca_cae', this.actor.raiz.position, 0.35);
+      if (dist < 14) this.d.avisos.sacudida(0.12 * (1 - dist / 14));
+    }
     this.ataques.actualizar(dt, t, this.actor, jugador, enSuelo);
     this._pilares(dt, t);
   }

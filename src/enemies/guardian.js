@@ -156,7 +156,7 @@ export class ActorGuardian {
     this.rumbo = spawn.rumbo;
     this.sentado = 1;      // 1 = en el trono, 0 = de pie
     this.reloj = 0;
-    this.pose = { brazos: 0, golpe: 0, giro: 0, abre: 0, rugido: 0 };
+    this.pose = { brazos: 0, golpe: 0, giro: 0, abre: 0, rugido: 0, alto: 0 };
     this.fase = 0;
     this.visible = true;
     this.colocar();
@@ -216,7 +216,10 @@ export class ActorGuardian {
         const v = this.cfg.velocidad * estado.rapidez * dt;
         const nx = b.position.x + (dx / d) * v;
         const nz = b.position.z + (dz / d) * v;
-        if (Math.hypot(nx - centro.x, nz - centro.z) < this.cfg.radio_movimiento) b.position.set(nx, b.position.y, nz);
+        // Dentro del radio de la arena, o acercándose al centro (al bajar del trono empieza fuera del radio)
+        const antes = Math.hypot(b.position.x - centro.x, b.position.z - centro.z);
+        const despues = Math.hypot(nx - centro.x, nz - centro.z);
+        if (despues < this.cfg.radio_movimiento || despues < antes) b.position.set(nx, b.position.y, nz);
       }
     }
     this.colocar();
@@ -242,7 +245,20 @@ export class ActorGuardian {
     h.pierna_inf_der.rx += 1.35 * s;
     h.pierna_inf_izq.rx += 1.35 * s;
     h.cabeza.rx += 0.35 * s;
-    this.modelo.position.y = -0.15 * s;
+    // Salto del golpe sísmico (pose.alto la fija BossFight): en el aire encoge las piernas
+    this.modelo.position.y = -0.15 * s + p.alto;
+    const aire = Math.max(0, Math.min(1, p.alto / 0.6));
+    h.pierna_sup_der.rx += -0.6 * aire;
+    h.pierna_sup_izq.rx += -0.6 * aire;
+    h.pierna_inf_der.rx += 0.9 * aire;
+    h.pierna_inf_izq.rx += 0.9 * aire;
+    // Agachado antes de despegar
+    const agacha = Math.max(0, -p.alto / 0.35);
+    h.pierna_sup_der.rx += -0.5 * agacha;
+    h.pierna_sup_izq.rx += -0.5 * agacha;
+    h.pierna_inf_der.rx += 0.8 * agacha;
+    h.pierna_inf_izq.rx += 0.8 * agacha;
+    h.torso.rx += 0.25 * agacha;
     // Respiración pesada
     h.torso.rx += Math.sin(t * 1.1) * 0.03;
     // Núcleo abierto: se tambalea con los brazos abiertos (expone el pecho)
@@ -264,7 +280,11 @@ export class ActorGuardian {
     h.cabeza.rx += -0.3 * p.rugido;
     // Caminar (cuando se acerca)
     const anda = this.sentado < 0.01 && !estado.nucleoAbierto && d > this.cfg.distancia_comoda ? 1 : 0;
-    const paso = Math.sin(t * 2.4) * 0.32 * anda;
+    const fasePaso = Math.sin(t * 2.4);
+    const paso = fasePaso * 0.32 * anda;
+    // Pisada: cada vez que un pie llega al suelo (BossFight la hace sonar y temblar)
+    this.pisada = anda > 0 && Math.sign(fasePaso) !== Math.sign(this._fasePaso ?? fasePaso);
+    this._fasePaso = fasePaso;
     h.pierna_sup_der.rx += paso;
     h.pierna_sup_izq.rx -= paso;
     for (const k of Object.values(h)) k.aplicar();
