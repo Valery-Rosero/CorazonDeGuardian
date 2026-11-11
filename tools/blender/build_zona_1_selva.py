@@ -325,6 +325,36 @@ def checkpoints_y_flores(m):
         vacio(f'trg_rad_flor_{n}', (x, y, z), props={'radio': 1.3, 'evento': 'flor', 'flor': n})
 
 
+def interactuables(m, rnd):
+    """Objetos de la Manipulación ancestral (E): el brazalete, las páginas del diario y la losa."""
+    # Brazalete sobre el altar: aro de 12 segmentos dorados con la gema azul
+    b = Constructor(PALETA, semilla=31, variacion=0.02)
+    for i in range(12):
+        a = math.tau * i / 12
+        b.agregar(caja_biselada(0.09, 0.05, 0.07, 0.012), 'oro_brillante', 'escenario',
+                  colocar((math.cos(a) * 0.15, math.sin(a) * 0.15, 0), (0, 0, math.degrees(a))), material=1)
+    b.agregar(casco([(0.15, 0, 0.05), (0.15, 0, -0.05), (0.15, 0.04, 0), (0.15, -0.04, 0), (0.21, 0, 0)]),
+              'cristal_runa', 'escenario', material=2)
+    objeto_suelto('prop_brazalete', b, [m['toon'], m['oro'], m['runa']], (ALTAR[0], ALTAR[1], 1.85),
+                  {'interactuable': 'brazalete', 'etiqueta': 'Tomar el brazalete', 'flotar': 1})
+    # Páginas del diario: hoja con una piedrita encima
+    for n, (pos, giro) in {1: ((1.2, -5.6, 0.36), 20), 2: ((8.6, -71.5, 0.0), -35), 3: ((2.6, -129.2, MESETA[2]), 60)}.items():
+        p = Constructor(PALETA, semilla=90 + n, variacion=0.04)
+        p.agregar(caja_biselada(0.32, 0.42, 0.012, 0.004), 'papel', 'escenario', colocar((0, 0, 0.006), (0, 0, giro)))
+        p.agregar(caja_biselada(0.3, 0.06, 0.014, 0.004), 'papel_sombra', 'escenario', colocar((0.01, -0.12, 0.012), (0, 0, giro)))
+        p.agregar(casco(rock_builder.puntos_roca((0.06, 0.08, 0.04), 0.07, rnd)), tono_piedra, 'escenario')
+        objeto_suelto(f'pagina_{n}', p, [m['toon']], pos, {'interactuable': 'pagina', 'pagina': n, 'etiqueta': 'Leer la página'})
+    # Losa que cierra lo alto de la escalinata de las ruinas: se hunde en la terraza al manipularla
+    zt = MESETA[2] + 2.4
+    l = Constructor(PALETA, semilla=77, variacion=0.04)
+    l.agregar(caja_biselada(12.0, 0.8, 2.4, 0.12), tono_piedra, 'escenario')
+    for i in range(5):
+        l.agregar(caja_biselada(0.5, 0.06, 0.5, 0.05), 'cristal_runa', 'escenario', colocar((-4 + i * 2, -0.42, 0.3), (0, 45, 0)), material=1)
+    objeto_suelto('dyn_losa_1', l, [m['toon'], m['runa']], (0, -143.0, zt + 1.2),
+                  {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa',
+                   'etiqueta': 'Mover la losa', 'mover': [0.0, 0.0, -2.45], 'duracion': 1.6})
+
+
 def triggers_y_puntos():
     zonas = [
         ('claro', (-24, -16, -1), (24, 20, 8), 'La selva olvidada — Claro de entrada'),
@@ -419,6 +449,7 @@ def main():
     ruinas(k, m, rnd)
     paisaje(k, m, rnd)
     checkpoints_y_flores(m)
+    interactuables(m, rnd)
     triggers_y_puntos()
     plantas = vegetacion(m, rnd)
 

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { before, test } from 'node:test';
+import * as THREE from 'three';
 import { crearSimulacion } from './simulacion.js';
 
 /** @type {Awaited<ReturnType<typeof crearSimulacion>>} */
@@ -144,13 +145,73 @@ test('recorrido completo de la zona 1: del claro al pórtico del santuario', () 
   seguir(sendero, 8);
   assert.ok(sim.eventos.includes('portal:portal_cornisa'), 'entra al portal de la cueva');
   sim.eventos.length = 0;
-  seguir([[0, -110], [0, -128], [0, -136], [0, -145], [0, -150]], 8);
+  seguir([[0, -110], [0, -128], [0, -136], [0, -141.6]], 8);
+  // La losa cierra lo alto de la escalinata: se abre con la Manipulación ancestral
+  sim.mirar(0);
+  sim.correr(0.2);
+  assert.equal(sim.manipular(), 'losa', 'la losa es el objetivo de la Manipulación');
+  sim.correr(2);
+  seguir([[0, -146], [0, -150]], 8);
   zonas.add(sim.triggers.zona);
   assert.ok(!sim.muerta, 'no cae al abismo');
   assert.ok(sim.jugador.posicion.y > 14, 'llega a la terraza del pórtico');
   for (const z of ['Claro de entrada', 'Sendero de los helechos', 'Cascada', 'Cueva de las runas', 'Puente viejo', 'Ruinas del pórtico']) {
     assert.ok([...zonas].some((n) => n.includes(z)), `pasó por «${z}» (zonas: ${[...zonas].join(' | ')})`);
   }
+});
+
+test('la losa cierra el paso al pórtico hasta que se usa la Manipulación', () => {
+  reiniciar();
+  const losa = sim.losas.lista[0];
+  losa.t = -1;
+  losa.cuerpo.position.set(losa.desde.x, losa.desde.y, losa.desde.z);
+  for (const o of sim.interactuables.lista) if (o.tipo === 'losa') o.activo = true;
+  sim.ir('debug_3');
+  sim.teclas('adelante');
+  sim.correr(6);
+  assert.ok(sim.jugador.posicion.z < 143, `la losa la detiene antes del pórtico (z = ${sim.jugador.posicion.z.toFixed(2)})`);
+  sim.teclas();
+  assert.equal(sim.manipular(), 'losa');
+  sim.correr(2);
+  assert.ok(losa.cuerpo.position.y < losa.desde.y - 2.3, 'la losa se hundió');
+  sim.teclas('adelante');
+  sim.correr(3);
+  assert.ok(sim.jugador.posicion.z > 146, `ahora pasa (z = ${sim.jugador.posicion.z.toFixed(2)})`);
+});
+
+test('el Pulso solar empuja una esfera ritual', () => {
+  reiniciar();
+  const esfera = sim.nivel.dinamicos.find((d) => d.datos.forma === 'esfera');
+  esfera.cuerpo.position.set(esfera.inicio.p.x, esfera.inicio.p.y, esfera.inicio.p.z);
+  esfera.cuerpo.velocity.set(0, 0, 0);
+  sim.correr(0.5);
+  const inicio = esfera.cuerpo.position.clone();
+  // Desde 1,4 m y hacia el centro abierto del claro (en la otra dirección hay obstáculos cerca)
+  const origen = new THREE.Vector3(inicio.x, inicio.y, inicio.z + 1.4);
+  sim.pulsos.disparar(origen, new THREE.Vector3(0, 0, -1));
+  sim.correr(1.5);
+  assert.ok(sim.eventos.includes('impacto:dinamico'), `eventos: ${sim.eventos.join(', ')}`);
+  const { cuerpo, pos } = sim.ultimoImpacto;
+  assert.ok(cuerpo.position.distanceTo(pos) > 0.5, `la esfera golpeada rodó ${cuerpo.position.distanceTo(pos).toFixed(2)} m`);
+});
+
+test('el Pulso solar no atraviesa los riscos y su proyectil vuelve al pool', () => {
+  reiniciar();
+  // Desde el sendero hacia la pared del desfiladero (x > 14)
+  sim.pulsos.disparar(new THREE.Vector3(8, 1.5, 70), new THREE.Vector3(1, 0, 0));
+  sim.correr(1.5);
+  assert.ok(sim.eventos.includes('impacto:estatico'), `eventos: ${sim.eventos.join(', ')}`);
+  assert.equal(sim.pulsos.activos, 0);
+});
+
+test('el pool de pulsos nunca crea proyectiles nuevos: recicla el más antiguo', () => {
+  reiniciar();
+  const antes = sim.pulsos.lista.length;
+  for (let i = 0; i < 20; i++) sim.pulsos.disparar(new THREE.Vector3(0, 30, 0), new THREE.Vector3(0, 1, 0));
+  assert.equal(sim.pulsos.lista.length, antes);
+  assert.equal(sim.pulsos.activos, 16);
+  sim.correr(2);
+  assert.equal(sim.pulsos.activos, 0, 'se apagan al llegar a su alcance');
 });
 
 test('el mundo está cerrado: caminar hacia el borde del claro no saca a Victoria del mapa', () => {

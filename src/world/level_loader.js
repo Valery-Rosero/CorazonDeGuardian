@@ -37,6 +37,7 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
     /** @type {Record<number, THREE.Object3D>} */ flores: {},
     /** @type {THREE.Object3D[]} */ giratorios: [],
     /** @type {THREE.MeshStandardMaterial[]} */ runas: [],
+    /** @type {THREE.Object3D[]} */ interactuables: [],
   };
 
   /** @type {THREE.Object3D[]} */
@@ -45,8 +46,20 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
   /** @type {THREE.Object3D[]} */
   const quitar = [];
 
+  /**
+   * Un objeto con varios materiales llega como un grupo cuyas mallas hijas heredan el nombre
+   * (dyn_losa_1 → dyn_losa_1_1, dyn_losa_1_2). Las hijas forman parte del padre: no son objetos nuevos.
+   * @param {THREE.Object3D} o
+   */
+  const esParteDeOtro = (o) => {
+    for (let p = o.parent; p && p !== raiz; p = p.parent) {
+      if (clasificarNombre(p.name).tipo !== 'visual') return true;
+    }
+    return false;
+  };
+
   for (const o of objetos) {
-    const { tipo, clave } = clasificarNombre(o.name);
+    const { tipo, clave } = esParteDeOtro(o) ? { tipo: 'visual', clave: '' } : clasificarNombre(o.name);
     if (esColisionador(tipo)) {
       crearColisionador(/** @type {THREE.Mesh} */ (o), tipo, fisica);
       o.visible = false;
@@ -77,6 +90,7 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
     if (o.name.startsWith('pilar_checkpoint_') && o.userData.checkpoint) res.pilares[Number(o.userData.checkpoint)] = o;
     if (o.name.startsWith('flor_') && o.userData.cura) res.flores[Number(o.name.split('_')[1])] = o;
     if (o.userData.girar) res.giratorios.push(o);
+    if (o.userData.interactuable && !res.interactuables.includes(o)) res.interactuables.push(o);
   }
   for (const o of quitar) o.removeFromParent();
 

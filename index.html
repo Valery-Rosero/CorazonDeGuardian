@@ -13,6 +13,7 @@
         <div class="cartografa-titulo">Cuaderno de la cartógrafa</div>
         <div id="cartografa-zona">Territorio sin cartografiar</div>
         <div id="cartografa-coords">X: 0.0 | Y: 0.0 | Z: 0.0</div>
+        <div id="cartografa-diario">Diario: 0/6</div>
         <div id="cartografa-mensaje"></div>
         <div class="brujula" aria-hidden="true">
           <div id="cartografa-aguja" class="rosa">
@@ -26,6 +27,25 @@
         <div class="vida-barra"><div id="vida-relleno"></div></div>
         <span id="vida-texto">100</span>
       </div>
+      <div id="poderes" aria-label="Poderes del brazalete">
+        <div class="poder bloqueado" id="poder-pulso" data-poder="pulso" style="--p: 1">
+          <div class="poder-icono"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="7"></circle><g stroke-linecap="round"><line x1="20" y1="4" x2="20" y2="9"></line><line x1="20" y1="31" x2="20" y2="36"></line><line x1="4" y1="20" x2="9" y2="20"></line><line x1="31" y1="20" x2="36" y2="20"></line><line x1="8.7" y1="8.7" x2="12.2" y2="12.2"></line><line x1="27.8" y1="27.8" x2="31.3" y2="31.3"></line><line x1="8.7" y1="31.3" x2="12.2" y2="27.8"></line><line x1="27.8" y1="12.2" x2="31.3" y2="8.7"></line></g></svg></div>
+          <span class="poder-tecla">Clic</span>
+          <span class="poder-nombre">Pulso solar</span>
+        </div>
+        <div class="poder bloqueado" id="poder-escudo" data-poder="escudo" style="--p: 1">
+          <div class="poder-icono"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5 L33 10 V20 C33 28 27 33 20 36 C13 33 7 28 7 20 V10 Z"></path></svg></div>
+          <span class="poder-tecla">Q</span>
+          <span class="poder-nombre">Escudo arcano</span>
+        </div>
+        <div class="poder bloqueado" id="poder-manipulacion" data-poder="manipulacion" style="--p: 1">
+          <div class="poder-icono"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M13 30 V17 a2.5 2.5 0 0 1 5 0 V13 a2.5 2.5 0 0 1 5 0 V15 a2.5 2.5 0 0 1 5 0 V24 C28 30 24 34 19 34 C15 34 13 32 11 28 L8 22 a2.4 2.4 0 0 1 4 -2.4 Z"></path></svg></div>
+          <span class="poder-tecla">E</span>
+          <span class="poder-nombre">Manipulación</span>
+        </div>
+      </div>
+      <div id="aviso-interaccion" class="oculto"><span class="tecla">E</span><span id="aviso-texto"></span></div>
+      <div id="tutorial" class="oculto"></div>
       <div id="reticula" aria-hidden="true"></div>
       <div id="vinyeta" aria-hidden="true"></div>
       <div id="subtitulo" class="oculto" data-estilo="calido">
@@ -42,7 +62,7 @@
     <div id="pantalla-inicio" class="pantalla oculto">
       <h1 class="titulo-oro">El Templo del Sol Perdido</h1>
       <p class="aviso">Haz clic para comenzar</p>
-      <p class="controles">WASD moverse · Shift correr · Espacio saltar · Ratón cámara · P o Esc pausa</p>
+      <p class="controles">WASD moverse · Shift correr · Espacio saltar · C esquivar · Ratón cámara · P o Esc pausa</p>
     </div>
 
     <div id="destello" aria-hidden="true"></div>
@@ -53,9 +73,29 @@
       <button id="boton-reintentar" type="button" class="boton">Reintentar</button>
     </div>
 
+    <div id="diario" class="oculto" role="dialog" aria-labelledby="diario-titulo">
+      <svg class="filtros" aria-hidden="true">
+        <filter id="papel-viejo"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="4" seed="7"></feTurbulence><feColorMatrix values="0 0 0 0 0.42  0 0 0 0 0.3  0 0 0 0 0.16  0 0 0 0.55 0"></feColorMatrix><feComposite in2="SourceGraphic" operator="in"></feComposite></filter>
+      </svg>
+      <article class="hoja">
+        <div class="hoja-textura" aria-hidden="true"></div>
+        <header>
+          <span id="diario-titulo">Diario de Mateo Solano</span>
+          <span id="diario-numero">Página 1 de 6</span>
+        </header>
+        <p id="diario-texto"></p>
+        <footer>E o clic para cerrar</footer>
+      </article>
+    </div>
+
     <div id="pausa" class="pantalla oculto">
       <h2 class="titulo-oro">Pausa</h2>
-      <p class="aviso">Haz clic para continuar</p>
+      <div class="menu">
+        <button type="button" class="boton" id="boton-continuar">Continuar</button>
+        <button type="button" class="boton" id="boton-checkpoint">Volver al último pilar solar</button>
+        <button type="button" class="boton secundario" id="boton-inicio">Reiniciar la aventura</button>
+      </div>
+      <p class="controles">WASD moverse · Shift correr · Espacio saltar · C esquivar · Clic Pulso · Q Escudo · E Manipular</p>
     </div>
 
     <script type="module" src="/src/main.js"></script>

@@ -65,6 +65,13 @@ export class ControladorJugador {
     this._adelante = new THREE.Vector3();
     this._derecha = new THREE.Vector3();
     this._dir = new THREE.Vector3();
+    // Esquiva: impulso corto en la dirección de la entrada (o hacia delante)
+    this._esquivaT = 0;
+    this._esquivaV = 0;
+    this._esquivaDir = new THREE.Vector3();
+    // Al disparar o interactuar, Victoria gira hacia donde apunta la cámara
+    this._rumboForzado = 0;
+    this._tForzado = 0;
 
     // Comprobación de suelo por contacto (semana 6): normal del contacto hacia arriba.
     /** @type {CANNON.Body | null} */
@@ -92,6 +99,23 @@ export class ControladorJugador {
     this.posicion.set(pies.x, pies.y, pies.z);
     this.modelo.position.copy(this.posicion);
     this.modelo.rotation.y = this.orientacion;
+  }
+
+  /**
+   * Esquiva (sección 5.2): 'distancia' metros en 'duracion' segundos.
+   * @param {{distancia:number, duracion:number}} cfg
+   */
+  esquivar(cfg) {
+    if (this._dir.lengthSq() > 1e-4) this._esquivaDir.copy(this._dir);
+    else this._esquivaDir.set(Math.sin(this.orientacion), 0, Math.cos(this.orientacion));
+    this._esquivaT = cfg.duracion;
+    this._esquivaV = cfg.distancia / cfg.duracion;
+  }
+
+  /** Gira a Victoria hacia un rumbo durante un momento (disparar, manipular). @param {number} rumbo @param {number} tiempo */
+  mirarHacia(rumbo, tiempo) {
+    this._rumboForzado = rumbo;
+    this._tForzado = tiempo;
   }
 
   /**
@@ -136,8 +160,14 @@ export class ControladorJugador {
     this.corriendo = hayEntrada && e.mantiene('correr');
     const vmax = this.corriendo ? cfg.velocidad_correr : cfg.velocidad_caminar;
     const acel = this.enSuelo ? (hayEntrada ? cfg.aceleracion : cfg.frenado) : cfg.aceleracion_aire;
-    b.velocity.x = acercar(b.velocity.x, this._dir.x * vmax, acel * dt);
-    b.velocity.z = acercar(b.velocity.z, this._dir.z * vmax, acel * dt);
+    if (this._esquivaT > 0) {
+      this._esquivaT -= dt;
+      b.velocity.x = this._esquivaDir.x * this._esquivaV;
+      b.velocity.z = this._esquivaDir.z * this._esquivaV;
+    } else {
+      b.velocity.x = acercar(b.velocity.x, this._dir.x * vmax, acel * dt);
+      b.velocity.z = acercar(b.velocity.z, this._dir.z * vmax, acel * dt);
+    }
 
     // Salto con coyote time y memoria de tecla; gravedad extra al caer
     this.salto = false;
@@ -148,8 +178,13 @@ export class ControladorJugador {
     }
     if (!this.enSuelo && b.velocity.y < 0) b.velocity.y -= GRAVEDAD * (cfg.gravedad_extra_caida - 1) * dt;
 
-    // Orientación del modelo hacia donde se mueve
-    if (hayEntrada) {
+    // Orientación del modelo: hacia donde apunta (si está disparando) o hacia donde se mueve
+    if (this._tForzado > 0) {
+      this._tForzado -= dt;
+      this.orientacion += anguloMasCorto(this.orientacion, this._rumboForzado) * (1 - Math.exp(-dt * cfg.giro * 2));
+    } else if (this._esquivaT > 0) {
+      this.orientacion += anguloMasCorto(this.orientacion, Math.atan2(this._esquivaDir.x, this._esquivaDir.z)) * (1 - Math.exp(-dt * cfg.giro * 2));
+    } else if (hayEntrada) {
       const objetivo = Math.atan2(this._dir.x, this._dir.z);
       this.orientacion += anguloMasCorto(this.orientacion, objetivo) * (1 - Math.exp(-dt * cfg.giro));
     }

@@ -110,6 +110,29 @@ export function crearParticulasDeEmisor(em, tex, escala) {
   }
 }
 
+/** Estela del Pulso solar y destellos pequeños: partículas cortas, sin gravedad. */
+export function crearEstela(tex) {
+  return new SistemaParticulas({
+    capacidad: 260, textura: tex, aditivo: true, arrastre: 3, perfil: 'desvanecer', continuo: false,
+    nacer: () => {},
+  });
+}
+
+/**
+ * @param {SistemaParticulas} s
+ * @param {THREE.Vector3} pos
+ * @param {string} hex
+ * @param {number} [cantidad]
+ * @param {number} [vida]
+ */
+export function chispaEn(s, pos, hex, cantidad = 1, vida = 0.28) {
+  const c = rgb(hex);
+  s.rafaga(cantidad, (sis, i) => {
+    sis.colocar(i, pos.x + (R() - 0.5) * 0.08, pos.y + (R() - 0.5) * 0.08, pos.z + (R() - 0.5) * 0.08,
+      (R() - 0.5) * 0.6, (R() - 0.2) * 0.6, (R() - 0.5) * 0.6, vida * (0.6 + R() * 0.6), 0.14 + R() * 0.1, 0.9, c[0], c[1], c[2]);
+  });
+}
+
 /** Sistema de ráfagas (checkpoint, flor, portal, chispas): no continuo, se dispara bajo demanda. */
 export function crearRafagas(tex) {
   return new SistemaParticulas({

@@ -58,6 +58,33 @@ class Resorte {
 const mezclar = (a, b, t) => a + (b - a) * t;
 
 /**
+ * Gestos del torso y los brazos (capa 2 de la animación): se mezclan sobre la locomoción
+ * sin detener las piernas. Rotaciones [x, y, z] en el espacio del personaje.
+ * El poncho se levanta junto con los brazos para que no lo atraviesen.
+ * @type {Record<string, {duracion: number, huesos: Record<string, [number, number, number]>}>}
+ */
+const GESTOS = {
+  disparo: { duracion: 0.34, huesos: {
+    brazo_sup_der: [-1.5, 0, -0.12], brazo_inf_der: [-0.1, 0, 0], mano_der: [-0.2, 0, 0], torso: [0, -0.2, 0],
+    poncho_delante: [-0.4, 0, 0] } },
+  escudo: { duracion: 0.7, huesos: {
+    brazo_sup_izq: [-1.2, 0, -0.38], brazo_inf_izq: [-1.15, 0, 0], brazo_sup_der: [-1.2, 0, 0.38], brazo_inf_der: [-1.15, 0, 0],
+    cabeza: [0.12, 0, 0], poncho_delante: [-0.45, 0, 0] } },
+  manipular: { duracion: 0.6, huesos: {
+    brazo_sup_der: [-1.25, 0, 0.08], brazo_inf_der: [-0.25, 0, 0], mano_der: [-0.35, 0, 0], cabeza: [0.12, 0, 0],
+    poncho_delante: [-0.3, 0, 0] } },
+  chisporroteo: { duracion: 0.35, huesos: {
+    brazo_sup_der: [-0.9, 0, 0.1], brazo_inf_der: [-0.6, 0, 0], mano_der: [0.3, 0, 0], poncho_delante: [-0.2, 0, 0] } },
+  mirar_brazalete: { duracion: 2.4, huesos: {
+    brazo_sup_der: [-0.55, 0, 0.3], brazo_inf_der: [-1.75, 0, 0], mano_der: [0.2, 0, 0], cabeza: [0.38, 0.15, 0],
+    poncho_delante: [-0.25, 0, 0] } },
+  esquiva: { duracion: 0.35, huesos: {
+    torso: [0.85, 0, 0], cabeza: [0.3, 0, 0], pierna_sup_izq: [-1.15, 0, 0], pierna_inf_izq: [1.5, 0, 0],
+    pierna_sup_der: [-0.95, 0, 0], pierna_inf_der: [1.4, 0, 0], brazo_sup_izq: [-0.9, 0, 0.25], brazo_sup_der: [-0.9, 0, -0.25],
+    brazo_inf_izq: [-1.0, 0, 0], brazo_inf_der: [-1.0, 0, 0] } },
+};
+
+/**
  * Animación procedural de Victoria por capas: locomoción, aire, respiración y movimiento secundario.
  * Cada fotograma se acumulan rotaciones en cada hueso y se aplican al final.
  */
@@ -94,6 +121,25 @@ export class AnimadorProcedural {
     this.ponchoDelante = new Resorte();
     this.ponchoDetras = new Resorte();
     this.aplastamiento = new Resorte();
+    /** Gesto en curso (solo uno a la vez: uno nuevo reemplaza al anterior). */
+    this.gestoActual = /** @type {{duracion:number, huesos:Record<string, [number, number, number]>} | null} */ (null);
+    this.tGesto = 0;
+    // Pares (hueso, pose) precalculados por gesto para no crear nada en el bucle
+    /** @type {Record<string, {h: HuesoAnimable, p: [number, number, number]}[]>} */
+    this.paresGesto = {};
+    for (const [nombre, g] of Object.entries(GESTOS)) {
+      this.paresGesto[nombre] = Object.entries(g.huesos).filter(([n]) => n in this.h).map(([n, p]) => ({ h: this.h[n], p }));
+    }
+    this.pares = /** @type {{h: HuesoAnimable, p: [number, number, number]}[]} */ ([]);
+  }
+
+  /** Lanza un gesto (disparo, escudo, manipular...). @param {string} nombre @param {number} [duracion] */
+  gesto(nombre, duracion) {
+    const g = GESTOS[nombre];
+    if (!g) return;
+    this.gestoActual = duracion ? { ...g, duracion } : g;
+    this.pares = this.paresGesto[nombre];
+    this.tGesto = 0;
   }
 
   /** @param {string} nombre */
@@ -183,6 +229,21 @@ export class AnimadorProcedural {
     // +rx lleva la punta hacia atrás: al correr el viento pega el poncho al cuerpo; al saltar se levanta
     h.poncho_delante.rx += this.ponchoDelante.paso(0.05 * vNorm - pa * 0.18, dt, k, amort);
     h.poncho_detras.rx += this.ponchoDetras.paso(0.16 * vNorm + pa * 0.12, dt, k, amort);
+
+    // --- Capa de gestos: entrada en 0,08 s y salida en 0,15 s
+    if (this.gestoActual) {
+      this.tGesto += dt;
+      const d = this.gestoActual.duracion;
+      const t = this.tGesto;
+      const w = Math.min(1, t / 0.08) * Math.min(1, Math.max(0, (d - t) / 0.15));
+      for (let i = 0; i < this.pares.length; i++) {
+        const { h: hueso, p } = this.pares[i];
+        hueso.rx = mezclar(hueso.rx, p[0], w);
+        hueso.ry = mezclar(hueso.ry, p[1], w);
+        hueso.rz = mezclar(hueso.rz, p[2], w);
+      }
+      if (t >= d) this.gestoActual = null;
+    }
 
     for (let i = 0; i < this.lista.length; i++) this.lista[i].aplicar();
   }

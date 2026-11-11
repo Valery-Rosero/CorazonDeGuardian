@@ -82,6 +82,14 @@ test('zona 1: como máximo 4 luces puntuales (los shaders no se recompilan)', ()
   assert.ok(nodos.filter((n) => n.name.startsWith('luz_')).length <= 4);
 });
 
+test('zona 1: las mallas hijas de un objeto especial no se convierten en objetos nuevos', async () => {
+  const { crearSimulacion } = await import('./simulacion.js');
+  const sim = await crearSimulacion();
+  const nombres = sim.nivel.dinamicos.map((d) => d.malla.name).sort();
+  assert.equal(nombres.filter((n) => n.startsWith('dyn_losa')).length, 1, `dinámicos: ${nombres.join(', ')}`);
+  assert.equal(sim.nivel.dinamicos.length, 20 + 3 + 1, 'tablas + esferas + losa');
+});
+
 test('todos los sonidos configurados existen en public/', () => {
   for (const [nombre, ruta] of Object.entries(SONIDOS)) assert.ok(existsSync(`public${ruta}`), `${nombre}: ${ruta}`);
 });

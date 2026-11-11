@@ -18,7 +18,19 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Haz clic en la pantalla para empezar. **Controles:** WASD para moverse, Shift para correr, Espacio para saltar, el ratón para la cámara y P o Esc para pausar.
+Haz clic en la pantalla para empezar.
+
+| Acción | Tecla |
+|---|---|
+| Moverse / correr | WASD / Shift |
+| Saltar / esquivar | Espacio / C |
+| Pulso solar | Clic izquierdo |
+| Escudo arcano | Q |
+| Manipulación ancestral | E |
+| Cámara | Ratón |
+| Pausa | P o Esc |
+
+Los poderes se desbloquean en orden. El Pulso solar y la Manipulación se obtienen al tomar el brazalete del altar del claro. El Escudo llega en el santuario (zona 2).
 
 En `npm run dev`, o con `?debug` en la URL, aparece el panel de depuración. Muestra los FPS y las llamadas de dibujo, y permite ajustar en vivo la velocidad, el salto, la cámara y la cara. Desde ahí se puede probar cada emoción y hacer que Victoria diga una línea.
 
@@ -39,6 +51,8 @@ En `npm run dev`, o con `?debug` en la URL, aparece el panel de depuración. Mue
 |---|---|
 | 1, 2, 3 | Teletransporte: entrada, cornisa, ruinas |
 | 6 | Invulnerabilidad |
+| 7 | Desbloquear los tres poderes |
+| 8 | Recibir 20 de daño (para probar el escudo, la esquiva y la vida; luego será la vida del jefe al 36 %) |
 | 9 | Mostrar u ocultar los FPS y las llamadas de dibujo |
 | 0 | Mostrar u ocultar los triggers y los colisionadores |
 

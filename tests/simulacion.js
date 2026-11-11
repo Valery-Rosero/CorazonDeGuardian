@@ -3,7 +3,12 @@
 import { readFileSync } from 'node:fs';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { ESCUDO, ESQUIVA, MANIPULACION, PULSO } from '../src/config/abilities.js';
 import { PORTAL, PUENTE } from '../src/config/level.js';
+import { Interactuables } from '../src/interaction/interactables.js';
+import { Losas } from '../src/interaction/slabs.js';
+import { Poderes } from '../src/player/abilities/abilities_logic.js';
+import { PoolPulsos } from '../src/player/abilities/solar_pulse.js';
 import { PLAYER, VIDA } from '../src/config/player.js';
 import { Enfriamiento } from '../src/core/cooldown.js';
 import { MundoFisico } from '../src/core/physics_world.js';
@@ -51,9 +56,30 @@ export async function crearSimulacion() {
     alCaer: () => eventos.push('tabla_cae'),
   });
 
+  const poderes = new Poderes(PULSO, ESCUDO, MANIPULACION, ESQUIVA);
+  const interactuables = new Interactuables(nivel.interactuables, MANIPULACION);
+  const losas = new Losas(nivel.dinamicos);
+  const pulsos = new PoolPulsos(escena, fisica, PULSO, {
+    alImpactar: (p, cuerpo) => {
+      eventos.push(`impacto:${cuerpo?.type === 1 ? 'dinamico' : 'estatico'}`);
+      sim.ultimoImpacto = cuerpo ? { cuerpo, pos: cuerpo.position.clone() } : null;
+    },
+  });
+  const pecho = new THREE.Vector3();
+
   const sim = {
     nivel, jugador, entrada, vida, checkpoints, puente, eventos, triggers, fisica,
+    poderes, interactuables, losas, pulsos,
     muerta: false,
+    /** @type {{cuerpo: any, pos: any} | null} */
+    ultimoImpacto: null,
+    /** Pulsa E: si hay una losa a la vista, la mueve. Devuelve el tipo del objetivo (o null). */
+    manipular() {
+      const o = interactuables.objetivo;
+      if (!o) return null;
+      if (o.tipo === 'losa' && losas.activar(o.objeto)) interactuables.desactivar(o);
+      return o.tipo;
+    },
     /** Coloca a Victoria en un spawn y orienta la "cámara" detrás de ella. */
     ir(nombre) {
       const s = nivel.spawns[nombre];
@@ -79,6 +105,11 @@ export async function crearSimulacion() {
         jugador.actualizar(DT, camara);
         enfriamiento.actualizar(DT);
         puente.actualizar(DT, jugador.cuerpoSuelo);
+        pulsos.actualizar(DT);
+        losas.actualizar(DT);
+        poderes.actualizar(DT);
+        pecho.copy(jugador.posicion).y += 1.2;
+        interactuables.actualizar(DT, pecho, camara, () => true);
         p.copy(jugador.posicion);
         p.y += 0.8;
         triggers.actualizar(p);

@@ -3,7 +3,8 @@ import * as THREE from 'three';
 
 /**
  * Atajos de depuración (sección 13.2). Mientras no existan las zonas 2 y 3:
- * 1 = entrada, 2 = cornisa/puente, 3 = ruinas. 6 = invulnerable, 9 = FPS, 0 = triggers y colisionadores.
+ * 1 = entrada, 2 = cornisa/puente, 3 = ruinas. 6 = invulnerable, 7 = todos los poderes,
+ * 8 = recibir 20 de daño (hasta que exista el jefe), 9 = FPS, 0 = triggers y colisionadores.
  * Las ayudas visuales se crean la primera vez que se piden, nunca dentro del bucle.
  * @param {{
  *   escena: THREE.Scene,
@@ -13,6 +14,8 @@ import * as THREE from 'three';
  *   vida: import('../player/health.js').Vida,
  *   nota: (texto: string) => void,
  *   panel: {stats: {dom: HTMLElement}, info: HTMLElement} | null,
+ *   desbloquearTodo: () => void,
+ *   recibirDano: (cantidad: number) => boolean,
  * }} s
  */
 export function crearAtajos(s) {
@@ -50,6 +53,14 @@ export function crearAtajos(s) {
       case 'Digit6':
         s.vida.dios = !s.vida.dios;
         s.nota(s.vida.dios ? 'Depuración: invulnerable' : 'Depuración: vulnerable');
+        break;
+      case 'Digit7':
+        s.desbloquearTodo();
+        s.nota('Depuración: todos los poderes');
+        break;
+      case 'Digit8':
+        // Hasta que exista el jefe (sección 13.2), el 8 sirve para probar el escudo y la vida
+        s.nota(s.recibirDano(20) ? 'Depuración: −20 de vida' : 'Depuración: golpe bloqueado');
         break;
       case 'Digit9':
         if (s.panel) {

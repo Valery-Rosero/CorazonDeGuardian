@@ -82,7 +82,7 @@ def envolvente(n, sr, ataque, caida, forma='exp'):
 
 
 def tono(frec, dur, sr, armonicos=(1.0,), vibrato=0.0):
-    t = np.arange(int(dur * sr)) / sr
+    t = np.arange(int(round(dur * sr))) / sr
     f = frec if np.isscalar(frec) else frec
     fase = 2 * np.pi * np.cumsum(np.broadcast_to(f, t.shape) * (1 + vibrato * np.sin(2 * np.pi * 5.5 * t))) / sr
     return sum(a * np.sin(fase * (i + 1)) for i, a in enumerate(armonicos))
@@ -230,6 +230,97 @@ def paso(superficie):
     return normalizar(s, 0.45)
 
 
+def pulso_disparo():
+    dur = 0.42
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    zumbido = np.sin(2 * np.pi * np.cumsum(1400 * np.exp(-t * 7) + 300) / SR)
+    brillo = sum(np.sin(2 * np.pi * f * t) for f in (1760, 2637)) * np.exp(-t * 14)
+    soplo = filtrar(RNG.normal(0, 1, n), SR, paso_banda(2500, 0.6)) * np.exp(-t * 18)
+    return normalizar((0.6 * zumbido + 0.25 * brillo + 0.3 * soplo) * envolvente(n, SR, 0.004, 0.16))
+
+
+def pulso_impacto():
+    dur = 0.5
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    golpe = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(1800)) * np.exp(-t * 22)
+    campanilla = sum(np.sin(2 * np.pi * f * t) for f in (987.77, 1318.5, 1975.5)) * np.exp(-t * 9)
+    return normalizar(0.8 * golpe + 0.35 * campanilla)
+
+
+def escudo_activar():
+    dur = 0.8
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    barrido = np.sin(2 * np.pi * np.cumsum(300 + 500 * np.sqrt(t / dur)) / SR)
+    cristal = sum(np.sin(2 * np.pi * f * t + i) for i, f in enumerate((659.25, 987.77, 1318.5, 1760))) * 0.3
+    s = (barrido + cristal) * (0.6 + 0.4 * np.sin(2 * np.pi * 9 * t))
+    return normalizar(s * envolvente(n, SR, 0.06, 0.35))
+
+
+def escudo_bloquear():
+    dur = 0.35
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    s = sum(np.sin(2 * np.pi * f * t) for f in (1174.66, 1567.98, 2349.3)) * np.exp(-t * 12)
+    s += filtrar(RNG.normal(0, 1, n), SR, paso_banda(3200, 0.5)) * np.exp(-t * 30)
+    return normalizar(s)
+
+
+def manipular():
+    dur = 0.6
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    s = sum(np.sin(2 * np.pi * f * t) * np.exp(-t * (5 + i)) for i, f in enumerate((523.25, 783.99, 1046.5)))
+    s *= 1 + 0.3 * np.sin(2 * np.pi * 14 * t)
+    return normalizar(s * envolvente(n, SR, 0.02, 0.3), 0.7)
+
+
+def chisporroteo():
+    n = int(0.3 * SR)
+    s = np.zeros(n)
+    for _ in range(12):
+        largo = int(SR * RNG.uniform(0.002, 0.008))
+        golpe = filtrar(RNG.normal(0, 1, largo), SR, paso_banda(RNG.uniform(3000, 6000), 0.5)) * np.exp(-np.arange(largo) / (largo / 3))
+        inicio = int(RNG.uniform(0, n - largo))
+        s[inicio:inicio + largo] += golpe
+    return normalizar(s, 0.5)
+
+
+def brazalete():
+    """Desbloqueo de poderes: arpegio ascendente y un acorde que se sostiene."""
+    s = campana((392.0, 523.25, 659.25, 783.99, 1046.5), 2.8, 0.1, 1.2)
+    n = len(s)
+    t = np.arange(n) / SR
+    pad = sum(np.sin(2 * np.pi * f * t) for f in (261.63, 392.0, 523.25)) * envolvente(n, SR, 0.6, 1.4) * 0.35
+    return normalizar(s + pad)
+
+
+def pagina():
+    n = int(0.7 * SR)
+    t = np.arange(n) / SR
+    papel = filtrar(RNG.normal(0, 1, n), SR, paso_banda(3500, 0.9)) * (np.abs(np.sin(2 * np.pi * 6 * t)) * np.exp(-t * 5))
+    tono_suave = np.sin(2 * np.pi * 880 * t) * envolvente(n, SR, 0.2, 0.3) * 0.25
+    return normalizar(papel + tono_suave, 0.6)
+
+
+def losa_mover():
+    dur = 1.7
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    roce = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(450)) * (0.8 + 0.2 * np.sin(2 * np.pi * 7 * t))
+    grave = np.sin(2 * np.pi * 48 * t) * 0.6
+    return normalizar((roce + grave) * envolvente(n, SR, 0.15, 1.2, forma='lineal'))
+
+
+def esquiva():
+    n = int(0.3 * SR)
+    t = np.arange(n) / SR
+    s = filtrar(RNG.normal(0, 1, n), SR, paso_banda(1200, 0.5)) * np.sin(np.pi * t / t[-1]) ** 2
+    return normalizar(s, 0.55)
+
+
 # ---------------------------------------------------------------------------
 
 BUCLES = {'cascada': cascada, 'antorcha': antorcha, 'ambiente_selva': ambiente_selva}
@@ -237,6 +328,9 @@ EFECTOS = {
     'portal': portal, 'checkpoint': checkpoint, 'flor': flor, 'tabla_cruje': tabla_cruje, 'tabla_cae': tabla_cae,
     'derrota': derrota, 'salto': salto, 'aterrizaje': aterrizaje,
     'paso_tierra': lambda: paso('tierra'), 'paso_piedra': lambda: paso('piedra'), 'paso_madera': lambda: paso('madera'),
+    'pulso_disparo': pulso_disparo, 'pulso_impacto': pulso_impacto, 'escudo_activar': escudo_activar,
+    'escudo_bloquear': escudo_bloquear, 'manipular': manipular, 'chisporroteo': chisporroteo,
+    'brazalete': brazalete, 'pagina': pagina, 'losa_mover': losa_mover, 'esquiva': esquiva,
 }
 
 

@@ -1,7 +1,9 @@
 // @ts-check
 import './style.css';
 import * as THREE from 'three';
+import { COLOR_GEMA, ESCUDO, ESQUIVA, MANIPULACION, PULSO, TUTORIAL } from './config/abilities.js';
 import { POSICIONAL, SONIDOS } from './config/audio.js';
+import { PAGINAS, TOTAL_PAGINAS } from './config/diary.js';
 import { CAMERA_LIMITES, CAMERA_PROFILES } from './config/camera_profiles.js';
 import { EXPRESIONES } from './config/expressions.js';
 import { INPUT_MAP } from './config/input_map.js';
@@ -17,14 +19,20 @@ import { BucleJuego } from './core/game_loop.js';
 import { Entrada } from './core/input.js';
 import { MundoFisico } from './core/physics_world.js';
 import { ajustarAlRedimensionar, crearRenderer } from './core/renderer.js';
-import { crearParticulasDeEmisor, crearRafagas, rafagaEn } from './fx/particle_presets.js';
+import { chispaEn, crearEstela, crearParticulasDeEmisor, crearRafagas, rafagaEn } from './fx/particle_presets.js';
 import { texturaPunto } from './fx/particles.js';
+import { Interactuables } from './interaction/interactables.js';
 import { Portales } from './interaction/portal.js';
+import { Losas } from './interaction/slabs.js';
+import { Poderes } from './player/abilities/abilities_logic.js';
+import { BurbujaEscudo } from './player/abilities/shield.js';
+import { PoolPulsos } from './player/abilities/solar_pulse.js';
 import { AnimadorCara } from './player/face_animator.js';
 import { Vida } from './player/health.js';
 import { ControladorJugador } from './player/player_controller.js';
 import { AnimadorProcedural } from './player/procedural_animator.js';
 import { PanelCartografa } from './ui/cartographer_panel.js';
+import { PanelDiario } from './ui/diary_panel.js';
 import { Hud } from './ui/hud.js';
 import { pantallas, Subtitulos } from './ui/screens.js';
 import { Puente } from './world/bridge.js';
@@ -128,7 +136,8 @@ async function iniciar() {
   const textura = texturaPunto();
   const particulas = nivel.emisores.flatMap((em) => crearParticulasDeEmisor(em, textura, calidad.particulas));
   const rafagas = crearRafagas(textura);
-  particulas.push(rafagas);
+  const estela = crearEstela(textura);
+  particulas.push(rafagas, estela);
   for (const p of particulas) escena.add(p.puntos);
 
   // ---------------- Interfaz
@@ -166,6 +175,214 @@ async function iniciar() {
     hud.nota('Portal activado');
   });
 
+  // ---------------- Poderes del brazalete (sección 5.5)
+  const dirCamara = new THREE.Vector3();
+  const pecho = new THREE.Vector3();
+  const poderes = new Poderes(PULSO, ESCUDO, MANIPULACION, ESQUIVA);
+  const burbuja = new BurbujaEscudo(escena, ESCUDO.radio);
+  const pulsos = new PoolPulsos(escena, fisica, PULSO, {
+    alImpactar: (p) => {
+      rafagaEn(rafagas, p, 22, PALETA.oro_brillante, 4);
+      audio.efectoEn('pulso_impacto', p, 0.9);
+    },
+    estela: (p) => chispaEn(estela, p, PALETA.oro_brillante, 1, 0.22),
+  });
+  const interactuables = new Interactuables(nivel.interactuables, MANIPULACION);
+  const losas = new Losas(nivel.dinamicos);
+  const panelDiario = new PanelDiario();
+  /** @type {Set<number>} */
+  const paginas = new Set();
+  hud.paginas(0, TOTAL_PAGINAS);
+  const huesoBrazalete = modeloVictoria.getObjectByName('brazalete');
+  const manoDer = modeloVictoria.getObjectByName('mano_der');
+  huesoBrazalete.scale.setScalar(0.001); // aún no lo tiene: se le ve al tomarlo del altar
+  const colorGema = new THREE.Color(PALETA.gema_pulso);
+  const colorObjetivo = new THREE.Color();
+  let brilloGema = 0;
+  const tutorial = { brazalete: false, pulso: false, manipulacion: false, esquiva: false };
+  const objBrazalete = interactuables.lista.find((o) => o.tipo === 'brazalete');
+
+  // Apuntar: rayo desde el centro de la pantalla (la retícula) contra el escenario
+  const rayoMira = new THREE.Raycaster();
+  rayoMira.far = PULSO.alcance;
+  /** @type {THREE.Intersection[]} */
+  const impactosMira = [];
+  const objetivosMira = [...nivel.colisionables, ...nivel.dinamicos.map((d) => d.malla)];
+  const centroPantalla = new THREE.Vector2(0, 0);
+  const mira = new THREE.Vector3();
+  const origenPulso = new THREE.Vector3();
+  const dirPulso = new THREE.Vector3();
+  const derecha = new THREE.Vector3();
+  const posMano = new THREE.Vector3();
+  const rumboCamara = () => {
+    camara.getWorldDirection(dirCamara);
+    return Math.atan2(dirCamara.x, dirCamara.z);
+  };
+
+  const dispararPulso = () => {
+    rayoMira.setFromCamera(centroPantalla, camara);
+    impactosMira.length = 0;
+    rayoMira.intersectObjects(objetivosMira, true, impactosMira);
+    if (impactosMira.length) mira.copy(impactosMira[0].point);
+    else mira.copy(rayoMira.ray.origin).addScaledVector(rayoMira.ray.direction, PULSO.alcance);
+    // Sale de la mano derecha (la del brazalete), a la altura del pecho
+    derecha.set(Math.cos(jugador.orientacion), 0, -Math.sin(jugador.orientacion));
+    origenPulso.copy(jugador.posicion).addScaledVector(derecha, -0.3);
+    origenPulso.y += 1.3;
+    camara.getWorldDirection(dirCamara);
+    origenPulso.addScaledVector(dirCamara, 0.45);
+    dirPulso.subVectors(mira, origenPulso).normalize();
+    pulsos.disparar(origenPulso, dirPulso);
+    animador.gesto('disparo');
+    jugador.mirarHacia(rumboCamara(), 0.45);
+    audio.efecto('pulso_disparo', 0.8);
+    rafagaEn(rafagas, origenPulso, 8, PALETA.oro_brillante, 2);
+    brilloGema = 1;
+    if (!tutorial.manipulacion) {
+      tutorial.manipulacion = true;
+      setTimeout(() => hud.mensajeTutorial(TUTORIAL.manipulacion, 7), 2500);
+    }
+  };
+
+  /** Secuencia del altar: el brazalete vuela a la muñeca de Victoria y despierta dos poderes. */
+  let secuenciaBrazalete = null;
+  /** @param {import('./interaction/interactables.js').Interactuable} o */
+  const tomarBrazalete = (o) => {
+    interactuables.desactivar(o);
+    secuenciaBrazalete = { t: 0, desde: o.objeto.position.clone(), objeto: o.objeto };
+    animador.gesto('mirar_brazalete');
+    jugador.mirarHacia(Math.atan2(o.pos.x - jugador.posicion.x, o.pos.z - jugador.posicion.z), 0.8);
+    jugador.bloqueado = true;
+  };
+  /** @param {number} dt */
+  const avanzarBrazalete = (dt) => {
+    if (!secuenciaBrazalete) return;
+    const s = secuenciaBrazalete;
+    s.t += dt;
+    manoDer.getWorldPosition(posMano);
+    const u = Math.min(1, s.t / 0.9);
+    s.objeto.position.lerpVectors(s.desde, posMano, u * u * (3 - 2 * u));
+    s.objeto.scale.setScalar(1 - u * 0.6);
+    chispaEn(estela, s.objeto.position, PALETA.oro_brillante, 2, 0.4);
+    if (u >= 1 && s.objeto.visible) {
+      s.objeto.visible = false;
+      huesoBrazalete.scale.setScalar(1);
+      poderes.desbloquear('pulso');
+      poderes.desbloquear('manipulacion');
+      rafagaEn(rafagas, posMano, 70, PALETA.oro_brillante, 5);
+      audio.efecto('brazalete');
+      cara.ponerEmocion('ternura');
+      hud.nota('El brazalete despierta: Pulso solar y Manipulación', 4);
+      bus.emitir(EVENTOS.PODER_DESBLOQUEADO, ['pulso', 'manipulacion']);
+    }
+    if (s.t > 2.2) {
+      secuenciaBrazalete = null;
+      jugador.bloqueado = false;
+      cara.ponerEmocion('neutral');
+      hud.mensajeTutorial(TUTORIAL.pulso, 8);
+      tutorial.pulso = true;
+    }
+  };
+
+  /** @param {import('./interaction/interactables.js').Interactuable} o */
+  const leerPagina = (o) => {
+    const pagina = PAGINAS[Number(o.datos.pagina) - 1];
+    if (!pagina) return;
+    interactuables.desactivar(o);
+    o.objeto.visible = false;
+    paginas.add(pagina.n);
+    hud.paginas(paginas.size, TOTAL_PAGINAS);
+    audio.efecto('pagina');
+    bus.emitir(EVENTOS.PAGINA_ENCONTRADA, pagina.n);
+    panelDiario.abrir(pagina);
+    bucle.pausado = true;
+  };
+  panelDiario.alCerrar = () => {
+    entrada.pulsadas.clear(); // la misma E que cierra el diario no debe volver a interactuar
+    if (!muerta && rig.controles.isLocked) bucle.pausado = false;
+    if (!tutorial.esquiva) {
+      tutorial.esquiva = true;
+      hud.mensajeTutorial(TUTORIAL.esquiva, 5);
+    }
+  };
+
+  const manipular = () => {
+    const o = interactuables.objetivo;
+    if (o && o.tipo === 'brazalete') {
+      tomarBrazalete(o);
+      return;
+    }
+    if (!poderes.tiene('manipulacion')) return;
+    if (!o) {
+      // Sin objetivo el brazalete chisporrotea y no gasta nada
+      if (!poderes.manipulacionLista) return;
+      manoDer.getWorldPosition(posMano);
+      chispaEn(estela, posMano, PALETA.gema_manipulacion, 10, 0.35);
+      animador.gesto('chisporroteo');
+      audio.efecto('chisporroteo', 0.6);
+      return;
+    }
+    if (!poderes.usar('manipulacion')) return;
+    animador.gesto('manipular');
+    jugador.mirarHacia(Math.atan2(o.pos.x - jugador.posicion.x, o.pos.z - jugador.posicion.z), 0.6);
+    audio.efecto('manipular', 0.8);
+    rafagaEn(rafagas, o.pos, 18, PALETA.gema_manipulacion, 2.5);
+    if (o.tipo === 'pagina') leerPagina(o);
+    else if (o.tipo === 'losa' && losas.activar(o.objeto)) {
+      interactuables.desactivar(o);
+      audio.efectoEn('losa_mover', o.pos, 1);
+      rig.sacudida.agregar(0.3);
+      hud.nota('La losa se hunde en la piedra');
+    }
+  };
+
+  /** Todo el daño pasa por aquí: el escudo lo bloquea y la esquiva lo evita. @param {number} cantidad */
+  const recibirDano = (cantidad) => {
+    if (muerta) return false;
+    if (poderes.escudoActivo) {
+      burbuja.golpe();
+      audio.efecto('escudo_bloquear');
+      return false;
+    }
+    if (poderes.esquivaInvulnerable || !vida.danar(cantidad)) return false;
+    rig.sacudida.agregar(0.35);
+    if (vida.muerta) morir();
+    return true;
+  };
+
+  /** @param {number} dt */
+  const usarPoderes = (dt) => {
+    poderes.actualizar(dt);
+    if (muerta || jugador.bloqueado) return;
+    if (entrada.clicPulsado && poderes.usar('pulso')) dispararPulso();
+    if (entrada.pulso('escudo')) {
+      if (poderes.usar('escudo')) {
+        animador.gesto('escudo');
+        audio.efecto('escudo_activar');
+      } else if (!poderes.tiene('escudo')) {
+        hud.nota('El brazalete aún no conoce ese poder', 2);
+      }
+    }
+    if (entrada.pulso('esquivar') && poderes.esquivar()) {
+      jugador.esquivar(ESQUIVA);
+      animador.gesto('esquiva');
+      audio.efecto('esquiva', 0.7);
+    }
+    if (entrada.pulso('manipular')) manipular();
+  };
+
+  /** Color de la gema: dorado (Pulso), azul (Escudo) o blanco cálido (Manipulación con objetivo). @param {number} dt */
+  const actualizarGema = (dt) => {
+    const clave = poderes.escudoActivo ? COLOR_GEMA.escudo
+      : interactuables.objetivo && poderes.tiene('manipulacion') ? COLOR_GEMA.manipulacion : COLOR_GEMA.pulso;
+    colorObjetivo.set(PALETA[clave]);
+    colorGema.lerp(colorObjetivo, 1 - Math.exp(-dt * 10));
+    brilloGema = Math.max(0, brilloGema - dt * 3);
+    matVictoria.gema.color.copy(colorGema);
+    matVictoria.gema.emissive.copy(colorGema);
+    matVictoria.gema.emissiveIntensity = 2.2 + brilloGema * 4;
+  };
+
   // ---------------- Muerte y reaparición
   let muerta = false;
   let tiempoMuerte = 0;
@@ -181,6 +398,7 @@ async function iniciar() {
     const s = checkpoints.reaparicion;
     puente.reiniciar();
     vida.reiniciar();
+    poderes.reiniciarRecargas();
     jugador.colocar(s.pos, s.rumbo);
     jugador.bloqueado = false;
     rig.reorientar(s.rumbo);
@@ -243,13 +461,21 @@ async function iniciar() {
       escena, triggers, colisionables: nivel.colisionables, vida, panel: depuracion,
       teletransportar: (n) => { teletransportar(n); puente.reiniciar(); },
       nota: (texto) => hud.nota(texto, 1.6),
+      desbloquearTodo: () => {
+        for (const p of ['pulso', 'escudo', 'manipulacion']) poderes.desbloquear(p);
+        huesoBrazalete.scale.setScalar(1);
+        if (objBrazalete && objBrazalete.activo) {
+          interactuables.desactivar(objBrazalete);
+          objBrazalete.objeto.visible = false;
+        }
+      },
+      recibirDano,
     });
   }
 
   // ---------------- Bucle único
-  const dirCamara = new THREE.Vector3();
-  const pecho = new THREE.Vector3();
   let reloj = 0;
+  let tChispas = 0;
   const bucle = new BucleJuego(renderer, {
     fisica: (dt) => fisica.paso(dt),
     sincronizar: () => fisica.sincronizar(),
@@ -257,10 +483,31 @@ async function iniciar() {
       depuracion?.inicio();
       reloj = t;
       uTiempo.value = t;
+      usarPoderes(dt);
       jugador.actualizar(dt, camara);
       animador.actualizar(dt, t, jugador);
       cara.actualizar(dt);
       vida.actualizar(dt);
+      pulsos.actualizar(dt);
+      losas.actualizar(dt);
+      avanzarBrazalete(dt);
+      pecho.copy(jugador.posicion).y += 1.2;
+      interactuables.actualizar(dt, pecho, camara, (o) => o.tipo === 'brazalete' || poderes.tiene('manipulacion'));
+      burbuja.actualizar(dt, poderes.escudoActivo, pecho);
+      actualizarGema(dt);
+      // Los objetos interactuables cercanos sueltan chispas blancas
+      tChispas += dt;
+      if (tChispas > 0.3) {
+        tChispas = 0;
+        for (let i = 0; i < interactuables.lista.length; i++) {
+          const o = interactuables.lista[i];
+          if (o.activo && o.pos.distanceToSquared(jugador.posicion) < 196) chispaEn(estela, o.objeto.position, PALETA.gema_manipulacion, 2, 0.9);
+        }
+      }
+      if (!tutorial.brazalete && objBrazalete && objBrazalete.activo && objBrazalete.pos.distanceTo(jugador.posicion) < 10) {
+        tutorial.brazalete = true;
+        hud.mensajeTutorial(TUTORIAL.brazalete, 7);
+      }
       portales.actualizar(dt);
       puente.actualizar(dt, jugador.cuerpoSuelo);
       checkpoints.actualizar(dt, t);
@@ -284,7 +531,6 @@ async function iniciar() {
     camara: (dt) => {
       rig.actualizar(dt, jugador.posicion, jugador);
       ambiente.seguir(jugador.posicion);
-      pecho.copy(jugador.posicion).y += 1.2;
       oclusion.actualizar(dt, camara.position, pecho);
     },
     particulas: (dt) => {
@@ -310,6 +556,10 @@ async function iniciar() {
       camara.getWorldDirection(dirCamara);
       panel.actualizar(dt, triggers.zona, jugador.posicion, -Math.atan2(dirCamara.x, -dirCamara.z));
       hud.vida(vida.actual, vida.maxima);
+      hud.poder('pulso', poderes.tiene('pulso'), poderes.progreso('pulso'));
+      hud.poder('escudo', poderes.tiene('escudo'), poderes.progreso('escudo'), poderes.escudoActivo);
+      hud.poder('manipulacion', poderes.tiene('manipulacion'), poderes.progreso('manipulacion'));
+      hud.avisoInteraccion(interactuables.objetivo && !secuenciaBrazalete ? String(interactuables.objetivo.datos.etiqueta) : '');
       hud.actualizar(dt);
       if (cara.hablando) {
         subtitulos.actualizar(cara.progreso);
@@ -344,6 +594,16 @@ async function iniciar() {
       jugador.colocar(new THREE.Vector3(pos[0], pos[1], pos[2]), rumbo);
       rig.reorientar(params.get('vista') === 'frente' ? rumbo + Math.PI : rumbo);
     }
+    // ?auto&poderes desbloquea los tres poderes; &disparar lanza un Pulso cada 0,6 s; &escudo lo mantiene
+    if (params.has('poderes')) {
+      for (const p of ['pulso', 'escudo', 'manipulacion']) poderes.desbloquear(p);
+      huesoBrazalete.scale.setScalar(1);
+    }
+    if (params.has('disparar')) setInterval(() => { if (poderes.usar('pulso')) dispararPulso(); }, 600);
+    // &diario=N abre esa página (para revisar el estilo de la escritura)
+    const pagina = PAGINAS[Number(params.get('diario')) - 1];
+    if (pagina) setTimeout(() => panelDiario.abrir(pagina), 300);
+    if (params.has('escudo')) setInterval(() => { if (poderes.usar('escudo')) animador.gesto('escudo'); }, 300);
     // ?auto&tecla=KeyW,ShiftLeft mantiene teclas pulsadas para capturas automáticas
     for (const codigo of (params.get('tecla') ?? '').split(',').filter(Boolean)) entrada.abajo.add(codigo);
     return;
@@ -354,11 +614,19 @@ async function iniciar() {
     audio.iniciar();
     pantallas.ocultarInicio();
     rig.controles.lock();
+    hud.mensajeTutorial(TUTORIAL.inicio, 7);
   });
-  pantallas.alHacerClicPausa(() => rig.controles.lock());
   hud.alReintentar(() => {
     reaparecer();
     rig.controles.lock();
+  });
+  hud.menuPausa({
+    continuar: () => rig.controles.lock(),
+    checkpoint: () => {
+      reaparecer();
+      rig.controles.lock();
+    },
+    inicio: () => location.reload(),
   });
   rig.controles.addEventListener('lock', () => {
     bucle.pausado = false;
@@ -366,6 +634,7 @@ async function iniciar() {
   });
   rig.controles.addEventListener('unlock', () => {
     bucle.pausado = true;
+    if (panelDiario.abierto) panelDiario.cerrar();
     if (!muerta) pantallas.pausa(true);
   });
 }

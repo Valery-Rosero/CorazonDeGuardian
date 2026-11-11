@@ -18,6 +18,16 @@ export const SONIDOS = Object.freeze({
   paso_tierra: '/sounds/paso_tierra.mp3',
   paso_piedra: '/sounds/paso_piedra.mp3',
   paso_madera: '/sounds/paso_madera.mp3',
+  pulso_disparo: '/sounds/pulso_disparo.mp3',
+  pulso_impacto: '/sounds/pulso_impacto.mp3',
+  escudo_activar: '/sounds/escudo_activar.mp3',
+  escudo_bloquear: '/sounds/escudo_bloquear.mp3',
+  manipular: '/sounds/manipular.mp3',
+  chisporroteo: '/sounds/chisporroteo.mp3',
+  brazalete: '/sounds/brazalete.mp3',
+  pagina: '/sounds/pagina.mp3',
+  losa_mover: '/sounds/losa_mover.mp3',
+  esquiva: '/sounds/esquiva.mp3',
 });
 
 /** Volúmenes por categoría (se podrán cambiar en Opciones). */

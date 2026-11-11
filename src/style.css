@@ -177,6 +177,157 @@ html, body {
 .boton:hover, .boton:focus-visible { background: rgba(221, 170, 54, 0.35); outline: none; }
 #derrota { background: radial-gradient(circle at 50% 40%, rgba(60, 14, 8, 0.7), rgba(10, 6, 4, 0.92)); cursor: default; }
 
+#cartografa-diario {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+}
+
+/* Poderes: anillo de recarga con conic-gradient (--p = 0 recién usado, 1 listo) */
+#poderes {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  gap: 14px;
+}
+.poder {
+  position: relative;
+  width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: opacity 0.3s;
+}
+.poder-icono {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle, rgba(16, 12, 8, 0.85) 58%, transparent 60%),
+    conic-gradient(var(--color) calc(var(--p) * 360deg), rgba(255, 255, 255, 0.12) 0);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+.poder-icono svg { width: 30px; height: 30px; fill: none; stroke: var(--color); stroke-width: 2.6; }
+#poder-pulso { --color: #ffc94a; }
+#poder-pulso svg circle { fill: #ffc94a; }
+#poder-escudo { --color: #48b4ff; }
+#poder-manipulacion { --color: #fff1d6; }
+.poder-tecla {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  font: bold 10px system-ui, sans-serif;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(10, 8, 6, 0.85);
+  border: 1px solid rgba(255, 244, 226, 0.4);
+}
+.poder-nombre { font-size: 11px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); white-space: nowrap; }
+.poder.recargando .poder-icono svg { opacity: 0.45; }
+.poder.bloqueado { opacity: 0.35; filter: grayscale(1); }
+.poder.bloqueado .poder-tecla { visibility: hidden; }
+.poder.listo .poder-icono { animation: poder-listo 0.5s ease-out; }
+.poder.activo .poder-icono { box-shadow: 0 0 18px var(--color); }
+@keyframes poder-listo {
+  0% { box-shadow: 0 0 0 0 var(--color); transform: scale(1); }
+  40% { box-shadow: 0 0 22px 6px var(--color); transform: scale(1.12); }
+  100% { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); transform: scale(1); }
+}
+
+/* Aviso de interacción y tutorial */
+#aviso-interaccion {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px 7px 8px;
+  border-radius: 20px;
+  background: rgba(10, 8, 6, 0.65);
+  border: 1px solid rgba(255, 241, 214, 0.4);
+  font-size: 17px;
+}
+.tecla {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #fff1d6;
+  color: #2a1e12;
+  font: bold 14px system-ui, sans-serif;
+}
+#tutorial {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%);
+  max-width: min(720px, 86vw);
+  padding: 10px 22px;
+  border-radius: 8px;
+  background: rgba(10, 8, 6, 0.55);
+  font-size: 18px;
+  text-align: center;
+  animation: aparecer 0.4s ease-out;
+}
+@keyframes aparecer { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* Diario de Mateo: papel envejecido generado con degradados y un filtro SVG feTurbulence */
+#diario {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 6, 4, 0.55);
+  cursor: pointer;
+  padding: 16px;
+}
+#diario .filtros { position: absolute; width: 0; height: 0; }
+.hoja {
+  position: relative;
+  width: min(560px, 92vw);
+  min-height: 340px;
+  padding: 38px 44px 30px;
+  color: #3a2a1c;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.45), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(120, 80, 30, 0.25), transparent 55%),
+    linear-gradient(170deg, #efe2c4, #dcc69a);
+  border-radius: 3px 8px 5px 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(110, 70, 25, 0.35);
+  transform: rotate(-1.2deg);
+  animation: hoja-entra 0.45s ease-out;
+}
+.hoja-textura { position: absolute; inset: 0; filter: url(#papel-viejo); background: #fff; opacity: 0.55; border-radius: inherit; pointer-events: none; }
+.hoja header { position: relative; display: flex; justify-content: space-between; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; }
+.hoja footer { position: relative; margin-top: 26px; font-size: 12px; opacity: 0.55; text-align: right; }
+#diario-texto { position: relative; margin: 26px 0 0; font-size: 22px; line-height: 1.6; font-style: italic; }
+#diario-texto .palabra { display: inline-block; white-space: nowrap; }
+#diario-texto .letra { display: inline-block; }
+#diario-texto.temblor .letra { animation: temblor 0.35s infinite alternate; }
+#diario-texto.dorada { font-style: normal; letter-spacing: 0.04em; color: #b8862a; animation: oro-brilla 2.4s ease-in-out infinite; }
+#diario-texto.dorada .letra { animation: temblor 0.18s infinite alternate; }
+@keyframes temblor { from { transform: translate(0, 0) rotate(0); } to { transform: translate(0.6px, -0.8px) rotate(-1.2deg); } }
+@keyframes oro-brilla {
+  0%, 100% { text-shadow: 0 0 4px rgba(221, 170, 54, 0.5); color: #b8862a; }
+  50% { text-shadow: 0 0 12px rgba(255, 212, 94, 0.95); color: #ddaa36; }
+}
+@keyframes hoja-entra { from { opacity: 0; transform: rotate(-4deg) translateY(30px) scale(0.95); } to { opacity: 1; transform: rotate(-1.2deg); } }
+
+/* Menú de pausa */
+.menu { display: flex; flex-direction: column; gap: 12px; min-width: min(340px, 86vw); }
+.boton.secundario { border-color: rgba(255, 244, 226, 0.35); background: transparent; }
+#pausa { cursor: default; }
+
 #reticula {
   position: absolute;
   left: 50%;

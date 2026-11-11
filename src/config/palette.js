@@ -90,4 +90,7 @@ export const PALETA = Object.freeze({
   flor_tallo: '#4F8A3E',
   fuego: '#FF9A3C',
   niebla_selva: '#A9C3A0',
+  papel: '#EADCBF',
+  papel_sombra: '#C9B48C',
+  pulso_nucleo: '#FFF3C4',
 });
