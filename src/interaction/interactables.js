@@ -1,5 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
+import { clonarMaterial } from '../world/shaders.js';
 import { elegirInteractuable } from '../player/abilities/abilities_logic.js';
 
 /**
@@ -24,7 +25,7 @@ export class Interactuables {
       objeto.traverse((h) => {
         const m = /** @type {THREE.Mesh} */ (h);
         if (!m.isMesh) return;
-        const mat = /** @type {THREE.MeshStandardMaterial} */ (m.material).clone();
+        const mat = clonarMaterial(/** @type {THREE.MeshStandardMaterial} */ (m.material));
         if (!mat.emissive) return;
         m.material = mat;
         materiales.push(mat);

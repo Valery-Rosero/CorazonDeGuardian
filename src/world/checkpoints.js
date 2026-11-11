@@ -1,5 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
+import { clonarMaterial } from './shaders.js';
 import { RegistroCheckpoints } from './checkpoint_logic.js';
 
 /**
@@ -24,7 +25,7 @@ export class Checkpoints {
       obj.traverse((h) => {
         const m = /** @type {THREE.Mesh} */ (h);
         if (m.isMesh && /** @type {THREE.Material} */ (m.material).name.includes('disco')) {
-          disco = /** @type {THREE.MeshStandardMaterial} */ (m.material).clone();
+          disco = clonarMaterial(/** @type {THREE.MeshStandardMaterial} */ (m.material));
           m.material = disco;
         }
       });

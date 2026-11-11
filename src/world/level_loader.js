@@ -5,7 +5,7 @@ import { GRUPOS } from '../core/physics_world.js';
 import { clasificarNombre, esColisionador } from './level_naming.js';
 import { PALETA } from '../config/palette.js';
 import { direccionSol } from './environment.js';
-import { agregarBordeSol, agregarViento, materialCascada, materialPoza, materialRayo } from './shaders.js';
+import { agregarBordeSol, agregarCieloSH, agregarViento, clonarMaterial, materialCascada, materialPoza, materialRayo } from './shaders.js';
 
 /** Brillo del borde de sol en las copas (hoja de escenarios): color y fuerza. */
 const BORDE_SOL = { color: PALETA.dorado_solar, fuerza: 0.55 };
@@ -121,7 +121,7 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
     o.traverse((h) => {
       const m = /** @type {THREE.Mesh} */ (h);
       if (!m.isMesh) return;
-      const mat = /** @type {THREE.MeshStandardMaterial} */ (m.material).clone();
+      const mat = clonarMaterial(/** @type {THREE.MeshStandardMaterial} */ (m.material));
       mat.transparent = true;
       m.material = mat;
       res.ocluibles.push(m);
@@ -160,10 +160,12 @@ function ajustarMaterial(m, res) {
   if (nombre.includes('runa')) res.runas.push(m);
   // La cima de la pirámide guía al jugador: brilla a través de la niebla
   if (nombre.startsWith('cima_piramide')) m.fog = false;
-  // Hojas de palma: una sola cara, visibles por ambos lados
-  if (nombre.includes('doble')) m.side = THREE.DoubleSide;
+  // Blender exporta todo como doble cara (glTF doubleSided); solo las hojas de un plano lo necesitan.
+  // Dibujar las caras traseras de troncos, rocas y muros costaba ~65 % del fotograma en la selva.
+  m.side = nombre.includes('doble') ? THREE.DoubleSide : THREE.FrontSide;
   // Copas de los árboles: el contorno que mira al sol se dora
   if (nombre.includes('copa')) agregarBordeSol(m, direccionSol(), BORDE_SOL.color, BORDE_SOL.fuerza);
+  agregarCieloSH(m, m.envMapIntensity);
   m.needsUpdate = true;
   return m;
 }
@@ -276,11 +278,14 @@ function crearDinamico(o, fisica) {
 function crearInstancias(plantilla, puntos, fraccion, viento, bordeSol) {
   const total = Math.floor(puntos.length / 5);
   const cuantas = Math.max(1, Math.floor(total * fraccion));
+  // Helechos y pasto son frondas de un plano (doble cara); los árboles jóvenes son volúmenes cerrados
+  const plano = !plantilla.name.includes('arbol');
   const material = new THREE.MeshStandardMaterial({
-    vertexColors: true, side: THREE.DoubleSide, roughness: 0.9, envMapIntensity: 0.3, flatShading: true,
+    vertexColors: true, side: plano ? THREE.DoubleSide : THREE.FrontSide, roughness: 0.9, envMapIntensity: 0.3, flatShading: true,
   });
   agregarViento(material, viento);
   if (bordeSol) agregarBordeSol(material, direccionSol(), BORDE_SOL.color, BORDE_SOL.fuerza);
+  agregarCieloSH(material, material.envMapIntensity);
   const inst = new THREE.InstancedMesh(plantilla.geometry, material, cuantas);
   inst.name = `vegetacion_${plantilla.name}`;
   const m = new THREE.Matrix4();

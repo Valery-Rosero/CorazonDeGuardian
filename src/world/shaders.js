@@ -145,6 +145,54 @@ export function agregarViento(material, fuerza = 1) {
 }
 
 /**
+ * Luz difusa del cielo en armónicos esféricos (9 coeficientes), compartida por todo el escenario.
+ * Sustituye al mapa de entorno (PMREM): con la rugosidad del escenario (0,92) el entorno solo aportaba
+ * la luz difusa del cielo, y muestrearlo costaba más de la mitad del fotograma en la selva.
+ * `fuerza` es 0 dentro del santuario (no hay cielo).
+ */
+export const CIELO_SH = {
+  coef: { value: Array.from({ length: 9 }, () => new THREE.Vector3()) },
+  fuerza: { value: 1 },
+};
+
+/**
+ * Clona un material conservando lo que se le añadió al shader (luz del cielo, borde de sol, viento):
+ * Material.clone() no copia onBeforeCompile.
+ * @template {THREE.Material} M
+ * @param {M} m
+ * @returns {M}
+ */
+export function clonarMaterial(m) {
+  const copia = /** @type {M} */ (m.clone());
+  copia.onBeforeCompile = m.onBeforeCompile;
+  copia.customProgramCacheKey = m.customProgramCacheKey;
+  return copia;
+}
+
+/**
+ * Añade la luz del cielo (CIELO_SH) a un material estándar. Se encadena con un onBeforeCompile previo.
+ * @param {THREE.MeshStandardMaterial} material
+ * @param {number} intensidad  la que tenía como envMapIntensity
+ */
+export function agregarCieloSH(material, intensidad) {
+  const previo = material.onBeforeCompile;
+  const claveprevia = material.customProgramCacheKey();
+  const uIntensidad = { value: intensidad };
+  material.onBeforeCompile = (shader, renderer) => {
+    previo.call(material, shader, renderer);
+    shader.uniforms.uCieloSH = CIELO_SH.coef;
+    shader.uniforms.uCieloFuerza = CIELO_SH.fuerza;
+    shader.uniforms.uCieloMaterial = uIntensidad;
+    shader.fragmentShader = 'uniform vec3 uCieloSH[9];\nuniform float uCieloFuerza;\nuniform float uCieloMaterial;\n' + shader.fragmentShader.replace(
+      '#include <lights_fragment_begin>',
+      /* glsl */ `#include <lights_fragment_begin>
+      irradiance += getLightProbeIrradiance(uCieloSH, geometryNormal) * (uCieloFuerza * uCieloMaterial);`,
+    );
+  };
+  material.customProgramCacheKey = () => `${claveprevia}|cielo-sh`;
+}
+
+/**
  * Borde de sol de las copas (hoja de escenarios, «Árboles»): el contorno de cada almohada que mira al sol
  * se dora. Es un brillo de contorno (Fresnel) que solo aparece en las caras orientadas hacia el sol.
  * Se encadena con un onBeforeCompile previo (p. ej. el viento de las instancias).

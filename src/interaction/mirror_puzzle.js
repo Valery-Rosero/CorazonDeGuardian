@@ -1,5 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
+import { clonarMaterial } from '../world/shaders.js';
 import { PALETA } from '../config/palette.js';
 import { AcertijoEspejos } from '../world/light_beam_logic.js';
 
@@ -77,7 +78,7 @@ export class AcertijoSantuario {
       e.objeto.traverse((h) => {
         const m = /** @type {THREE.Mesh} */ (h);
         if (m.isMesh && /** @type {THREE.Material} */ (m.material).name.includes('espejo')) {
-          mat = /** @type {THREE.MeshStandardMaterial} */ (m.material).clone();
+          mat = clonarMaterial(/** @type {THREE.MeshStandardMaterial} */ (m.material));
           m.material = mat;
         }
       });
@@ -89,7 +90,7 @@ export class AcertijoSantuario {
     this.cristal.traverse((h) => {
       const m = /** @type {THREE.Mesh} */ (h);
       if (m.isMesh && /** @type {THREE.Material} */ (m.material).name.includes('cristal')) {
-        this.matCristal = /** @type {THREE.MeshStandardMaterial} */ (m.material).clone();
+        this.matCristal = clonarMaterial(/** @type {THREE.MeshStandardMaterial} */ (m.material));
         m.material = this.matCristal;
       }
     });

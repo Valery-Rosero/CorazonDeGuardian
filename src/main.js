@@ -45,6 +45,7 @@ import { pantallas, Subtitulos } from './ui/screens.js';
 import { Puente } from './world/bridge.js';
 import { Checkpoints } from './world/checkpoints.js';
 import { crearAmbienteSelva, crearLucesNivel } from './world/environment.js';
+import { ResolucionDinamica } from './core/dynamic_resolution.js';
 import { combinarNiveles, construirNivel } from './world/level_loader.js';
 import { aplicarMaterialesPersonaje, crearRampaToon } from './world/materials.js';
 import { Santuario } from './world/sanctuary.js';
@@ -56,6 +57,7 @@ const params = new URLSearchParams(location.search);
 const DEPURACION = params.has('debug') || import.meta.env.DEV;
 /** Arranque sin clic ni captura del ratón, para capturas automáticas (solo en depuración). */
 const AUTOMATICO = DEPURACION && params.has('auto');
+const MEDIR = DEPURACION && params.has('stats');
 
 /**
  * Prepara el modelo de Victoria: materiales toon, sombras y la cabeza con expresiones.
@@ -86,6 +88,10 @@ async function iniciar() {
   const camara = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 600);
   camara.rotation.order = 'YXZ';
   ajustarAlRedimensionar(renderer, camara);
+  // Resolución dinámica: si no llega a ~55 FPS dibuja a menos resolución (hasta el 67 %)
+  const pixelRatioBase = renderer.getPixelRatio();
+  const resolucion = new ResolucionDinamica((e) => renderer.setPixelRatio(pixelRatioBase * e));
+  resolucion.activa = !MEDIR && params.get('resolucion') !== 'fija';
   const oyente = new THREE.AudioListener();
   camara.add(oyente);
   escena.add(camara);
@@ -110,7 +116,7 @@ async function iniciar() {
   const nivelCamara = construirNivel(modelos.camara, escena, fisica, triggers, opcionesNivel);
   const nivel = { ...combinarNiveles([construirNivel(modelos.zona, escena, fisica, triggers, opcionesNivel), nivelSantuario, nivelCamara]),
     raizCamara: nivelCamara.raiz };
-  const luces = crearLucesNivel(escena, nivel.luces);
+  const luces = crearLucesNivel(escena, nivel.luces, calidad.luces);
 
   // ---------------- Victoria
   const rampa = crearRampaToon();
@@ -495,6 +501,8 @@ async function iniciar() {
       rig.controles.unlock();
     },
   });
+  // El núcleo del Guardián ilumina la arena a través del grupo de luces (zona 3)
+  luces.registrar(actoFinal.combate.actor.luz, 3, actoFinal.combate.actor.raiz);
 
   /** @param {number} dt */
   const usarPoderes = (dt) => {
@@ -690,7 +698,7 @@ async function iniciar() {
       portales.actualizar(dt);
       puente.actualizar(dt, jugador.cuerpoSuelo);
       checkpoints.actualizar(dt, t);
-      luces.actualizar(t);
+      luces.actualizar(t, dt, camara.position);
       puntoTrigger.copy(jugador.posicion);
       puntoTrigger.y += 0.8;
       triggers.actualizar(puntoTrigger);
@@ -733,6 +741,7 @@ async function iniciar() {
       }
     },
     hud: (dt) => {
+      resolucion.actualizar(dt);
       if (enMenu) {
         // Menú principal (el juego está en pausa): vista lenta del claro hacia la cima dorada de la pirámide
         const r = performance.now() / 1000;
@@ -750,7 +759,28 @@ async function iniciar() {
       hud.actualizar(dt);
       depuracion?.fin(dt);
     },
-    render: () => renderer.render(escena, camara),
+    render: () => {
+      renderer.render(escena, camara);
+      // &stats: llamadas, triángulos, luces puntuales encendidas y mallas con sombra en el título (para medir sin ventana)
+      if (MEDIR) {
+        let luces = 0;
+        let sombras = 0;
+        escena.traverseVisible((o) => {
+          if (/** @type {THREE.PointLight} */ (o).isPointLight) luces++;
+          if (/** @type {THREE.Mesh} */ (o).isMesh && o.castShadow) sombras++;
+        });
+        const r = renderer.info.render;
+        const texto = `${Math.round(resolucion.escala * 100)} % · ${r.calls} llamadas · ${r.triangles} tri · ${luces} luces · ${sombras} con sombra · ${renderer.info.programs?.length ?? 0} programas`;
+        let caja = document.getElementById('stats');
+        if (!caja) {
+          caja = document.createElement('div');
+          caja.id = 'stats';
+          caja.style.cssText = 'position:fixed;left:0;right:0;top:40%;z-index:99;font:bold 40px monospace;color:#0f0;background:#000;padding:12px;text-align:center';
+          document.body.appendChild(caja);
+        }
+        caja.textContent = texto;
+      }
+    },
     finFotograma: () => {
       entrada.finFotograma();
       if (entrada.pulso('pausa') && rig.controles.isLocked) rig.controles.unlock();
@@ -758,6 +788,8 @@ async function iniciar() {
   });
 
   // ---------------- Inicio, pausa y derrota
+  // Depuración: acceso desde la consola (y desde los scripts de medición y de revisión de cinemáticas)
+  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, jugador, teletransportar, mateo, rig, nivel, bucle } });
   bucle.pausado = !AUTOMATICO;
   bucle.iniciar();
   if (AUTOMATICO) {

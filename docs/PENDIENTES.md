@@ -85,6 +85,19 @@
 | Las voces de los diálogos son el murmullo sintetizado (`public/sounds/voz/*.mp3`, generado por `tools/audio/audio_synth.py`). | Opción A aprobada. Una grabación con el mismo nombre la reemplaza. |
 | Parámetros de depuración: `&final=derrota` o `&final=amanecer` saltan al final del combate o al amanecer, y `&tcine=N` adelanta N segundos la siguiente cinemática. | Chrome sin ventana dibuja pocos fotogramas: sin ellos no se pueden revisar los planos. |
 
+## Rendimiento (tras medir ~30 FPS en el equipo de referencia)
+
+Medido con Chrome sin ventana y swiftshader a 1920 × 1080: el tiempo absoluto no es el de la Iris Xe, pero sí la proporción de cada parte. Herramienta: `&stats` muestra llamadas, triángulos, luces y la escala de resolución.
+
+| Decisión | Medición | Motivo |
+|---|---|---|
+| El escenario se dibuja por una sola cara; solo las hojas de un plano (`doble`, helechos, pasto) son de doble cara. | Selva: 3.168 → 1.705 ms (−46 %). | Blender exporta todo como `doubleSided`: se sombreaban las caras traseras de troncos, rocas y muros. |
+| La luz del cielo pasa de mapa de entorno (PMREM) a armónicos esféricos (`CIELO_SH`), calculados del mismo cielo. Al amanecer se recalculan con el cielo rosado. | Selva: 1.786 → 785 ms; meseta: 3.580 → 1.598 ms. | Con rugosidad 0,92 el entorno solo aportaba luz difusa; muestrearlo era más de la mitad del fotograma. Se ve igual. |
+| Solo hay 3 luces puntuales reales en calidad baja (4 en media y 6 en alta). Toman la posición de las fuentes más cercanas a la cámara, con un fundido al cambiar. La luz del núcleo del Guardián es una fuente más. | Santuario: 558 → 417 ms. | Cada píxel paga todas las luces de la escena. El número nunca cambia, así que no se recompilan los shaders. |
+| Resolución dinámica (`src/core/dynamic_resolution.js`): si no llega a ~55 FPS dibuja a menos resolución, hasta el 67 %, y vuelve a subir con histéresis. `&resolucion=fija` la desactiva. | Prueba `tests/resolucion.test.js`. | Red de seguridad para llegar a 60 FPS en la Iris Xe sin poder medirla desde aquí. |
+| No se parte el escenario en trozos. | Probado con celdas de 30 y 45 m: el mismo tiempo y más llamadas de dibujo (325). | El sobredibujado no era el problema. |
+| `Material.clone()` no copia `onBeforeCompile`: se usa `clonarMaterial()`. | — | Sin eso, los objetos interactuables perdían la luz del cielo. |
+
 ## Pendiente
 
 - La **voz de Victoria** al oír la voz tras la puerta de los espejos (`vic_voz_01`, propuesta) espera tu aprobación del guion, igual que las otras tres líneas *propuesta*.
@@ -92,7 +105,7 @@
 - Opciones completas en el menú (día 6). El volumen, la sensibilidad y la sacudida ya están.
 - Cinemáticas que faltan (día 6): intro, brazalete, puente y puerta del santuario. Modo demo y modo foto.
 - Las flores solares solo curan si Victoria ha recibido daño.
-- Medir los FPS reales en el equipo de referencia (Iris Xe). Chrome sin ventana no sirve para medir rendimiento.
+- Volver a medir los FPS en el equipo de referencia (Iris Xe) tras las mejoras de rendimiento. El día 5 daba ~30 FPS.
 - Medir los FPS en la arena durante la fase 3 (rocas, rayo y los espectros invocados).
 - Medir los FPS con la selva nueva: 82 árboles jóvenes instanciados (≈ 200 triángulos cada uno), 461 helechos y 700 matas.
 - Medir los FPS en el santuario con los espectros (cuerpo transparente) y las 7 luces.

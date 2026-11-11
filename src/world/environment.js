@@ -1,8 +1,10 @@
 // @ts-check
 import * as THREE from 'three';
+import { LightProbeGenerator } from 'three/examples/jsm/lights/LightProbeGenerator.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { ESCENARIO, INTERIOR } from '../config/level.js';
 import { PALETA } from '../config/palette.js';
+import { CIELO_SH } from './shaders.js';
 
 /** Dirección hacia el sol (mundo de Three.js), según config/level.js. */
 export function direccionSol() {
@@ -12,38 +14,92 @@ export function direccionSol() {
 }
 
 /**
- * Luces puntuales del nivel (luz_*): antorchas cálidas que parpadean y la luz azul de la cueva.
- * Sin sombras (sección 4.2). Cada luz pertenece a un grupo (1 = selva, 2 = santuario): solo se
- * enciende el grupo de la zona donde está Victoria, así la Iris Xe nunca calcula todas a la vez
- * (al cambiar de grupo los shaders se recompilan una vez, durante el fundido a negro).
+ * @typedef {{luz: THREE.PointLight, parpadeo: boolean, fase: number, grupo: number, datos: Record<string, any>}} FuenteLuz
+ *   `luz` no se dibuja: guarda posición, color, intensidad y alcance (el juego puede cambiarlos).
+ */
+
+/**
+ * Luces puntuales del nivel (luz_*): antorchas cálidas que parpadean, la luz azul de la cueva, la del
+ * cristal solar y la del núcleo del Guardián. Sin sombras (sección 4.2).
+ *
+ * Cada píxel paga todas las luces puntuales de la escena, estén cerca o no (medido: dentro del santuario
+ * eran el 60 % del fotograma). Por eso solo hay `huecos` luces reales, siempre encendidas (el número
+ * nunca cambia: los shaders no se recompilan), que toman la posición y el color de las fuentes del
+ * grupo de la zona más cercanas a la cámara. Al cambiar de fuente, el hueco se apaga y se vuelve a
+ * encender con un fundido corto, sin saltos.
  * @param {THREE.Scene} escena
  * @param {{objeto: THREE.Object3D, datos: Record<string, any>}[]} luces
+ * @param {number} huecos
  */
-export function crearLucesNivel(escena, luces) {
-  const lista = luces.map(({ objeto, datos }) => {
+export function crearLucesNivel(escena, luces, huecos) {
+  /** @type {FuenteLuz[]} */
+  const fuentes = luces.map(({ objeto, datos }) => {
     const luz = new THREE.PointLight(datos.color ?? PALETA.fuego, Number(datos.intensidad ?? 5), Number(datos.distancia ?? 10), 2);
     objeto.getWorldPosition(luz.position);
-    escena.add(luz);
-    const grupo = Number(datos.grupo ?? 1);
-    luz.visible = grupo === 1;
-    return { luz, base: luz.intensity, parpadeo: Boolean(datos.parpadeo), fase: Math.random() * 10, grupo, datos };
+    luz.updateMatrixWorld();
+    return { luz, parpadeo: Boolean(datos.parpadeo), fase: Math.random() * 10, grupo: Number(datos.grupo ?? 1), datos };
   });
+  const reales = Array.from({ length: huecos }, () => {
+    const luz = new THREE.PointLight('#FFFFFF', 0, 10, 2);
+    escena.add(luz);
+    return { luz, /** @type {FuenteLuz | null} */ fuente: null, peso: 0 };
+  });
+  let grupoActivo = 1;
+  const _p = new THREE.Vector3();
+  /** @type {FuenteLuz[]} */
+  const elegidas = [];
   return {
     /** @param {number} grupo */
     encenderGrupo(grupo) {
-      for (const l of lista) l.luz.visible = l.grupo === grupo;
+      grupoActivo = grupo;
     },
-    /** La luz cuyo dato 'clave' está puesto (p. ej. la del cristal solar). @param {string} clave */
+    /** La fuente cuyo dato 'clave' está puesto (p. ej. la del cristal solar). @param {string} clave */
     porDato(clave) {
-      return lista.find((l) => l.datos[clave]) ?? null;
+      return fuentes.find((l) => l.datos[clave]) ?? null;
     },
-    /** @param {number} t */
-    actualizar(t) {
-      for (let i = 0; i < lista.length; i++) {
-        const l = lista[i];
-        if (!l.parpadeo || !l.luz.visible) continue;
-        const f = Math.sin(t * 9.1 + l.fase) * 0.5 + Math.sin(t * 23.7 + l.fase * 2) * 0.3 + Math.sin(t * 4.3) * 0.2;
-        l.luz.intensity = l.base * (1 + f * ESCENARIO.parpadeo_antorcha);
+    /**
+     * Una luz que se mueve con un objeto (el núcleo del Guardián): se mantiene invisible y el grupo
+     * copia su posición, color e intensidad.
+     * @param {THREE.PointLight} luz @param {number} grupo
+     * @param {THREE.Object3D} [dueno]  si se oculta (el Guardián derrotado), la luz no cuenta
+     */
+    registrar(luz, grupo, dueno) {
+      luz.visible = false;
+      fuentes.push({ luz, parpadeo: false, fase: 0, grupo, datos: { dueno } });
+    },
+    /** @param {number} t @param {number} dt @param {THREE.Vector3} ref  la cámara */
+    actualizar(t, dt, ref) {
+      // Las fuentes del grupo más cercanas (por el borde de su alcance)
+      elegidas.length = 0;
+      for (let i = 0; i < fuentes.length; i++) {
+        const f = fuentes[i];
+        if (f.grupo !== grupoActivo || f.luz.intensity <= 0 || (f.datos.dueno && !f.datos.dueno.visible)) continue;
+        f.luz.getWorldPosition(_p);
+        /** @type {any} */ (f).d = Math.max(0, _p.distanceTo(ref) - f.luz.distance);
+        elegidas.push(f);
+      }
+      elegidas.sort((a, b) => /** @type {any} */ (a).d - /** @type {any} */ (b).d);
+      if (elegidas.length > huecos) elegidas.length = huecos;
+      // Los huecos cuya fuente ya no está entre las elegidas se apagan; los libres toman las nuevas
+      for (const r of reales) {
+        const sigue = r.fuente !== null && elegidas.includes(r.fuente);
+        r.peso = Math.max(0, Math.min(1, r.peso + (sigue ? 1 : -1) * dt * 4));
+        if (!sigue && r.peso === 0) r.fuente = null;
+      }
+      for (const f of elegidas) {
+        if (reales.some((r) => r.fuente === f)) continue;
+        const libre = reales.find((r) => r.fuente === null);
+        if (libre) { libre.fuente = f; libre.peso = 0; }
+      }
+      for (const r of reales) {
+        const f = r.fuente;
+        if (!f) { r.luz.intensity = 0; continue; }
+        f.luz.getWorldPosition(r.luz.position);
+        r.luz.color.copy(f.luz.color);
+        r.luz.distance = f.luz.distance;
+        let k = 1;
+        if (f.parpadeo) k += (Math.sin(t * 9.1 + f.fase) * 0.5 + Math.sin(t * 23.7 + f.fase * 2) * 0.3 + Math.sin(t * 4.3) * 0.2) * ESCENARIO.parpadeo_antorcha;
+        r.luz.intensity = f.luz.intensity * k * r.peso;
       }
     },
   };
@@ -51,7 +107,7 @@ export function crearLucesNivel(escena, luces) {
 
 /**
  * Luz y atmósfera de la selva (sección 4.3): sol cálido de tarde con sombras, cielo procedural
- * convertido en mapa de entorno (IBL) sin descargar HDRI, niebla verdosa.
+ * convertido en luz difusa (armónicos esféricos, ver CIELO_SH) sin descargar HDRI, niebla verdosa.
  * @param {THREE.Scene} escena
  * @param {THREE.WebGLRenderer} renderer
  * @param {import('../config/quality.js').Calidad} calidad
@@ -62,12 +118,19 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
   const cielo = crearCielo(dirSol);
   escena.add(cielo);
 
-  // Mapa de entorno a partir de otra instancia del cielo
-  const pmrem = new THREE.PMREMGenerator(renderer);
+  // Luz difusa del cielo a partir de otra instancia del cielo: un cubo de 32 px proyectado en
+  // armónicos esféricos (antes era un mapa de entorno PMREM, mucho más caro por píxel)
   const escenaCielo = new THREE.Scene();
-  escenaCielo.add(crearCielo(dirSol));
-  escena.environment = pmrem.fromScene(escenaCielo).texture;
-  pmrem.dispose();
+  const cieloLuz = crearCielo(dirSol);
+  escenaCielo.add(cieloLuz);
+  const cubo = new THREE.WebGLCubeRenderTarget(32, { type: THREE.HalfFloatType });
+  const camaraCubo = new THREE.CubeCamera(1, 1000, cubo);
+  const medirCielo = () => {
+    camaraCubo.update(renderer, escenaCielo);
+    const sonda = LightProbeGenerator.fromCubeRenderTarget(renderer, cubo);
+    sonda.sh.coefficients.forEach((c, i) => CIELO_SH.coef.value[i].copy(c));
+  };
+  medirCielo();
 
   escena.fog = new THREE.FogExp2(PALETA.niebla_selva, ESCENARIO.niebla_selva);
 
@@ -89,7 +152,7 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
   const desplazamiento = dirSol.clone().multiplyScalar(35);
   const exterior = { niebla: escena.fog.color.clone(), densidad: /** @type {THREE.FogExp2} */ (escena.fog).density, hemi: hemi.intensity,
     cielo: hemi.color.clone(), suelo: hemi.groundColor.clone(),
-    ambiente: ambiente.intensity, sol: sol.intensity, entorno: escena.environment };
+    ambiente: ambiente.intensity, sol: sol.intensity };
   return {
     sol,
     /**
@@ -106,6 +169,14 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
       u.turbidity.value = 3.5;
       u.mieCoefficient.value = 0.004;
       u.mieDirectionalG.value = 0.92;
+      // La luz del cielo también es la del amanecer
+      const ul = cieloLuz.material.uniforms;
+      for (const k of ['sunPosition', 'rayleigh', 'turbidity', 'mieCoefficient', 'mieDirectionalG']) {
+        if (k === 'sunPosition') ul[k].value.copy(u[k].value);
+        else ul[k].value = u[k].value;
+      }
+      medirCielo();
+      CIELO_SH.fuerza.value = 1;
       const niebla = /** @type {THREE.FogExp2} */ (escena.fog);
       niebla.color.set('#F0BFB4');
       niebla.density = exterior.densidad * 0.8;
@@ -116,7 +187,6 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
       hemi.intensity = 0.7;
       ambiente.intensity = 0.3;
       desplazamiento.copy(dir).multiplyScalar(35);
-      escena.environment = exterior.entorno;
       escena.background = null;
       sol.castShadow = true;
     },
@@ -135,7 +205,7 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
       ambiente.intensity = dentro ? INTERIOR.ambiente : exterior.ambiente;
       sol.intensity = dentro ? INTERIOR.sol : exterior.sol;
       sol.castShadow = !dentro;
-      escena.environment = dentro ? null : exterior.entorno;
+      CIELO_SH.fuerza.value = dentro ? 0 : 1;
       escena.background = dentro ? new THREE.Color(INTERIOR.niebla) : null;
     },
     /** La cámara de sombras sigue a Victoria para mantener sombras nítidas. @param {THREE.Vector3} pos */

@@ -1,5 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
+import { clonarMaterial } from '../world/shaders.js';
 import { ATAQUES, GUARDIAN } from '../config/boss.js';
 import { PALETA } from '../config/palette.js';
 import { materialHaz } from '../interaction/mirror_puzzle.js';
@@ -53,7 +54,7 @@ export class CombateGuardian {
         o.objeto.traverse((h) => {
           const m = /** @type {THREE.Mesh} */ (h);
           if (m.isMesh && /** @type {THREE.Material} */ (m.material).name.includes('pilar')) {
-            cristal = /** @type {THREE.MeshStandardMaterial} */ (m.material).clone();
+            cristal = clonarMaterial(/** @type {THREE.MeshStandardMaterial} */ (m.material));
             m.material = cristal;
           }
         });
