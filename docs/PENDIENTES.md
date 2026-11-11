@@ -83,7 +83,7 @@
 | El final ocurre en la cornisa al amanecer: Victoria mira al este, hacia el sol, y Mateo sale del portal de runas detrás de ella. | Lo dice el tablero de la cámara; mirando al este el sol queda de frente, en silueta. |
 | El menú principal es básico: jugar y opciones de volumen, sensibilidad del ratón y sacudida de cámara, guardadas en `localStorage`. | Lo mínimo para jugar de principio a fin; el resto de opciones queda para el día 6. |
 | Las voces de los diálogos son el murmullo sintetizado (`public/sounds/voz/*.mp3`, generado por `tools/audio/audio_synth.py`). | Opción A aprobada. Una grabación con el mismo nombre la reemplaza. |
-| Parámetros de depuración: `&final=derrota` o `&final=amanecer` saltan al final del combate o al amanecer, y `&tcine=N` adelanta N segundos la siguiente cinemática. | Chrome sin ventana dibuja pocos fotogramas: sin ellos no se pueden revisar los planos. |
+| Parámetros de depuración: `&final=derrota`, `&final=amanecer` o `&final=epilogo` saltan al final del combate, al amanecer o al epílogo; `&tcine=N` adelanta N segundos la siguiente cinemática y `&pasofijo=N` avanza 1/N s por fotograma (capturas en tiempos exactos sin GPU). | Chrome sin ventana dibuja pocos fotogramas: sin ellos no se pueden revisar los planos. |
 
 ## Rendimiento (tras medir ~30 FPS en el equipo de referencia)
 

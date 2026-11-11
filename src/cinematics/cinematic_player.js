@@ -2,6 +2,9 @@
 import * as THREE from 'three';
 import { fovDeLente, LineaTiempo, suave } from './timeline.js';
 
+/** Sucesos que solo tienen sentido dentro de la cinemática: al saltarla no se entregan. */
+const SOLO_EN_CINE = new Set(['decir', 'susurro', 'rugido', 'acorde']);
+
 const _p = new THREE.Vector3();
 const _m = new THREE.Vector3();
 /** Temporal propio de punto(): no puede ser el mismo vector que la salida. */
@@ -47,6 +50,12 @@ export class ReproductorCine {
     this.adelanto = 0;
     /** Distancia de la cámara a lo que mira (enfoque de la profundidad de campo). */
     this.distanciaMira = 0;
+    /**
+     * Corta lo que se esté diciendo (lo pone main con el sistema de diálogos): al empezar una cinemática,
+     * para que su primera línea no espere a una frase del juego, y al saltarla.
+     * @type {() => void}
+     */
+    this.callar = () => {};
     /** Mezcla con la cámara de juego al terminar (sección 9.4). */
     this.salida = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), fov: 70, t: 0, d: 0 };
   }
@@ -75,6 +84,7 @@ export class ReproductorCine {
     this.alTerminar = avisos.alTerminar ?? null;
     this.saltando = 0;
     this.fovBase = this.camara.fov;
+    this.callar();
     this.ui.cine(true);
     // Tras morir, lo ya visto no se repite
     if (this.vistas.has(cine.nombre)) this.saltar();
@@ -87,7 +97,10 @@ export class ReproductorCine {
 
   saltar() {
     if (!this.linea) return;
-    for (const s of this.linea.saltar()) this.alSuceso?.(s);
+    // Al saltar, el estado del juego queda igual que si se hubiera visto entera, pero sin el diálogo:
+    // las líneas que faltaban no suenan después, ya en el juego
+    this.callar();
+    for (const s of this.linea.saltar()) if (!SOLO_EN_CINE.has(s.accion)) this.alSuceso?.(s);
     this._terminar();
   }
 

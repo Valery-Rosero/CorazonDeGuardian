@@ -24,8 +24,16 @@ export class Musica {
       if (!audio.buffers[`musica_${nombre}`]) continue;
       this.pistas[nombre] = { a: audio.bucleGlobal(`musica_${nombre}`, 0, 'musica'), v: 0 };
     }
-    this.temaAudio = new THREE.Audio(oyente);
-    if (audio.buffers.musica_tema) this.temaAudio.setBuffer(audio.buffers.musica_tema);
+    /** @type {Record<string, THREE.Audio>} piezas que suenan una vez, por encima de los bucles */
+    this.unicas = {};
+    for (const n of ['tema', 'amenaza']) {
+      const a = new THREE.Audio(oyente);
+      if (audio.buffers[`musica_${n}`]) a.setBuffer(audio.buffers[`musica_${n}`]);
+      this.unicas[n] = a;
+    }
+    this.temaAudio = this.unicas.tema;
+    /** La pieza única que se apaga al empezar otra (fundido de 1,2 s). @type {THREE.Audio | null} */
+    this.apagando = null;
     /** @type {string | null} */
     this.actual = null;
     this.tocandoTema = 0;
@@ -38,16 +46,33 @@ export class Musica {
 
   /** El tema completo, una vez (los bucles bajan mientras suena). */
   tema() {
-    if (!this.audio.iniciado || !this.temaAudio.buffer) return;
-    if (this.temaAudio.isPlaying) this.temaAudio.stop();
-    this.temaAudio.setVolume(this.audio._vol('musica') * 0.9);
-    this.temaAudio.play();
-    this.tocandoTema = this.temaAudio.buffer.duration;
+    this.unaVez('tema');
+  }
+
+  /**
+   * Una pieza completa, una vez (los bucles bajan mientras suena); la que sonaba se apaga con un fundido.
+   * @param {string} nombre  'tema' o 'amenaza'
+   */
+  unaVez(nombre) {
+    const a = this.unicas[nombre];
+    if (!this.audio.iniciado || !a || !a.buffer) return;
+    for (const otra of Object.values(this.unicas)) if (otra !== a && otra.isPlaying) this.apagando = otra;
+    if (a.isPlaying) a.stop();
+    a.setVolume(this.audio._vol('musica') * 0.9);
+    a.play();
+    this.tocandoTema = a.buffer.duration;
   }
 
   /** @param {number} dt  tiempo real */
   actualizar(dt) {
     this.tocandoTema = Math.max(0, this.tocandoTema - dt);
+    if (this.apagando) {
+      const v = this.apagando.getVolume() - dt * this.audio._vol('musica') * 0.75;
+      if (v <= 0.001) {
+        this.apagando.stop();
+        this.apagando = null;
+      } else this.apagando.setVolume(v);
+    }
     const k = Math.min(1, dt / FUNDIDO);
     for (const [nombre, p] of Object.entries(this.pistas)) {
       const objetivo = this.tocandoTema > 0 ? 0 : nombre === this.actual ? NIVEL[/** @type {keyof typeof NIVEL} */ (nombre)] : 0;

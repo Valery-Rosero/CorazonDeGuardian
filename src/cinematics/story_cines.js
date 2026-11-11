@@ -31,7 +31,8 @@ export function intro(victoria, cima) {
     mezclaFinal: 1.6,
     sucesos: [
       { t: 0.0, accion: 'mapa' },
-      { t: 0.0, accion: 'niebla', datos: 3.2 },
+      { t: 0.0, accion: 'niebla', datos: 2.2 },
+      { t: 4.0, accion: 'niebla', datos: 1.5 },
       { t: 4.4, accion: 'acorde' },
       { t: 7.0, accion: 'niebla', datos: 1 },
       { t: 11.8, accion: 'titulo', datos: 'El Templo del Sol Perdido' },
@@ -41,7 +42,7 @@ export function intro(victoria, cima) {
 }
 
 /**
- * El brazalete (7 s): el altar bajo un único haz de sol; el brazalete vuela a su muñeca.
+ * El brazalete (7,4 s): el altar bajo un único haz de sol; el brazalete vuela a su muñeca.
  * @param {V3} altar  pie del altar
  * @param {V3} victoria  donde está Victoria (mirando al altar)
  * @returns {Cinematica}
@@ -61,7 +62,7 @@ export function brazalete(altar, victoria) {
       // Plano detalle: el brazalete vuela hacia la muñeca derecha
       { duracion: 1.6, lente: 85, camara: [rel(victoria, f, 1.55, 0.95, 1.2), rel(victoria, f, 1.45, 0.9, 1.18)], mira: [rel(victoria, f, 0.32, 0.16, 1.15), rel(victoria, f, 0.3, 0.15, 1.15)] },
       // Primer plano: la cara de Victoria desde el lado del altar, un poco desde abajo (se ve bajo el ala)
-      { duracion: 2.6, lente: 65, curva: 'sale', camara: [rel(victoria, f, 2.4, 0.3, 1.2), rel(victoria, f, 2.25, 0.28, 1.2)], mira: [mas(victoria, 0, 1.3, 0), mas(victoria, 0, 1.3, 0)] },
+      { duracion: 2.8, lente: 65, curva: 'sale', camara: [rel(victoria, f, 2.4, 0.3, 1.2), rel(victoria, f, 2.25, 0.28, 1.2)], mira: [mas(victoria, 0, 1.3, 0), mas(victoria, 0, 1.3, 0)] },
     ],
     sucesos: [
       { t: 2.7, accion: 'mirar' },
@@ -72,7 +73,7 @@ export function brazalete(altar, victoria) {
 }
 
 /**
- * Llegada al puente (4 s): picado casi cenital sobre Victoria que se inclina por el eje del puente hasta
+ * Llegada al puente (4,9 s): picado casi cenital sobre Victoria que se inclina por el eje del puente hasta
  * la fachada, centrada. (Detrás de la cornisa el risco sube a 26 m: no hay un punto que vea a la vez a
  * Victoria abajo y la fachada arriba, así que el plano se mueve de una a otra.)
  * @param {V3} victoria  en la cornisa, al llegar por el portal
@@ -86,7 +87,7 @@ export function puente(victoria, fachada) {
     planos: [
       // Picado casi cenital sobre Victoria al borde del vacío (8,5 m por encima, delante del risco); la cámara
       // se inclina por el puente hasta la fachada, centrada: de la vulnerabilidad al destino
-      { duracion: 4.6, lente: 28, curva: 'suave', retener: 1.6, camara: [rel(victoria, f, -1.6, 0, 8.5), rel(victoria, f, -1.3, 0, 10)], mira: [mas(victoria, 0, 0.9, 0), mas(fachada, 0, -2, 0)] },
+      { duracion: 4.9, lente: 28, curva: 'suave', retener: 1.6, camara: [rel(victoria, f, -1.6, 0, 8.5), rel(victoria, f, -1.3, 0, 10)], mira: [mas(victoria, 0, 0.9, 0), mas(fachada, 0, -2, 0)] },
     ],
     mezclaFinal: 1.4,
     sucesos: [{ t: 0.8, accion: 'decir', datos: ['vic_puente_01'] }],
@@ -94,7 +95,7 @@ export function puente(victoria, fachada) {
 }
 
 /**
- * La puerta de los espejos (7 s): el rayo llega al cristal, las runas se encienden, la puerta se hunde;
+ * La puerta de los espejos (7,7 s): el rayo llega al cristal, las runas se encienden, la puerta se hunde;
  * del otro lado, una voz.
  * @param {V3} puerta  pie de la puerta (centro)
  * @param {V3} cristal  el cristal solar sobre ella
@@ -113,7 +114,7 @@ export function puertaEspejos(puerta, cristal, victoria) {
       { duracion: 2.5, lente: 28, camara: [rel(puerta, n, 6.5, 0, 0.45), rel(puerta, n, 6.4, 0, 0.45)], mira: [mas(cristal, 0, -0.6, 0), mas(cristal, 0, -0.7, 0)] },
       { duracion: 2.0, lente: 28, camara: [rel(puerta, n, 6.4, 0, 0.45), rel(puerta, n, 6.3, 0, 0.45)], mira: [centro, centro], sacudida: 0.05 },
       // 3. Primer plano de Victoria desde el lado de la puerta
-      { duracion: 2.6, lente: 65, curva: 'lineal', camara: [rel(victoria, hv, 1.9, -0.25, 1.38), rel(victoria, hv, 1.75, -0.23, 1.38)], mira: [caraV, caraV] },
+      { duracion: 3.2, lente: 65, curva: 'lineal', camara: [rel(victoria, hv, 1.9, -0.25, 1.38), rel(victoria, hv, 1.75, -0.23, 1.38)], mira: [caraV, caraV] },
     ],
     sucesos: [
       { t: 0.2, accion: 'runas' },

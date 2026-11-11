@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { ESCAPE, ROCAS } from '../config/boss.js';
 import { PALETA } from '../config/palette.js';
 import { derrota, despertar, fase2, fase3, final } from '../cinematics/guardian_cines.js';
+import { epilogo } from '../cinematics/epilogo.js';
+import { EJERCITO } from '../config/epilogue.js';
 import { PoolRocas } from '../enemies/boss_attacks.js';
 import { CombateGuardian } from '../enemies/boss_fight.js';
 import { PoolPiezas } from '../enemies/fragments.js';
@@ -63,7 +65,7 @@ export class ActoFinal {
       sonido: (n, p, v) => c.audio.efectoEn(n, p, v ?? 1),
       rumor: (v) => c.audio.volumenBucle(c.rumorDerrumbe, v),
     });
-    /** 'antes', 'despertar', 'combate', 'derrota', 'escape', 'final', 'fin' */
+    /** 'antes', 'despertar', 'combate', 'derrota', 'escape', 'final', 'epilogo', 'fin' */
     this.etapa = 'antes';
     this.levantando = -1;
     this.gema = -1;
@@ -315,9 +317,62 @@ export class ActoFinal {
           c.jugador.mirarHacia(s.rumbo, 3);
           c.mateo.mirar(s.rumbo);
         }
-        if (e.accion === 'victoria') this._victoria();
       },
-      alTerminar: () => { if (this.etapa !== 'fin') this._victoria(); },
+      alTerminar: () => this._epilogo(),
+    });
+  }
+
+  /**
+   * Epílogo «La marcha»: sobre la cresta del monte del este, a contraluz del sol, aparece un ejército
+   * de centinelas y espectros que baja hacia la cornisa (src/cinematics/epilogo.js).
+   */
+  _epilogo() {
+    const c = this.c;
+    if (this.etapa === 'epilogo' || this.etapa === 'fin') return;
+    this.etapa = 'epilogo';
+    const s = c.nivel.spawns.final;
+    const f = new THREE.Vector3(Math.sin(s.rumbo), 0, Math.cos(s.rumbo));
+    const derecha = new THREE.Vector3(-f.z, 0, f.x);
+    // Los dos en su sitio, frente al sol (aunque se haya saltado el final)
+    c.jugador.colocar(s.pos, s.rumbo);
+    const posMateo = s.pos.clone().addScaledVector(derecha, 1.15).addScaledVector(f, -0.1);
+    c.mateo.raiz.visible = true;
+    c.mateo.caminar = null;
+    c.mateo.siguiendo = false;
+    c.mateo.colocar(posMateo, s.rumbo);
+    // El ejército: la primera fila en la cresta, marchando hacia la cornisa
+    const cresta = c.ejercito.cresta;
+    const dir = new THREE.Vector3().subVectors(s.pos, cresta).setY(0).normalize();
+    c.ejercito.formar(cresta, dir);
+    const frente = (/** @type {number} */ t) => {
+      const p = cresta.clone().addScaledVector(dir, EJERCITO.velocidad * t);
+      const y = c.ejercito.altura(p.x, p.z);
+      p.y = Number.isFinite(y) ? y : cresta.y;
+      return p;
+    };
+    c.cine.reproducir(epilogo(s.pos, f, posMateo, frente, cresta, dir, c.ejercito.altura), {
+      alSuceso: (/** @type {any} */ e) => {
+        if (e.accion === 'ejercito') c.ejercito.mostrar();
+        if (e.accion === 'musica') c.musica.unaVez('amenaza');
+        if (e.accion === 'tension') c.cara.ponerEmocion('sorpresa');
+        if (e.accion === 'ojos') c.ejercito.encenderOjos();
+        if (e.accion === 'decir') c.dialogos.decir(...e.datos);
+        if (e.accion === 'brazalete') {
+          // La gema late en el brazalete: es a ella a quien llaman
+          c.animador.gesto('mirar_brazalete', 1.3);
+          c.manoDer.getWorldPosition(_v);
+          c.rafaga(_v, 40, PALETA.espectro_runa, 2.5);
+          c.audio.efecto('brazalete', 0.4);
+        }
+        if (e.accion === 'negro') c.ui.negro(true);
+        if (e.accion === 'continuara') c.ui.continuara('Continuará…');
+      },
+      alTerminar: () => {
+        c.ui.negro(true);
+        c.ui.continuara('Continuará…');
+        c.ejercito.ocultar();
+        this._victoria();
+      },
     });
   }
 
@@ -364,9 +419,12 @@ export class ActoFinal {
     }
     this.rocas.actualizar(dt, pies, (n) => c.recibirDano(n));
     this.caparazon.actualizar(dt);
-    // En la derrota ningún trozo del caparazón se queda entre la cámara y la cara de Mateo
+    // En los primeros planos de la derrota (desde que aparece Mateo) ningún trozo del caparazón se queda
+    // entre la cámara y lo que mira: ni la cara de Mateo ni la de Victoria
     if (this.etapa === 'derrota' && enCine && c.mateo.raiz.visible) {
-      this.caparazon.despejarLinea(c.cine.camara.position, _v.copy(c.mateo.raiz.position).setY(c.mateo.raiz.position.y + 0.95), 0.8);
+      const cam = c.cine.camara;
+      cam.getWorldDirection(_w);
+      this.caparazon.despejarLinea(cam.position, _v.copy(cam.position).addScaledVector(_w, Math.max(1, c.cine.distanciaMira)), 0.4);
     }
     // La gema vuela del pecho al brazalete
     if (this.gema >= 0) {

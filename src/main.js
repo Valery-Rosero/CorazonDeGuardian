@@ -52,7 +52,9 @@ import { crearAmbienteSelva, crearLucesNivel } from './world/environment.js';
 import { ResolucionDinamica } from './core/dynamic_resolution.js';
 import { Musica } from './core/music.js';
 import { MuralVivo } from './world/living_mural.js';
-import { crearPosproceso } from './fx/postprocess.js';
+import { crearPosproceso, excluirDelBrillo } from './fx/postprocess.js';
+import { precompilar } from './core/warmup.js';
+import { Ejercito, crearMapaAlturas } from './world/army.js';
 import { combinarNiveles, construirNivel } from './world/level_loader.js';
 import { aplicarMaterialesPersonaje, crearRampaToon } from './world/materials.js';
 import { Santuario } from './world/sanctuary.js';
@@ -107,6 +109,7 @@ async function iniciar() {
   escena.add(camara);
 
   const ambiente = crearAmbienteSelva(escena, renderer, calidad);
+  if (posproceso.activo) escena.traverse((o) => { const m = /** @type {any} */ (o).material; if (m?.uniforms?.turbidity) excluirDelBrillo(m); });
   const fisica = new MundoFisico();
   const entrada = new Entrada(INPUT_MAP);
   const triggers = new SistemaTriggers();
@@ -382,11 +385,18 @@ async function iniciar() {
       tutorial.pulso = true;
     });
   };
+  /** @type {{value: number} | null} intensidad del haz de luz falso sobre el altar del brazalete */
+  let hazAltar = null;
+  nivel.raiz.getObjectByName('rayo_altar')?.traverse((o) => {
+    const u = /** @type {any} */ (o).material?.uniforms?.uIntensidad;
+    if (u) hazAltar = u;
+  });
   /** @param {number} dt */
   const avanzarBrazalete = (dt) => {
     if (!secuenciaBrazalete) return;
     const s = secuenciaBrazalete;
     s.t += dt;
+    if (hazAltar) hazAltar.value = Math.max(0, 1 - s.t / 1.4);
     manoDer.getWorldPosition(posMano);
     const u = Math.min(1, s.t / 0.9);
     s.objeto.position.lerpVectors(s.desde, posMano, u * u * (3 - 2 * u));
@@ -553,6 +563,28 @@ async function iniciar() {
     },
   });
 
+  // ---------------- Epílogo: el ejército que marcha desde el monte del este (todo se crea al cargar)
+  const ejercito = new Ejercito(modelos.enemigos.scene, toonEnemigos);
+  escena.add(ejercito.grupo);
+  {
+    // La cresta del monte del este, delante del sol del amanecer, y el terreno por donde baja la tropa
+    const s = nivel.spawns.final;
+    const f = new THREE.Vector3(Math.sin(s.rumbo), 0, Math.cos(s.rumbo));
+    const centro = s.pos.clone().addScaledVector(f, 126);
+    const zona = { x0: centro.x - 60, z0: centro.z - 60, x1: centro.x + 60, z1: centro.z + 60 };
+    ejercito.altura = crearMapaAlturas(nivel.raiz, zona, 2);
+    // La cumbre: el punto más alto en esa dirección
+    let mejor = -Infinity;
+    for (let k = -8; k <= 8; k++) {
+      for (let a = 110; a <= 140; a += 2) {
+        const x = s.pos.x + f.x * a - f.z * k * 2;
+        const z = s.pos.z + f.z * a + f.x * k * 2;
+        const y = ejercito.altura(x, z);
+        if (Number.isFinite(y) && y > mejor) { mejor = y; ejercito.cresta.set(x, y, z); }
+      }
+    }
+  }
+
   // ---------------- Acto final (secciones 7, 8.3 y 9.4)
   const mateo = new MateoNPC(modelos.mateo.scene, (r) => aplicarMaterialesPersonaje(r, rampa), { ...ANIMACION }, cfgJugador, EXPRESIONES);
   escena.add(mateo.raiz);
@@ -565,7 +597,8 @@ async function iniciar() {
   const estadisticas = { tiempo: 0, muertes: 0 };
   const actoFinal = new ActoFinal({
     escena, fisica, nivel, modelos, jugador, animador, rig, audio, hud, ui, dialogos, cine, puente, enemigos, ambiente,
-    interactuables, toon: toonEnemigos, rumorDerrumbe, manoDer, mateo, transicion, teletransportar,
+    interactuables, toon: toonEnemigos, rumorDerrumbe, manoDer, mateo, transicion, teletransportar, ejercito, cara,
+    musica: { unaVez: (/** @type {string} */ n) => musica.unaVez(n) },
     reloj: () => reloj,
     rafaga: (pos, n, color, fuerza) => rafagaEn(rafagas, pos, n, color, fuerza),
     chispa: (pos, color, n) => chispaEn(estela, pos, color, n ?? 1, 0.4),
@@ -761,6 +794,8 @@ async function iniciar() {
     });
   }
 
+  cine.callar = () => dialogos.callar();
+
   // ---------------- Bucle único
   let reloj = 0;
   let enMenu = false;
@@ -793,7 +828,8 @@ async function iniciar() {
         ui.textosDerrota('El templo se derrumbó', 'Reintenta desde el inicio del escape.');
         morir();
       }
-      dialogos.actualizar(dtReal);
+      dialogos.actualizar(bucle.dtCine);
+      ejercito.actualizar(bucle.dtCine);
       santuario.actualizar(dt, t);
       pantallas.fundido(transicion.actualizar(dt));
       avanzarBrazalete(dt);
@@ -836,7 +872,7 @@ async function iniciar() {
     },
     camara: (dt) => {
       if (camLibre.activa) { /* la mueve OrbitControls (etapa del HUD, también en pausa) */ }
-      else if (cine.activo) cine.actualizar(dt, entrada.mantiene('saltar'));
+      else if (cine.activo) cine.actualizar(bucle.dtCine, entrada.mantiene('saltar'));
       else {
         rig.actualizar(dt, jugador.posicion, jugador);
         cine.mezclar(dt);
@@ -869,7 +905,7 @@ async function iniciar() {
       // Música: la pieza del momento de la historia; el tema completo al llegar al amanecer
       const etapa = actoFinal.etapa;
       musica.poner(etapa === 'combate' ? 'jefe' : etapa === 'escape' ? 'escape'
-        : etapa === 'despertar' || etapa === 'derrota' || etapa === 'final' || etapa === 'fin' ? null
+        : etapa === 'despertar' || etapa === 'derrota' || etapa === 'final' || etapa === 'epilogo' || etapa === 'fin' ? null
           : zonaActual === 1 ? 'selva' : zonaActual === 2 ? 'santuario' : null);
       if (etapa === 'final' && etapaMusica !== 'final') musica.tema();
       etapaMusica = etapa;
@@ -1002,7 +1038,19 @@ async function iniciar() {
 
   // ---------------- Inicio, pausa y derrota
   // Depuración: acceso desde la consola (y desde los scripts de medición y de revisión de cinemáticas)
-  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, mural, jugador, teletransportar, mateo, rig, nivel, bucle } });
+  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, mural, jugador, teletransportar, mateo, rig, nivel, bucle, posproceso } });
+  // Todos los sombreadores del nivel, en las dos atmósferas (selva e interiores), antes del primer
+  // fotograma: así ninguna cinemática se congela la primera vez que ve un material
+  const textoCarga = document.getElementById('texto-carga');
+  if (textoCarga) textoCarga.textContent = 'Preparando la luz del templo…';
+  // (&sinprecompilar en depuración: para medir la diferencia)
+  if (!(DEPURACION && params.has('sinprecompilar'))) {
+    // La profundidad de campo de las cinemáticas dibuja con su propio material: encendida en el fotograma de prueba
+    posproceso.enfocar(10);
+    await precompilar(renderer, escena, camara, posproceso.destino, [() => ambiente.ponerInterior(true), () => ambiente.ponerInterior(false)],
+      () => posproceso.render());
+    posproceso.enfocar(null);
+  }
   bucle.pausado = !AUTOMATICO && !demo.activo;
   bucle.iniciar();
   if (AUTOMATICO) {
@@ -1025,6 +1073,10 @@ async function iniciar() {
       }, 300);
     }
     if (params.get('final') === 'amanecer') setTimeout(() => { actoFinal.etapa = 'escape'; actoFinal._final(); }, 300);
+    // &final=epilogo: directo a «La marcha» (el final se salta)
+    if (params.get('final') === 'epilogo') setTimeout(() => { actoFinal.etapa = 'escape'; actoFinal._final(); cine.saltar(); }, 300);
+    // &pasofijo=N: cada fotograma avanza 1/N s (capturas de cinemáticas en tiempos exactos sin GPU; 30 por defecto)
+    if (params.has('pasofijo')) bucle.pasoFijo = 1 / (Number(params.get('pasofijo')) || 30);
     // &tcine=N adelanta N segundos la próxima cinemática (para revisar cada plano)
     cine.adelanto = Number(params.get('tcine') ?? 0);
     const destino = params.get('ir');
@@ -1097,6 +1149,7 @@ async function iniciar() {
   rig.controles.addEventListener('lock', () => {
     bucle.pausado = false;
     pantallas.pausa(false);
+    oyente.context.resume();
   });
   rig.controles.addEventListener('unlock', () => {
     if (amanecer) return;   // la pantalla de victoria deja el juego de fondo
@@ -1105,6 +1158,8 @@ async function iniciar() {
     bucle.pausado = true;
     if (panelDiario.abierto) panelDiario.cerrar();
     if (!muerta) pantallas.pausa(true);
+    // En la pausa todo el sonido se detiene (voces incluidas): al volver, la cinemática y su voz siguen juntas
+    oyente.context.suspend();
   });
 }
 

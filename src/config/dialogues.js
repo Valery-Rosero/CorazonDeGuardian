@@ -20,6 +20,9 @@ export const LINEAS = Object.freeze({
   vic_cascada_01: { quien: 'victoria', texto: '«Detrás del agua hay un camino». Como siempre, tenías razón.', emocion: 'alegria', duracion: 5.2 },
   vic_puente_01: { quien: 'victoria', texto: 'Te aguantó a ti… ojalá me aguante a mí.', emocion: 'determinacion', duracion: 3.7 },
   vic_voz_01: { quien: 'victoria', texto: '¿Papá? ¿Eres tú?', emocion: 'sorpresa', duracion: 1.8 },
+  // Epílogo «La marcha» (11/11)
+  mat_epilogo_01: { quien: 'mateo', texto: 'La gema… los está llamando.', emocion: 'miedo', duracion: 2.6 },
+  vic_epilogo_01: { quien: 'victoria', texto: '¿Cómo saldremos de aquí?', emocion: 'miedo', duracion: 1.9 },
 });
 
 /** Emoción de la cara de Victoria (config/expressions.js) para cada emoción del guion. */

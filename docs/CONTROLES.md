@@ -44,7 +44,8 @@ Volumen general, de música, de efectos y de voces; sensibilidad del ratón; sac
 | `/?debug&auto&poderes&ir=santuario` | El vestíbulo del santuario con los tres poderes |
 | `/?debug&auto&poderes&ir=arena` | La entrada de la arena (camina hacia el trono para despertar al Guardián) |
 | `/?debug&auto&poderes&final=derrota` | La cinemática de la derrota del Guardián |
-| `/?debug&auto&poderes&final=amanecer` | La cinemática final |
+| `/?debug&auto&poderes&final=amanecer` | La cinemática final y, después, el epílogo |
+| `/?debug&auto&poderes&final=epilogo` | El epílogo «La marcha» directamente |
 | `&stats` | Añadido a cualquier dirección: llamadas, triángulos y luces en pantalla |
 | `&calidad=baja`, `media` o `alta` | Fuerza una calidad gráfica |
 

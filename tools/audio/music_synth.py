@@ -238,8 +238,70 @@ def mural_canto():
     return normalizar(s * respira, 0.6)
 
 
+def musica_amenaza():
+    """Epílogo «La marcha» (una vez, sincronizada con la cinemática de src/cinematics/epilogo.js):
+    tambores lejanos sobre el silencio del amanecer, un trémolo frío cuando se encienden los ojos, la
+    marcha con el leitmotiv deformado en metales graves, solo latidos bajo el diálogo, el regreso de
+    toda la tropa y un golpe final antes de «Continuará»."""
+    dur = 25.0
+    n = int(dur * SR)
+    s = np.zeros(n)
+    seg = lambda t: int(t * SR)
+
+    def lejano(frag, corte=0.35):
+        # Lejos: sin ataque (se suaviza con un promedio móvil) y con una cola de eco
+        k = max(1, int(corte * 40))
+        suave = np.convolve(frag, np.ones(k) / k, mode='same')
+        eco = np.zeros(len(suave) + seg(0.9))
+        eco[:len(suave)] += suave
+        eco[seg(0.45):seg(0.45) + len(suave)] += suave * 0.35
+        eco[seg(0.9):seg(0.9) + len(suave)] += suave * 0.15
+        return eco
+
+    # 1. Tambores lejanos (0,4 · 1,6 · 2,8 s)
+    for t, fz in ((0.4, 0.55), (1.6, 0.7), (2.8, 0.85)):
+        pegar(s, lejano(taiko(fz)) * 0.9, seg(t), bucle=False)
+    # Dron grave desde los ojos hasta el final (La1 con quinta disminuida: inquietud)
+    nd = seg(dur - 3.2)
+    td = np.arange(nd) / SR
+    dron = (onda(55.0, nd, ((1, 1.0), (2, 0.4), (3, 0.15)), desafino=0.002) + 0.5 * onda(77.78, nd, ((1, 1.0), (2, 0.2))))
+    dron *= np.clip(td / 2.5, 0, 1) * np.clip((nd - np.arange(nd)) / (2.0 * SR), 0, 1) * 0.16
+    pegar(s, dron, seg(3.2), bucle=False)
+    # 2. Trémolo frío mientras se encienden los ojos (3,3 a 7 s)
+    nt = seg(3.9)
+    tt = np.arange(nt) / SR
+    tremolo = sum(onda(N[x] * 2, nt, ((1, 1.0), (2, 0.2))) for x in ('E4', 'F4', 'B4'))
+    tremolo *= (0.55 + 0.45 * np.sin(2 * np.pi * 9 * tt)) * np.clip(tt / 3.0, 0, 1) * np.clip((nt - np.arange(nt)) / (0.6 * SR), 0, 1) * 0.05
+    pegar(s, tremolo, seg(3.3), bucle=False)
+    # 3. La marcha (96 ppm) de 7 a 11,5 s y de 17,5 a 20,6 s; debajo del diálogo, solo el latido
+    pulso = 60 / 96
+    for desde, hasta, fuerza in ((7.0, 11.5, 1.0), (17.5, 20.6, 1.15)):
+        t = desde
+        k = 0
+        while t < hasta - 0.05:
+            crece = 0.6 + 0.4 * (t - desde) / (hasta - desde)
+            pegar(s, taiko((1.0 if k % 2 == 0 else 0.7) * crece * fuerza), seg(t), bucle=False)
+            if k % 2 == 1:
+                pegar(s, taiko(0.45 * crece), seg(t + pulso * 0.5), bucle=False)
+            pegar(s, bajo(N['A2'] if (k // 2) % 2 == 0 else N['F2'], pulso * 0.8, duro=True) * 0.5 * crece, seg(t), bucle=False)
+            t += pulso
+            k += 1
+    # El leitmotiv de Victoria y Mateo, deformado en metales graves: es la canción de la gema
+    tocar_motivo(s, MOTIVO[:6], pulso, 7.0 / pulso, metal_oscuro, transponer=0.5, bucle=False)
+    tocar_motivo(s, MOTIVO[:6], pulso, 17.5 / pulso, metal_oscuro, transponer=0.5, bucle=False)
+    for t in np.arange(11.5, 17.5, pulso * 2):
+        pegar(s, lejano(taiko(0.45)) * 0.7, seg(t), bucle=False)
+    # 4. Golpe final (20,6 s) y su cola: después, solo el dron que se apaga
+    golpe = np.zeros(seg(2.6))
+    for frag in (taiko(1.6), bajo(N['A2'] / 2, 2.5, duro=True) * 0.9, metal_oscuro(N['A2'], 2.4) * 1.4):
+        golpe[:len(frag)] += frag
+    pegar(s, lejano(golpe, 0.1), seg(20.6), bucle=False)
+    cola = np.clip((n - np.arange(n)) / (1.5 * SR), 0, 1)
+    return normalizar(s * cola, 0.8)
+
+
 PIEZAS = {
     'musica_selva': musica_selva, 'musica_santuario': musica_santuario, 'musica_jefe': musica_jefe,
     'musica_escape': musica_escape, 'musica_tema': musica_tema,
-    'mural_canto': mural_canto,
+    'mural_canto': mural_canto, 'musica_amenaza': musica_amenaza,
 }

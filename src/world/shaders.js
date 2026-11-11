@@ -92,20 +92,35 @@ export function materialPoza() {
 /** Rayo de luz falso: cono aditivo que se desvanece arriba y abajo, con polvo en suspensión. */
 export function materialRayo() {
   const m = new THREE.ShaderMaterial({
-    uniforms: { uColor: { value: new THREE.Color(PALETA.oro_brillante) } },
+    uniforms: { uColor: { value: new THREE.Color(PALETA.oro_brillante) }, uIntensidad: { value: 1 } },
     vertexShader: /* glsl */ `
       varying vec3 vLocal;
-      void main() { vLocal = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      varying vec3 vVista;
+      varying vec3 vNormalVista;
+      void main() {
+        vLocal = position;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vVista = mv.xyz;
+        vNormalVista = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * mv;
+      }`,
     fragmentShader: /* glsl */ `
       uniform float uTiempo;
       uniform vec3 uColor;
+      uniform float uIntensidad;
       varying vec3 vLocal;
+      varying vec3 vVista;
+      varying vec3 vNormalVista;
       ${RUIDO}
       void main() {
         float h = vLocal.y / 9.0;
         float a = smoothstep(0.0, 0.15, h) * (1.0 - smoothstep(0.55, 1.0, h));
         float polvo = ruido(vec2(atan(vLocal.x, vLocal.z) * 3.0, vLocal.y * 1.5 - uTiempo * 0.4));
-        gl_FragColor = vec4(uColor, a * (0.12 + polvo * 0.08));
+        // Bordes suaves: las caras que se ven de canto casi no se ven (sin el corte duro de la silueta)
+        float frente = abs(dot(normalize(vNormalVista), normalize(-vVista)));
+        // Si la cámara entra en el haz o pasa muy cerca, se desvanece en lugar de velar todo el cuadro
+        float cerca = smoothstep(1.5, 6.0, length(vVista));
+        gl_FragColor = vec4(uColor, a * (0.12 + polvo * 0.08) * (0.2 + 0.8 * frente * frente) * cerca * uIntensidad);
       }`,
     transparent: true,
     depthWrite: false,

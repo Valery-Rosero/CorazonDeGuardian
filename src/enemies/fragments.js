@@ -22,7 +22,7 @@ export class PoolPiezas {
    */
   constructor(escena, fisica, modelos, copias) {
     this.fisica = fisica;
-    /** @type {Record<string, {malla: THREE.Object3D, cuerpo: CANNON.Body, vida: number, activo: boolean, escala: number}[]>} */
+    /** @type {Record<string, {malla: THREE.Object3D, cuerpo: CANNON.Body, vida: number, activo: boolean, escala: number, radio: number}[]>} */
     this.piezas = {};
     let k = 0;
     for (const modelo of modelos) {
@@ -47,7 +47,8 @@ export class PoolPiezas {
         cuerpo.position.set(k++ * 3, LEJOS, 0);
         cuerpo.sleep();
         fisica.world.addBody(cuerpo);
-        return { malla, cuerpo, vida: 0, activo: false, escala: 1 };
+        // Radio de la esfera que envuelve la pieza: una placa grande tapa aunque su centro quede lejos de la línea
+        return { malla, cuerpo, vida: 0, activo: false, escala: 1, radio: tam.length() / 2 };
       });
     }
     this.vida = 3;
@@ -89,7 +90,7 @@ export class PoolPiezas {
   }
 
   /**
-   * Retira las piezas que se cruzan entre dos puntos (la cámara y la cara de quien habla).
+   * Retira las piezas que se cruzan entre dos puntos (la cámara y la cara de quien habla), contando su tamaño.
    * @param {THREE.Vector3} a @param {THREE.Vector3} b @param {number} radio
    */
   despejarLinea(a, b, radio) {
@@ -101,7 +102,7 @@ export class PoolPiezas {
         if (!p.activo || p.vida <= 0) continue;
         _ap.set(p.cuerpo.position.x, p.cuerpo.position.y, p.cuerpo.position.z).sub(a);
         const u = Math.max(0, Math.min(1, _ap.dot(_ab) / l2));
-        if (_ap.addScaledVector(_ab, -u).length() < radio) { p.vida = 0; alguna = true; }
+        if (_ap.addScaledVector(_ab, -u).length() < radio + p.radio) { p.vida = 0; alguna = true; }
       }
     }
     if (alguna) this.actualizar(0);

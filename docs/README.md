@@ -32,7 +32,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 | `npm run build` | Compilación de producción en `dist/` |
 | `npm run preview` | Probar la compilación de producción |
 | `npm run check` | Comprobación de tipos JSDoc |
-| `npm test` | 93 pruebas (`node --test`): lógica, y simulaciones que cargan los `.glb` reales y hacen correr la física |
+| `npm test` | 98 pruebas (`node --test`): lógica, y simulaciones que cargan los `.glb` reales y hacen correr la física |
 | `npm run assets` | Regenera los `.glb` con Blender y los sonidos y la música con Python. La ruta de Blender se lee de `BLENDER_PATH`. |
 
 ## Documentación
@@ -45,6 +45,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 | [CONTROLES.md](CONTROLES.md) | Teclas de juego y de depuración |
 | [EJECUTAR_Y_PUBLICAR.md](EJECUTAR_Y_PUBLICAR.md) | Compilar, publicar y probar en otra computadora |
 | [GUION_DIALOGOS.md](GUION_DIALOGOS.md) | Todas las líneas de diálogo, con su código y emoción |
+| [GUION_EPILOGO.md](GUION_EPILOGO.md) | Guion gráfico del epílogo «La marcha» |
 | [GUION_VIDEO.md](GUION_VIDEO.md) | Guion del video corto de la entrega |
 | [FICHA_CONCEPTO.md](FICHA_CONCEPTO.md) | Borrador de la ficha del concepto (una página) |
 | [PENDIENTES.md](PENDIENTES.md) | Decisiones, desvíos del documento maestro y lo que queda pendiente |

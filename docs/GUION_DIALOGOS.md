@@ -53,7 +53,18 @@ La duración estimada es la que el juego le da a la línea para mover la boca. U
 | `vic_derrota_01` | Plano y contraplano | Victoria | «Te dije que llegaría antes que tú.» | ternura, entre la risa y el llanto | 2,7 s |
 | `mat_escape_01` | El templo empieza a derrumbarse | Mateo | «¡Corre! Estoy justo detrás de ti.» | urgencia | 2,9 s |
 
-**Final (amanecer):** sin diálogo. Victoria se gira, Mateo sale de entre los árboles, ambos miran el sol y aparece «VICTORIA».
+**Final (amanecer):** sin diálogo. Victoria se gira, Mateo sale del portal de runas y los dos miran el sol.
+
+## 4b. Epílogo «La marcha» (después del amanecer)
+
+Sobre la cresta del monte del este, a contraluz del sol, se encienden cientos de ojos: un ejército de centinelas y espectros baja hacia la cornisa. Plano a plano en [GUION_EPILOGO.md](GUION_EPILOGO.md).
+
+| Código | Momento | Personaje | Línea | Emoción | Duración |
+|---|---|---|---|---|---|
+| `mat_epilogo_01` | Primer plano de Mateo, mirando la cresta | Mateo | «La gema… los está llamando.» | miedo, en voz baja | 2,6 s |
+| `vic_epilogo_01` | Primer plano de Victoria; acaba de mirar el brazalete | Victoria | «¿Cómo saldremos de aquí?» | miedo contenido | 1,9 s |
+
+Después: golpe de la música, negro y «Continuará…»; luego la pantalla de victoria.
 
 ---
 

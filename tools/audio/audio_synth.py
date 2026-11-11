@@ -687,6 +687,13 @@ import music_synth  # noqa: E402  (la música: su propio azar, no cambia nada de
 # Día 6: la voz que se oye detrás de la puerta de los espejos (la gema susurra, sin subtítulo)
 VOCES_DIA6 = {'voz/gem_susurro_puerta': lambda: murmullo('Vi… to… ri… a…', 3.0, 'gema', True)}
 
+# Epílogo «La marcha» (11/11): al salir, un ejército se acerca. Copia de src/config/dialogues.js.
+LINEAS_EPILOGO = {
+    'mat_epilogo_01': ('mateo', 'La gema… los está llamando.', 2.6, False),
+    'vic_epilogo_01': ('victoria', '¿Cómo saldremos de aquí?', 1.9, False),
+}
+VOCES_EPILOGO = {f'voz/{c}': (lambda c=c: murmullo(*[LINEAS_EPILOGO[c][i] for i in (1, 2, 0, 3)])) for c in LINEAS_EPILOGO}
+
 
 def buscar_ffmpeg():
     ruta = shutil.which('ffmpeg')
@@ -703,7 +710,7 @@ def main():
         print('[audio] AVISO: ffmpeg no está instalado; los efectos quedan en .wav', file=sys.stderr)
     # El orden importa: primero lo de los días 1 a 3 (los mismos sonidos de siempre), después lo nuevo
     os.makedirs(os.path.join(SALIDA, 'voz'), exist_ok=True)
-    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, {**EFECTOS_DIA5, **VOCES_DIA5}), ({}, VOCES_DIA6)):
+    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, {**EFECTOS_DIA5, **VOCES_DIA5}), ({}, VOCES_DIA6), ({}, VOCES_EPILOGO)):
         generar(bucles, efectos, ffmpeg)
     # Música: los bucles en .wav (un .mp3 añade silencio al empezar y el bucle se oiría cortado)
     for nombre, fn in music_synth.PIEZAS.items():

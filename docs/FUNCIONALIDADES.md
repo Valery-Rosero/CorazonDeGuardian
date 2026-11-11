@@ -6,7 +6,11 @@ Lo que tiene el juego y cómo se comprobó. «Prueba» es una prueba automática
 
 | Funcionalidad | Cómo se comprobó |
 |---|---|
-| Nueve cinemáticas (introducción, brazalete, llegada al puente, puerta de los espejos, despertar, fases 2 y 3, derrota y final), diseñadas primero en un guion gráfico con lente, ángulo, movimiento e intención de cada plano | Captura del centro de cada plano comparada con su viñeta (`tests/cine.test.js` para el reproductor) |
+| Diez cinemáticas (introducción, brazalete, llegada al puente, puerta de los espejos, despertar, fases 2 y 3, derrota, final y el epílogo «La marcha»), diseñadas primero en un guion gráfico con lente, ángulo, movimiento e intención de cada plano | Captura del centro de cada plano comparada con su viñeta (`tests/cine.test.js` para el reproductor) |
+| Las cinemáticas van con el reloj real (el de las voces): un fotograma lento no las desfasa; la pausa detiene también el sonido; saltarlas no deja diálogo sonando después | `tests/cine_tiempos.test.js`: cada línea termina dentro de su cinemática y de su plano, el reloj no se atrasa y el salto no entrega el diálogo |
+| Todos los sombreadores se compilan en la pantalla de carga (las dos atmósferas, sombras y profundidad de campo incluidas) | En las 10 cinemáticas, el número de programas antes y después es el mismo: ningún tirón por compilar |
+| Bloom sin velo: el cielo (HDR) no brilla y un píxel inválido no se extiende por el cuadro | Hoja de contactos de las 10 cinemáticas en calidad media y alta: antes, con el cielo a la vista el cuadro quedaba lechoso (peor que en baja) y el primer plano de Mateo en la derrota salía negro |
+| Epílogo: un ejército de 220 centinelas y 36 espectros (InstancedMesh, 6 llamadas de dibujo) baja del monte del este siguiendo el terreno; música sincronizada plano a plano y «Continuará…» | [GUION_EPILOGO.md](GUION_EPILOGO.md); prueba de que el negro llega con el golpe final de la música |
 | Mezcla suave con la cámara de juego al terminar cada cinemática; todas se saltan manteniendo Espacio 1 s | Prueba |
 | Diálogos con subtítulos y voces sintetizadas (murmullo con el timbre de cada personaje); la cara de quien habla se mueve con el texto | Captura y prueba de las voces |
 | Cuando habla Mateo desde dentro del Guardián, el núcleo late y asoma su silueta; cuando habla la gema, brillan las runas | Captura |

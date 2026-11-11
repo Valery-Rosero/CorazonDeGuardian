@@ -70,6 +70,18 @@ export class InterfazFinal {
     setTimeout(() => r.classList.add('oculto'), 4600);
   }
 
+  /** Epílogo: la pantalla en negro (corte seco, con el golpe de la música). @param {boolean} si */
+  negro(si) {
+    $('epilogo-negro').classList.toggle('oculto', !si);
+  }
+
+  /** Epílogo: «Continuará…» sobre el negro. @param {string} texto */
+  continuara(texto) {
+    const c = $('continuara');
+    c.textContent = texto;
+    c.classList.add('visible');
+  }
+
   /** @param {{tiempo: number, muertes: number, paginas: number, total: number}} e */
   victoria(e) {
     const m = Math.floor(e.tiempo / 60);

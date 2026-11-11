@@ -28,7 +28,7 @@ export const hacia = (a, b) => {
 const dir = (rumbo) => ({ x: Math.sin(rumbo), y: 0, z: Math.cos(rumbo) });
 
 /**
- * Despertar del Guardián (18,5 s). La revelación: el pecho habla con la voz de Mateo y la máscara con la de la gema.
+ * Despertar del Guardián (18,9 s). La revelación: el pecho habla con la voz de Mateo y la máscara con la de la gema.
  * @param {V3} entrada  donde entra Victoria
  * @param {V3} trono  pies del Guardián sentado
  * @returns {Cinematica}
@@ -46,11 +46,11 @@ export function despertar(entrada, trono) {
       { duracion: 2.5, lente: 85, camara: [rel(trono, f, 4.9, 0.12, 4.3), rel(trono, f, 4.6, 0.1, 4.35)], mira: [mas(trono, 0, 4.62, 0), mas(trono, 0, 4.65, 0)] },
       // 4. Picado desde detrás del hombro del Guardián mientras se levanta: Victoria, pequeña y sola al
       //    otro lado de la arena (sección 9.3). Desde los lados no hay sitio: el muro está a 16 m.
-      { duracion: 2.5, lente: 40, camara: [rel(entrada, f, -28, 3, 9), rel(entrada, f, -27.6, 2.9, 9.4)], mira: [rel(entrada, f, 0, 0, 1), rel(entrada, f, 0, 0, 1.2)], sacudida: 0.08 },
+      { duracion: 2.5, lente: 60, camara: [rel(entrada, f, -28, 3, 9), rel(entrada, f, -27.6, 2.9, 9.4)], mira: [rel(entrada, f, 0, 0, 1), rel(entrada, f, 0, 0, 1.2)], sacudida: 0.08 },
       // 5. Por encima del hombro de Victoria hacia el pecho: la voz de Mateo sale del núcleo
       { duracion: 4.5, lente: [50, 85], curva: 'sale', camara: [rel(entrada, f, 1.35, 0.5, 1.35), rel(entrada, f, 1.25, 0.45, 1.35)], mira: [mas(trono, 0, 3.6, 0), mas(trono, 0, 3.7, 0)] },
       // 6. La máscara habla con la voz de la gema (contrapicado); rótulo
-      { duracion: 3.1, lente: 65, camara: [rel(trono, f, 6.4, 0.9, 3.4), rel(trono, f, 6.1, 0.8, 3.3)], mira: [mas(trono, 0, 5.4, 0), mas(trono, 0, 5.45, 0)] },
+      { duracion: 3.4, lente: 65, camara: [rel(trono, f, 6.4, 0.9, 3.4), rel(trono, f, 6.1, 0.8, 3.3)], mira: [mas(trono, 0, 5.4, 0), mas(trono, 0, 5.45, 0)] },
     ],
     mezclaFinal: 1.4,
     sucesos: [
@@ -64,7 +64,7 @@ export function despertar(entrada, trono) {
 }
 
 /**
- * Fase 2 (5,4 s): acercamiento rápido al pecho mientras se abren las placas; Victoria responde en cuadro.
+ * Fase 2 (5,8 s): acercamiento al pecho mientras se abren las placas y habla la gema; Victoria responde en cuadro.
  * @param {V3} pecho @param {number} rumbo  hacia dónde mira el Guardián @param {V3} victoria
  * @returns {Cinematica}
  */
@@ -74,16 +74,16 @@ export function fase2(pecho, rumbo, victoria) {
   return {
     nombre: 'fase2',
     planos: [
-      { duracion: 2.6, lente: [35, 50], curva: 'sale', camara: [rel(pecho, f, 9.5, 1.6, 0.3), rel(pecho, f, 4.8, 0.8, 0.1)], mira: [pecho, pecho] },
+      { duracion: 3.5, lente: [35, 50], curva: 'sale', camara: [rel(pecho, f, 9.5, 1.6, 0.3), rel(pecho, f, 4.8, 0.8, 0.1)], mira: [pecho, pecho] },
       // Victoria de frente, decidida, mirando hacia arriba (contrapicado leve)
-      { duracion: 2.8, lente: 50, camara: [rel(victoria, hv, 2.3, 0.35, 1.15), rel(victoria, hv, 2.2, 0.32, 1.15)], mira: [mas(victoria, 0, 1.5, 0), mas(victoria, 0, 1.52, 0)] },
+      { duracion: 2.3, lente: 50, camara: [rel(victoria, hv, 2.3, 0.35, 1.15), rel(victoria, hv, 2.2, 0.32, 1.15)], mira: [mas(victoria, 0, 1.5, 0), mas(victoria, 0, 1.52, 0)] },
     ],
     sucesos: [{ t: 0.2, accion: 'decir', datos: ['gem_fase2_01', 'vic_fase2_01'] }],
   };
 }
 
 /**
- * Fase 3 (7,4 s): grietas en plano holandés con rugido; después, con la cámara quieta, habla Mateo.
+ * Fase 3 (7,9 s): grietas en plano holandés con rugido; después, con la cámara quieta, habla Mateo.
  * @param {V3} pecho @param {number} rumbo
  * @returns {Cinematica}
  */
@@ -93,7 +93,7 @@ export function fase3(pecho, rumbo) {
     nombre: 'fase3',
     planos: [
       { duracion: 2.4, lente: 50, camara: [rel(pecho, f, 5.4, -2.0, 1.4), rel(pecho, f, 5.0, -1.8, 1.6)], mira: [mas(pecho, 0, 1.0, 0), mas(pecho, 0, 1.3, 0)], holandes: 4, sacudida: 0.06 },
-      { duracion: 5.0, lente: 85, curva: 'lineal', camara: [rel(pecho, f, 6.4, 0.3, 0.05), rel(pecho, f, 6.0, 0.28, 0.05)], mira: [pecho, pecho] },
+      { duracion: 5.5, lente: 85, curva: 'lineal', camara: [rel(pecho, f, 6.4, 0.3, 0.05), rel(pecho, f, 6.0, 0.28, 0.05)], mira: [pecho, pecho] },
     ],
     sucesos: [{ t: 0.1, accion: 'rugido' }, { t: 2.5, accion: 'decir', datos: ['mat_fase3_01'] }],
   };
@@ -182,7 +182,7 @@ export function final(victoria, rumbo, mateo) {
       { t: 7.3, accion: 'gafas' },
       { t: 8.7, accion: 'acercarse' },
       { t: 10.4, accion: 'mirar_sol' },
-      { t: 15.6, accion: 'victoria' },
     ],
+    mezclaFinal: 0.01,
   };
 }
