@@ -14,9 +14,11 @@ Todo se genera con código: los personajes y escenarios con scripts de Python en
 
 ## Ejecutar
 
-```bash
-npm install
-npm run dev        # http://localhost:5173
+**Primera vez en una computadora nueva:** sigue [ONBOARDING.md](ONBOARDING.md). Es un comando para instalar todo y otro para jugar:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\instalar.ps1   # Windows (en macOS o Linux: bash scripts/instalar.sh)
+npm run jugar                                                  # abre el juego en el navegador
 ```
 
 Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos del curso, uno por uno.
@@ -28,6 +30,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 
 | Comando | Uso |
 |---|---|
+| `npm run jugar` | Servidor de desarrollo y abre el navegador |
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Compilación de producción en `dist/` |
 | `npm run preview` | Probar la compilación de producción |
@@ -40,6 +43,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 
 | Documento | Contenido |
 |---|---|
+| [ONBOARDING.md](ONBOARDING.md) | Instalar el proyecto en otra computadora con un comando (y [AGENTS.md](../AGENTS.md) para los agentes) |
 | [REQUISITOS_CURSO.md](REQUISITOS_CURSO.md) | Los 8 requisitos del curso: archivo, función y cómo demostrarlos |
 | [CHECKLIST_CURSO.md](CHECKLIST_CURSO.md) | Todo lo visto en las semanas 1 a 10 y cómo está en el juego |
 | [FUNCIONALIDADES.md](FUNCIONALIDADES.md) | Lo que tiene el juego y cómo se probó |

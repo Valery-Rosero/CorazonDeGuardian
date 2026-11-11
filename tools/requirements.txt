@@ -1,0 +1,3 @@
+# Para regenerar los sonidos, la música y el video del mural (npm run assets)
+numpy>=1.26
+Pillow>=10.0

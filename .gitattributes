@@ -4,3 +4,6 @@
 *.jpg binary
 *.wav binary
 *.mp3 binary
+*.mp4 binary
+# PowerShell en Windows: CRLF (los .sh ya quedan en LF por la regla general)
+*.ps1 text eol=crlf

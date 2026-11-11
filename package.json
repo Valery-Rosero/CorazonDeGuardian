@@ -5,6 +5,7 @@
   "description": "El Templo del Sol Perdido: aventura 3D para navegador con Three.js y cannon-es",
   "type": "module",
   "scripts": {
+    "jugar": "vite --open",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -22,5 +23,8 @@
     "@types/three": "0.160.0",
     "typescript": "7.0.2",
     "vite": "8.3.7"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

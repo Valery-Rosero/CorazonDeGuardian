@@ -26,7 +26,7 @@ import { ActoFinal } from './game/final_act.js';
 import { Historia } from './game/story.js';
 import { ModoDemo } from './game/demo_mode.js';
 import { CamaraLibre } from './camera/free_camera.js';
-import { crearAyudasVisuales } from './debug/helpers.js';
+import { crearAtajos, crearAyudasVisuales } from './debug/helpers.js';
 import { MateoNPC } from './player/mateo_npc.js';
 import { Dialogos } from './ui/dialogue_player.js';
 import { InterfazFinal } from './ui/endgame_ui.js';
@@ -869,7 +869,7 @@ async function iniciar() {
     ? (await import('./debug/debug_panel.js')).crearPanelDepuracion({ renderer })
     : null;
   if (DEPURACION) {
-    (await import('./debug/helpers.js')).crearAtajos({
+    crearAtajos({
       escena, triggers, colisionables: nivel.colisionables, vida, panel: depuracion,
       teletransportar: (n) => { teletransportar(n); puente.reiniciar(); },
       nota: (texto) => hud.nota(texto, 1.6),

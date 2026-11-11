@@ -1,10 +1,21 @@
 // Regenera todos los recursos: modelos con Blender (y, más adelante, sonidos con Python).
 // La ruta de Blender se lee de la variable de entorno BLENDER_PATH.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 
-const POR_DEFECTO = 'C:/Program Files/Blender Foundation/Blender 5.2/blender.exe';
-const BLENDER = process.env.BLENDER_PATH || POR_DEFECTO;
+/** Blender instalado en el lugar de siempre (la versión más nueva), o el de BLENDER_PATH. */
+function buscarBlender() {
+  if (process.env.BLENDER_PATH) return process.env.BLENDER_PATH;
+  if (process.platform === 'win32') {
+    const base = 'C:/Program Files/Blender Foundation';
+    const versiones = existsSync(base) ? readdirSync(base).filter((d) => existsSync(`${base}/${d}/blender.exe`)).sort().reverse() : [];
+    return versiones.length ? `${base}/${versiones[0]}/blender.exe` : `${base}/Blender 5.2/blender.exe`;
+  }
+  if (process.platform === 'darwin') return '/Applications/Blender.app/Contents/MacOS/Blender';
+  const enPath = spawnSync('which', ['blender'], { encoding: 'utf8' });
+  return enPath.status === 0 ? enPath.stdout.trim() : '/usr/bin/blender';
+}
+const BLENDER = buscarBlender();
 
 if (!existsSync(BLENDER)) {
   console.error(`No encuentro Blender en "${BLENDER}". Define BLENDER_PATH con la ruta a blender.exe.`);
