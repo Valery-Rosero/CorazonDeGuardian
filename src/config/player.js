@@ -1,5 +1,5 @@
 // @ts-check
-/** Valores iniciales de Victoria (sección 5.2). Ajustables con lil-gui en modo depuración. */
+/** Valores iniciales de Victoria (sección 5.2). Son los valores del juego; en la Demostración técnica se pueden mover con lil-gui. */
 export const PLAYER = Object.freeze({
   velocidad_caminar: 4.5,      // m/s
   velocidad_correr: 7.5,       // m/s

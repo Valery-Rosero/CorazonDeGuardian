@@ -35,7 +35,6 @@ Volumen general, de música, de efectos y de voces; sensibilidad del ratón; sac
 | 8 | Ir a la arena con el Guardián en la fase 3 |
 | 9 | Mostrar u ocultar los FPS y las llamadas de dibujo (arriba a la derecha) |
 | 0 | Mostrar u ocultar los triggers y los colisionadores |
-| º (la tecla a la izquierda del 1) | Abrir o cerrar los deslizadores de ajuste en vivo: velocidades y salto de Victoria, distancia de la cámara y pruebas de la cara. Empiezan ocultos |
 
 ## Direcciones útiles (con el servidor en marcha)
 

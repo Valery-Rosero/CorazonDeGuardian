@@ -46,7 +46,7 @@ Detalle de cada requisito, con archivos y funciones: [REQUISITOS_CURSO.md](REQUI
 | `MeshStandardMaterial` con materiales distintos (metal, brillante, mate) | Hecho | Piedra mate, oro emisivo, marco del mural metálico, gema brillante con barniz |
 | Texturas (`TextureLoader`, mapas de normales, rugosidad, oclusión) | Equivalente | El juego no descarga imágenes: todo se genera con código. Se usan `CanvasTexture` (mapa de Mateo, partículas, silueta de Mateo en el núcleo, matcap de los espectros), `DataTexture` (sombreado toon) y `VideoTexture` (mural vivo) |
 | Transformaciones (posición, rotación, escala) y `THREE.Group` | Hecho | Jerarquías de personajes (huesos), Victoria dentro de su grupo, piezas del Guardián |
-| `lil-gui` con carpetas | Hecho | Panel de depuración (`src/debug/debug_panel.js`): Victoria, cámara y cara |
+| `lil-gui` con carpetas | Hecho | «Parámetros en vivo» en la Demostración técnica (`crearAjustesEnVivo` en `src/debug/debug_panel.js`): carpetas Victoria y Cámara. Al jugar no aparece; los valores por defecto están en `src/config/` |
 | `OrbitControls` | Hecho | Modo foto y cámara libre |
 
 ### Semana 3 · Medios, animación y audio espacial (taller «Estación multimedia inmersiva»)

@@ -58,6 +58,7 @@ export class ModoDemo {
    *   renderer: THREE.WebGLRenderer,
    *   ir: (destino: {spawn?: string, pos?: [number, number, number], rumbo?: number}) => void,
    *   ayudas: () => THREE.Object3D,
+   *   parametros?: (contenedor: HTMLElement) => Promise<unknown>,
    *   camaraLibre: (activa: boolean) => void,
    *   salir: () => void,
    * }} c
@@ -76,6 +77,7 @@ export class ModoDemo {
       <p class="demo-stats" id="demo-stats">—</p>
       <ol class="demo-lista">${REQUISITOS.map((r, i) => `<li><button type="button" data-i="${i}"><span>${i + 1}</span>${r.titulo}</button></li>`).join('')}</ol>
       <article class="demo-ficha" id="demo-ficha"><p>Elige un requisito: Victoria va al lugar donde mejor se ve.</p></article>
+      <div class="demo-parametros" id="demo-parametros"></div>
       <div class="demo-controles">
         <label><input type="checkbox" id="demo-ayudas" checked> Triggers y colisionadores</label>
         <label><input type="checkbox" id="demo-libre"> Cámara libre (OrbitControls)</label>
@@ -103,6 +105,9 @@ export class ModoDemo {
     this.panel.classList.remove('oculto');
     document.body.classList.add('en-demo');
     this._ayudas(true);
+    // lil-gui (semana 2) plegado dentro del panel: solo existe en la demostración
+    const cont = this.panel.querySelector('#demo-parametros');
+    if (this.c.parametros && cont && !cont.childElementCount) this.c.parametros(/** @type {HTMLElement} */ (cont));
   }
 
   /** @param {number} i */

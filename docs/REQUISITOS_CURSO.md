@@ -18,7 +18,7 @@ Los 8 requisitos funcionan en el juego completo. Cada uno se puede demostrar en 
 | Semana | Dónde se usa |
 |---|---|
 | 1 | Escena, cámara, renderizador y bucle con `requestAnimationFrame` (`src/core/`) |
-| 2 | `BufferGeometry`, materiales, `THREE.Group` (jerarquía de los personajes) y `lil-gui` (panel de depuración) |
+| 2 | `BufferGeometry`, materiales, `THREE.Group` (jerarquía de los personajes) y `lil-gui` (parámetros en vivo dentro de la Demostración técnica) |
 | 3 | Audio espacial y desbloqueo del audio con el primer clic |
 | 4 | Materiales PBR, catálogo de luces, *shadow maps* y partículas con mezcla aditiva |
 | 5 | cannon-es: cuerpos estáticos, dinámicos y cinemáticos (el Guardián), materiales de contacto y paso fijo |

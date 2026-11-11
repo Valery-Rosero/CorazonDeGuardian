@@ -741,9 +741,7 @@ async function iniciar() {
 
   // ---------------- Depuración
   const depuracion = DEPURACION
-    ? (await import('./debug/debug_panel.js')).crearPanelDepuracion({
-        renderer, cfgJugador, camara: rig, cara, decir, emociones: Object.keys(EXPRESIONES),
-      })
+    ? (await import('./debug/debug_panel.js')).crearPanelDepuracion({ renderer })
     : null;
   if (DEPURACION) {
     (await import('./debug/helpers.js')).crearAtajos({
@@ -967,6 +965,7 @@ async function iniciar() {
     renderer,
     ir: irA,
     ayudas: () => crearAyudasVisuales(escena, triggers, nivel.colisionables),
+    parametros: (contenedor) => import('./debug/debug_panel.js').then((m) => m.crearAjustesEnVivo(contenedor, { cfgJugador, camara: rig })),
     camaraLibre: (si) => {
       if (si) {
         jugador.bloqueado = true;
