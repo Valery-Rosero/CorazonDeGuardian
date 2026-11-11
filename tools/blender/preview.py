@@ -121,7 +121,7 @@ def preparar(objetos_toon, gema_hex):
     return cam
 
 
-def disparar(cam, ruta, pos, objetivo, escala, res=(800, 1100), ajuste='AUTO'):
+def disparar(cam, ruta, pos, objetivo, escala, res=(800, 1100), ajuste='AUTO', lejos=50):
     """ajuste='VERTICAL': 'escala' es la altura visible (para encuadrar igual que el boceto)."""
     sc = bpy.context.scene
     cam.location = Vector(pos)
@@ -130,7 +130,7 @@ def disparar(cam, ruta, pos, objetivo, escala, res=(800, 1100), ajuste='AUTO'):
     cam.data.sensor_fit = ajuste
     cam.data.ortho_scale = escala
     cam.data.clip_start = 0.05
-    cam.data.clip_end = 50
+    cam.data.clip_end = lejos
     sc.render.resolution_x, sc.render.resolution_y = res
     sc.render.resolution_percentage = 100
     sc.render.filepath = ruta

@@ -167,8 +167,9 @@ def caja_biselada(ancho, fondo, alto, bisel=0.01, conico=1.0, conico_y=None):
     return verts, orientar_hacia_afuera(verts, caras)
 
 
-def prisma(lados, radio, alto, radio_sup=None, escala_y=1.0, giro=0.0):
-    """Prisma o tronco de pirámide de n lados sobre el eje Z."""
+def prisma(lados, radio, alto, radio_sup=None, escala_y=1.0, giro=0.0, tapas=True):
+    """Prisma o tronco de pirámide de n lados sobre el eje Z. tapas=False ahorra las caras de los extremos
+    cuando quedan ocultas (tambores apilados, troncos enterrados)."""
     rs = radio if radio_sup is None else radio_sup
     verts = []
     for z, r in ((-alto / 2, radio), (alto / 2, rs)):
@@ -176,9 +177,29 @@ def prisma(lados, radio, alto, radio_sup=None, escala_y=1.0, giro=0.0):
             ang = math.radians(giro) + 2 * math.pi * i / lados
             verts.append(Vector((math.cos(ang) * r, math.sin(ang) * r * escala_y, z)))
     n = lados
-    caras = [tuple(range(n)), tuple(range(n, 2 * n))]
+    caras = [tuple(range(n)), tuple(range(n, 2 * n))] if tapas else []
     caras += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
     return verts, orientar_hacia_afuera(verts, caras)
+
+
+# Dirección hacia el sol del juego (config/level.js: elevación 34°, azimut 115°) en coordenadas de Blender:
+# arriba a la izquierda de la cámara que mira por el sendero (hacia -Y), como en las hojas de diseño.
+# Con ella cada cara lleva el tono del dibujo: izquierda y arriba claras, frente medio, derecha oscura.
+SOL = Vector((0.75, 0.35, 0.56)).normalized()
+
+
+def tres_tonos(luz, medio, sombra, fondo=None, umbral_luz=0.45, umbral_sombra=-0.2):
+    """Función de color por cara: claro hacia el sol, oscuro del lado contrario y 'fondo' en las caras de abajo."""
+    def fn(_c, n):
+        if fondo and n.z < -0.45:
+            return fondo
+        d = n.dot(SOL)
+        if d > umbral_luz:
+            return luz
+        if d < umbral_sombra:
+            return sombra
+        return medio
+    return fn
 
 
 def elipsoide(rx, ry, rz, segmentos=8, anillos=5):

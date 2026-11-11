@@ -7,6 +7,7 @@
 | 2026-11-10 | Cada personaje es **una malla con esqueleto rígido** (cada vértice pesa 100 % en un hueso) en lugar de piezas sueltas emparentadas. La animación por código es la misma: el `ProceduralAnimator` gira huesos en vez de mallas. | 4.5 | Victoria pasa de 26 a 3 llamadas de dibujo y cada centinela de 13 a 1. El equipo de referencia tiene gráficos integrados (Intel Iris Xe). |
 | 2026-11-10 | Los personajes que hablan (Victoria y Mateo) tienen **cabeza aparte con 17 formas de expresión** (shape keys → morph targets): cejas, párpados, boca, 6 visemas del español, parpadeo y mirada. La boca sigue el texto del subtítulo. | 3.4, 4.5 | El productor pidió expresiones y movimiento fluido en los diálogos. Costo: +≈600 triángulos y +1 llamada por personaje. |
 | 2026-11-10 | Las piezas sueltas con física se usan solo donde hacen falta: fragmentos del centinela al morir y caparazón del Guardián en la derrota. | 4.5, 7.3 | Se mantiene el comportamiento del documento. |
+| 2026-11-11 | La selva, las rocas, los riscos y las ruinas se construyen **desde la hoja de escenarios** (canvas «Hoja de escenarios — Templo del Sol»), igual que Victoria desde su boceto. Cada pieza se compara con su dibujo en `docs/previews/escenario_vs_hoja_*.png`. | 4.1, 8.1 | El productor pidió coherencia: «no construyas por construir». |
 
 ## Decisiones técnicas del día 2
 
@@ -33,6 +34,22 @@
 | El menú «Reiniciar la aventura» recarga la página. | El menú principal llega el día 6. |
 | La tecla **8** de depuración aplica 20 de daño mientras no exista el jefe. | Permite probar el escudo, la esquiva y la barra de vida. |
 
+## Selva desde la hoja de escenarios
+
+| Decisión | Motivo |
+|---|---|
+| Cada especie se arma con las coordenadas de su dibujo (píxeles del SVG → metros según la altura del ejemplar). Una semilla cambia altura, giro y almohadas. | Las proporciones del 3D son las del dibujo y no hay dos árboles iguales. |
+| Ceibas y palmas junto al sendero son objetos propios (se aclaran si tapan a Victoria). Los **árboles jóvenes** son una InstancedMesh con viento suave (0,12) y colisionador en el tronco; no se quitan con la calidad baja (`fijo`). | La hoja pide muchos jóvenes «casi sin costo». |
+| El **sol** pasa a 34° de elevación y 115° de azimut: arriba a la izquierda de la cámara que mira por el sendero. `config/level.js` y `tools/blender/common.py` (SOL) usan la misma dirección. | Las hojas iluminan desde arriba a la izquierda: izquierda y arriba claras, frente medio, derecha oscura. Antes el sol venía de la derecha. |
+| La piedra se pinta en tono medio del lado del sol y oscuro en la sombra; el sol real pone el tono claro. | Pintado claro y además iluminado, la piedra se veía casi blanca («riscos pálidos»). |
+| El **borde dorado** de las copas es un brillo de contorno en el shader (`agregarBordeSol`), solo en las caras que miran al sol. | Pintado en las caras, el dorado cubría caras enteras; en la hoja es solo una línea en el borde. |
+| Las hojas de palma usan el material `selva_hojas_doble` (doble cara). | Son láminas de una cara. |
+| Las **cabezas de piedra** miran hacia el camino por el que llega Victoria (la hoja se corrigió). | Mirando a la pirámide, el jugador solo veía su nuca y la cara quedaba siempre en sombra. |
+| La **pirámide** mide 84 m (la hoja se corrigió; decía ≈ 22 m). | La cima tiene que asomar por encima del risco de la cascada (26 m) para guiar desde casi toda la zona. |
+| La escalinata de las ruinas tiene 6 peldaños de 40 cm con alfardas; la rampa invisible se ensanchó a las alfardas. | Así lo dibuja la hoja; la simulación confirma que se sube caminando. |
+| Los riscos son capas apiladas (`rock_builder.estratos`). En la cornisa y la meseta la capa de arriba coincide con el colisionador; en la cascada los lados que tocan el agua quedan a ras (`a_ras`). | Victoria camina sobre la cornisa y la meseta, y la cortina de agua cae pegada a la roca. |
+| Presupuesto: 49.368 de 50.000 triángulos sin contar las instancias. Para no pasarse hay 20 ceibas de fondo en vez de 22. | Límite de la sección 4.2. |
+
 ## Pendiente
 
 - El **bloqueo perfecto** del escudo (devolver proyectiles) ya se calcula en `Poderes.bloqueoPerfecto`, pero solo se nota cuando haya proyectiles enemigos (día 4).
@@ -42,6 +59,7 @@
 - Opciones de volumen y de sacudida de cámara en el menú (día 6). Los valores ya están en `src/config/audio.js` y en `Sacudida.intensidad`.
 - Las flores solares solo curan si Victoria ha recibido daño; hasta que lleguen los enemigos (día 4) se ven, pero no hacen falta.
 - Medir los FPS reales en el equipo de referencia (Iris Xe). Chrome sin ventana no sirve para medir rendimiento.
+- Medir los FPS con la selva nueva: 82 árboles jóvenes instanciados (≈ 200 triángulos cada uno), 461 helechos y 700 matas.
 
 ## Notas técnicas
 
@@ -54,4 +72,5 @@
 ## Herramientas fuera de la estructura de la sección 13
 
 - `tools/blender/preview.py`: renders de revisión con sombreado toon.
+- `tools/blender/build_escenario_preview.py`: renderiza cada pieza del escenario encuadrada como su dibujo (`docs/previews/escenario/`).
 - `tools/verificar_glb.py`: inspección rápida de un `.glb` sin Blender. Cuando exista el proyecto Vite, su comprobación pasa a una prueba de `node --test` en `tests/`.

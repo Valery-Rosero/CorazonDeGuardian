@@ -24,4 +24,9 @@ export const ESCENARIO = Object.freeze({
   niebla_selva: 0.0045,
   intensidad_entorno: 0.35,
   parpadeo_antorcha: 0.18,
+  // Sol de tarde arriba a la izquierda de la cámara que mira por el sendero (hacia -Z), como en las hojas
+  // de diseño: caras de la izquierda y de arriba claras, frente en tono medio, derecha en sombra.
+  // tools/blender/common.py (SOL) usa la misma dirección para pintar los tonos de cada cara.
+  sol_elevacion: 34,
+  sol_azimut: 115,
 });

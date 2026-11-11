@@ -3,7 +3,12 @@ import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { GRUPOS } from '../core/physics_world.js';
 import { clasificarNombre, esColisionador } from './level_naming.js';
-import { agregarViento, materialCascada, materialPoza, materialRayo } from './shaders.js';
+import { PALETA } from '../config/palette.js';
+import { direccionSol } from './environment.js';
+import { agregarBordeSol, agregarViento, materialCascada, materialPoza, materialRayo } from './shaders.js';
+
+/** Brillo del borde de sol en las copas (hoja de escenarios): color y fuerza. */
+const BORDE_SOL = { color: PALETA.dorado_solar, fuerza: 0.55 };
 
 /**
  * @typedef {{pos: THREE.Vector3, rumbo: number}} Spawn
@@ -82,7 +87,9 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
     } else if (tipo === 'inst') {
       const malla = /** @type {THREE.Mesh} */ (o);
       if (malla.isMesh && Array.isArray(o.userData.puntos)) {
-        escena.add(crearInstancias(malla, o.userData.puntos, opciones.vegetacion ?? 1));
+        // 'fijo': plantas con colisionador (árboles jóvenes); la calidad baja no puede quitarlas
+        const fraccion = o.userData.fijo ? 1 : (opciones.vegetacion ?? 1);
+        escena.add(crearInstancias(malla, o.userData.puntos, fraccion, Number(o.userData.viento ?? 1), Boolean(o.userData.borde_sol)));
         quitar.push(o);
       }
     }
@@ -153,6 +160,10 @@ function ajustarMaterial(m, res) {
   if (nombre.includes('runa')) res.runas.push(m);
   // La cima de la pirámide guía al jugador: brilla a través de la niebla
   if (nombre.startsWith('cima_piramide')) m.fog = false;
+  // Hojas de palma: una sola cara, visibles por ambos lados
+  if (nombre.includes('doble')) m.side = THREE.DoubleSide;
+  // Copas de los árboles: el contorno que mira al sol se dora
+  if (nombre.includes('copa')) agregarBordeSol(m, direccionSol(), BORDE_SOL.color, BORDE_SOL.fuerza);
   m.needsUpdate = true;
   return m;
 }
@@ -259,14 +270,17 @@ function crearDinamico(o, fisica) {
  * @param {THREE.Mesh} plantilla
  * @param {number[]} puntos
  * @param {number} fraccion  densidad según la calidad
+ * @param {number} viento  fuerza del viento (1 = helechos; los árboles se mecen mucho menos)
+ * @param {boolean} bordeSol  dorar el contorno que mira al sol (árboles jóvenes)
  */
-function crearInstancias(plantilla, puntos, fraccion) {
+function crearInstancias(plantilla, puntos, fraccion, viento, bordeSol) {
   const total = Math.floor(puntos.length / 5);
   const cuantas = Math.max(1, Math.floor(total * fraccion));
   const material = new THREE.MeshStandardMaterial({
     vertexColors: true, side: THREE.DoubleSide, roughness: 0.9, envMapIntensity: 0.3, flatShading: true,
   });
-  agregarViento(material);
+  agregarViento(material, viento);
+  if (bordeSol) agregarBordeSol(material, direccionSol(), BORDE_SOL.color, BORDE_SOL.fuerza);
   const inst = new THREE.InstancedMesh(plantilla.geometry, material, cuantas);
   inst.name = `vegetacion_${plantilla.name}`;
   const m = new THREE.Matrix4();

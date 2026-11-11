@@ -93,3 +93,19 @@ test('zona 1: las mallas hijas de un objeto especial no se convierten en objetos
 test('todos los sonidos configurados existen en public/', () => {
   for (const [nombre, ruta] of Object.entries(SONIDOS)) assert.ok(existsSync(`public${ruta}`), `${nombre}: ${ruta}`);
 });
+
+test('zona 1: la selva de la hoja de escenarios (árboles jóvenes, hojas de doble cara y copas con borde de sol)', () => {
+  const jovenes = nodo('inst_arbol_joven');
+  assert.ok(jovenes, 'falta la plantilla de árboles jóvenes');
+  assert.equal(jovenes.extras.fijo, 1, 'los jóvenes con colisionador no se quitan con la calidad baja');
+  assert.ok(jovenes.extras.viento < 1, 'los árboles se mecen menos que los helechos');
+  assert.equal(jovenes.extras.borde_sol, 1);
+  const materiales = json.materials.map((m) => m.name);
+  assert.ok(materiales.includes('selva_hojas_doble'));
+  assert.ok(materiales.includes('selva_copa'));
+  // Cada árbol joven dentro de lo caminable tiene su colisionador
+  assert.ok(nodos.filter((n) => n.name.startsWith('col_cyl_joven_')).length >= 20);
+  // Las cabezas de piedra y los bloques tallados del claro de las ruinas no se atraviesan
+  for (const n of ['col_box_cabeza_o', 'col_box_cabeza_e', 'col_box_cabeza_cruce']) assert.ok(nombres.includes(n), n);
+  assert.ok(nodos.filter((n) => n.name.startsWith('col_box_bloque_')).length === 8);
+});

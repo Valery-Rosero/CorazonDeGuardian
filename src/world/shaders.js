@@ -120,11 +120,14 @@ export function materialRayo() {
  * Viento en la vegetación instanciada (sección 4.2): el vértice se mueve más cuanto más alto está,
  * con una fase distinta por instancia.
  * @param {THREE.MeshStandardMaterial} material
+ * @param {number} [fuerza]  1 = plantas bajas; los árboles usan menos para que el tronco no se doble
  */
-export function agregarViento(material) {
+export function agregarViento(material, fuerza = 1) {
+  const uFuerza = { value: fuerza };
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTiempo = uTiempo;
-    shader.vertexShader = 'uniform float uTiempo;\n' + shader.vertexShader.replace(
+    shader.uniforms.uFuerzaViento = uFuerza;
+    shader.vertexShader = 'uniform float uTiempo;\nuniform float uFuerzaViento;\n' + shader.vertexShader.replace(
       '#include <begin_vertex>',
       /* glsl */ `#include <begin_vertex>
       #ifdef USE_INSTANCING
@@ -132,11 +135,41 @@ export function agregarViento(material) {
       #else
         vec2 raizViento = vec2(0.0);
       #endif
-      float altoViento = max(position.y, 0.0);
+      float altoViento = max(position.y, 0.0) * uFuerzaViento;
       float faseViento = uTiempo * 1.7 + raizViento.x * 0.35 + raizViento.y * 0.27;
       transformed.x += sin(faseViento) * 0.08 * altoViento;
       transformed.z += cos(faseViento * 0.83) * 0.06 * altoViento;`,
     );
   };
   material.customProgramCacheKey = () => 'viento';
+}
+
+/**
+ * Borde de sol de las copas (hoja de escenarios, «Árboles»): el contorno de cada almohada que mira al sol
+ * se dora. Es un brillo de contorno (Fresnel) que solo aparece en las caras orientadas hacia el sol.
+ * Se encadena con un onBeforeCompile previo (p. ej. el viento de las instancias).
+ * @param {THREE.MeshStandardMaterial} material
+ * @param {THREE.Vector3} dirSol  dirección hacia el sol en el mundo
+ * @param {string} color
+ * @param {number} fuerza
+ */
+export function agregarBordeSol(material, dirSol, color, fuerza) {
+  const previo = material.onBeforeCompile;
+  const claveprevia = material.customProgramCacheKey();
+  const uSol = { value: dirSol.clone().normalize() };
+  const uColor = { value: new THREE.Color(color).multiplyScalar(fuerza) };
+  material.onBeforeCompile = (shader, renderer) => {
+    previo.call(material, shader, renderer);
+    shader.uniforms.uSolMundo = uSol;
+    shader.uniforms.uBordeSol = uColor;
+    shader.fragmentShader = 'uniform vec3 uSolMundo;\nuniform vec3 uBordeSol;\n' + shader.fragmentShader.replace(
+      '#include <opaque_fragment>',
+      /* glsl */ `vec3 nMundoSol = normalize((vec4(normal, 0.0) * viewMatrix).xyz);
+      vec3 aCamaraSol = normalize((vec4(vViewPosition, 0.0) * viewMatrix).xyz);
+      float contornoSol = pow(1.0 - clamp(dot(nMundoSol, aCamaraSol), 0.0, 1.0), 3.0);
+      outgoingLight += uBordeSol * contornoSol * smoothstep(0.15, 0.65, dot(nMundoSol, uSolMundo));
+      #include <opaque_fragment>`,
+    );
+  };
+  material.customProgramCacheKey = () => `${claveprevia}|borde-sol`;
 }

@@ -4,6 +4,13 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { ESCENARIO } from '../config/level.js';
 import { PALETA } from '../config/palette.js';
 
+/** Dirección hacia el sol (mundo de Three.js), según config/level.js. */
+export function direccionSol() {
+  const elevacion = THREE.MathUtils.degToRad(ESCENARIO.sol_elevacion);
+  const azimut = THREE.MathUtils.degToRad(ESCENARIO.sol_azimut);
+  return new THREE.Vector3().setFromSphericalCoords(1, Math.PI / 2 - elevacion, azimut);
+}
+
 /**
  * Luces puntuales del nivel (luz_*): antorchas cálidas que parpadean y la luz azul de la cueva.
  * Sin sombras (sección 4.2). Su número es fijo, así que los shaders no se recompilan.
@@ -38,9 +45,7 @@ export function crearLucesNivel(escena, luces) {
  * @param {import('../config/quality.js').Calidad} calidad
  */
 export function crearAmbienteSelva(escena, renderer, calidad) {
-  const elevacion = THREE.MathUtils.degToRad(22);
-  const azimut = THREE.MathUtils.degToRad(215);
-  const dirSol = new THREE.Vector3().setFromSphericalCoords(1, Math.PI / 2 - elevacion, azimut);
+  const dirSol = direccionSol();
 
   const cielo = crearCielo(dirSol);
   escena.add(cielo);

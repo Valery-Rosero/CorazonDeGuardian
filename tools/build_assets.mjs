@@ -11,8 +11,11 @@ if (!existsSync(BLENDER)) {
   process.exit(1);
 }
 
+const conPreview = process.argv.includes('--preview');
 const scripts = ['tools/blender/build_personajes.py', 'tools/blender/build_zona_1_selva.py'];
-const extra = process.argv.includes('--preview') ? ['--', '--preview'] : [];
+// Renders de cada pieza del escenario encuadrada como su dibujo en la hoja de escenarios
+if (conPreview) scripts.push('tools/blender/build_escenario_preview.py');
+const extra = conPreview ? ['--', '--preview'] : [];
 
 for (const script of scripts) {
   console.log(`\n▶ ${script}`);
