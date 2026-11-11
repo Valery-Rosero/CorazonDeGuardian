@@ -54,6 +54,7 @@ import { Musica } from './core/music.js';
 import { MuralVivo } from './world/living_mural.js';
 import { crearPosproceso, excluirDelBrillo } from './fx/postprocess.js';
 import { precompilar } from './core/warmup.js';
+import { avanza, borrarPartida, guardarPartida, leerPartida } from './game/save.js';
 import { Ejercito, crearMapaAlturas } from './world/army.js';
 import { combinarNiveles, construirNivel } from './world/level_loader.js';
 import { aplicarMaterialesPersonaje, crearRampaToon } from './world/materials.js';
@@ -234,12 +235,15 @@ async function iniciar() {
   const zonaDe = (pos) => (pos.z < 400 ? 1 : pos.z < 673.5 ? 2 : 3);
   /** @param {THREE.Vector3} pos */
   const esSantuario = (pos) => zonaDe(pos) > 1;
+  /** @type {((zona: number) => void) | null} avisa del cambio de escenario (guardado de la partida) */
+  let alCambiarZona = null;
   /** Luces, atmósfera y ambiente de la zona donde está Victoria. @param {number} zona */
   const aplicarZona = (zona) => {
     if (zona === zonaActual || amanecer) return;
     const antes = zonaActual;
     zonaActual = zona;
     if ((antes > 1) !== (zona > 1)) ambiente.ponerInterior(zona > 1);
+    alCambiarZona?.(zona);
     luces.encenderGrupo(zona);
     focoAltar.intensity = zona === 2 ? 55 : 0;
     audio.volumenBucle(ambienteSelva, zona === 1 ? 0.55 : 0);
@@ -427,6 +431,7 @@ async function iniciar() {
     bus.emitir(EVENTOS.PAGINA_ENCONTRADA, pagina.n);
     panelDiario.abrir(pagina);
     paginaAbierta = pagina.n;
+    guardar();
     bucle.pausado = true;
   };
   let paginaAbierta = 0;
@@ -559,6 +564,7 @@ async function iniciar() {
         hud.nota('El brazalete aprende el Escudo arcano', 4);
         hud.mensajeTutorial(TUTORIAL.escudo, 8);
         bus.emitir(EVENTOS.PODER_DESBLOQUEADO, ['escudo']);
+        avanzarPunto('debug_4');
       },
     },
   });
@@ -606,6 +612,8 @@ async function iniciar() {
     recibirDano,
     alVictoria: () => {
       amanecer = true;
+      // La aventura terminó: la próxima vez se empieza de nuevo
+      if (!AUTOMATICO) borrarPartida();
       ui.victoria({ tiempo: estadisticas.tiempo, muertes: estadisticas.muertes, paginas: paginas.size, total: TOTAL_PAGINAS });
       bucle.pausado = false;
       rig.controles.unlock();
@@ -695,10 +703,86 @@ async function iniciar() {
     tiempoMuerte = 0;
     estadisticas.muertes++;
     jugador.bloqueado = true;
-    ui.textosDerrota('Victoria ha caído', actoFinal.enEscape ? 'El escape vuelve a empezar.' : 'El último pilar solar te espera.');
+    ui.textosDerrota('Victoria ha caído', actoFinal.enEscape ? 'El escape vuelve a empezar.'
+      : checkpoints.punto ? 'Vuelves a la entrada de este escenario.' : 'El último pilar solar te espera.');
     audio.efecto('derrota');
     bus.emitir(EVENTOS.JUGADOR_MUERTO);
   };
+  // ---------------- Partida guardada: al encender un pilar, al cambiar de escenario y al leer una página
+  const guardar = () => {
+    if (AUTOMATICO || demo.activo) return;
+    // Del combate en adelante el punto ya es la arena; el escape y el final no se guardan a medias
+    if (['escape', 'final', 'epilogo', 'fin'].includes(actoFinal.etapa)) return;
+    const altar = interactuables.lista.find((o) => o.tipo === 'altar_escudo');
+    guardarPartida({
+      pilar: checkpoints.registro.actual,
+      pilares: [...checkpoints.registro.encendidos],
+      punto: checkpoints.punto,
+      poderes: ['pulso', 'escudo', 'manipulacion'].filter((n) => poderes.tiene(n)),
+      paginas: [...paginas],
+      escudo: Boolean(altar && !altar.activo),
+      espejos: santuario.acertijo.resuelto,
+      vistas: [...new Set([...cine.vistas, ...historia.vistas])],
+      tiempo: estadisticas.tiempo,
+      muertes: estadisticas.muertes,
+    });
+  };
+  /** Llegar a un escenario (o a una sala) nuevo: desde ahora se reaparece allí. @param {string} punto */
+  const avanzarPunto = (punto) => {
+    if (!avanza(checkpoints.punto, punto)) return;
+    checkpoints.fijar(punto);
+    guardar();
+    if (!AUTOMATICO) hud.nota('Progreso guardado', 2);
+  };
+  alCambiarZona = (zona) => {
+    if (zona === 2) avanzarPunto('santuario');
+    if (zona === 3) avanzarPunto('arena');
+  };
+  /** Continuar: deja el mundo como estaba al guardar y lleva a Victoria a su punto. @param {import('./game/save.js').Partida} p */
+  const restaurar = (p) => {
+    for (const n of p.pilares) checkpoints.pasar(n);
+    checkpoints.registro.actual = p.pilar;
+    if (p.punto) checkpoints.fijar(p.punto);
+    for (const n of p.poderes) poderes.desbloquear(n);
+    if (poderes.tiene('pulso')) {
+      huesoBrazalete.scale.setScalar(1);
+      if (objBrazalete && objBrazalete.activo) {
+        interactuables.desactivar(objBrazalete);
+        objBrazalete.objeto.visible = false;
+      }
+      tutorial.brazalete = true;
+      tutorial.pulso = true;
+    }
+    if (p.escudo) {
+      const altar = interactuables.lista.find((o) => o.tipo === 'altar_escudo');
+      if (altar && altar.activo) {
+        interactuables.desactivar(altar);
+        altar.objeto.visible = false;
+      }
+    }
+    if (p.espejos) santuario.restaurarResuelto();
+    for (const n of p.paginas) {
+      const o = interactuables.lista.find((x) => x.tipo === 'pagina' && Number(x.datos.pagina) === n);
+      if (o && o.activo) {
+        interactuables.desactivar(o);
+        o.objeto.visible = false;
+      }
+      paginas.add(n);
+    }
+    hud.paginas(paginas.size, TOTAL_PAGINAS);
+    for (const v of p.vistas) {
+      historia.vistas.add(v);
+      cine.vistas.add(v);
+    }
+    estadisticas.tiempo = p.tiempo;
+    estadisticas.muertes = p.muertes;
+    const s = checkpoints.reaparicion;
+    jugador.colocar(s.pos, s.rumbo);
+    rig.reorientar(s.rumbo);
+    aplicarZona(zonaDe(s.pos));
+    hud.nota('Partida recuperada', 2.5);
+  };
+
   const reaparecer = () => {
     const s = checkpoints.reaparicion;
     puente.reiniciar();
@@ -722,7 +806,10 @@ async function iniciar() {
     const d = t.datos;
     if (d.zona && entra) bus.emitir(EVENTOS.ZONA_CAMBIADA, d.zona);
     if (d.perfil_camara) rig.zona(String(d.perfil_camara), entra);
-    if (d.evento === 'sala_espejos') santuario.salaEspejos(entra);
+    if (d.evento === 'sala_espejos') {
+      santuario.salaEspejos(entra);
+      if (entra && !muerta) avanzarPunto('debug_5');
+    }
     if (!entra) return;
     if (d.hint && nivel.hints[d.hint]) rig.mirarHacia(nivel.hints[d.hint]);
     if (muerta) return;
@@ -750,6 +837,7 @@ async function iniciar() {
           rafagaEn(rafagas, disco, CHECKPOINT.rafaga, PALETA.oro_brillante, 5);
           audio.efecto('checkpoint');
           hud.nota(`Pilar solar encendido: ${d.nombre}`);
+          guardar();
           bus.emitir(EVENTOS.CHECKPOINT, d.checkpoint);
         }
         break;
@@ -1038,7 +1126,7 @@ async function iniciar() {
 
   // ---------------- Inicio, pausa y derrota
   // Depuración: acceso desde la consola (y desde los scripts de medición y de revisión de cinemáticas)
-  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, mural, jugador, teletransportar, mateo, rig, nivel, bucle, posproceso } });
+  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, mural, jugador, teletransportar, mateo, rig, nivel, bucle, posproceso, checkpoints, poderes } });
   // Todos los sombreadores del nivel, en las dos atmósferas (selva e interiores), antes del primer
   // fotograma: así ninguna cinemática se congela la primera vez que ve un material
   const textoCarga = document.getElementById('texto-carga');
@@ -1073,6 +1161,8 @@ async function iniciar() {
       }, 300);
     }
     if (params.get('final') === 'amanecer') setTimeout(() => { actoFinal.etapa = 'escape'; actoFinal._final(); }, 300);
+    // &partida=<JSON>: recupera esa partida como «Continuar» (para probar el guardado)
+    if (params.has('partida')) restaurar(JSON.parse(params.get('partida') ?? '{}'));
     // &final=epilogo: directo a «La marcha» (el final se salta)
     if (params.get('final') === 'epilogo') setTimeout(() => { actoFinal.etapa = 'escape'; actoFinal._final(); cine.saltar(); }, 300);
     // &pasofijo=N: cada fotograma avanza 1/N s (capturas de cinemáticas en tiempos exactos sin GPU; 30 por defecto)
@@ -1108,8 +1198,26 @@ async function iniciar() {
     enMenu = true;
     document.body.classList.add('en-menu');
   }
+  // Continuar la partida guardada (si la hay): «Jugar» pasa a ser «Nueva partida»
+  const partida = leerPartida();
+  const botonContinuar = document.getElementById('boton-continuar');
+  if (partida && botonContinuar) {
+    botonContinuar.classList.remove('oculto');
+    const jugar = document.getElementById('boton-jugar');
+    if (jugar) jugar.textContent = 'Nueva partida';
+    botonContinuar.addEventListener('click', () => {
+      enMenu = false;
+      document.body.classList.remove('en-menu');
+      restaurar(partida);
+      oyente.context.resume();
+      audio.iniciar();
+      pantallas.ocultarInicio();
+      rig.controles.lock();
+    });
+  }
   ui.menu({
     jugar: () => {
+      borrarPartida();
       enMenu = false;
       document.body.classList.remove('en-menu');
       oyente.context.resume();

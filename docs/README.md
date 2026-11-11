@@ -32,7 +32,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 | `npm run build` | Compilación de producción en `dist/` |
 | `npm run preview` | Probar la compilación de producción |
 | `npm run check` | Comprobación de tipos JSDoc |
-| `npm test` | 98 pruebas (`node --test`): lógica, y simulaciones que cargan los `.glb` reales y hacen correr la física |
+| `npm test` | 101 pruebas (`node --test`): lógica, y simulaciones que cargan los `.glb` reales y hacen correr la física |
 | `npm run assets` | Regenera los `.glb` con Blender y los sonidos y la música con Python. La ruta de Blender se lee de `BLENDER_PATH`. |
 
 ## Documentación

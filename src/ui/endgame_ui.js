@@ -89,6 +89,9 @@ export class InterfazFinal {
     $('est-tiempo').textContent = `${m}:${String(s).padStart(2, '0')}`;
     $('est-muertes').textContent = String(e.muertes);
     $('est-paginas').textContent = `${e.paginas}/${e.total}`;
+    // «Continuará…» ya se vio sobre el negro: no queda debajo de las estadísticas
+    $('continuara').classList.remove('visible');
+    $('continuara').textContent = '';
     $('victoria').classList.remove('oculto');
   }
 

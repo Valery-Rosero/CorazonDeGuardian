@@ -17,6 +17,12 @@ export class Checkpoints {
     this.cfg = cfg;
     this.spawns = spawns;
     this.registro = new RegistroCheckpoints(1);
+    /**
+     * Punto de reaparición del escenario actual (santuario, sus salas, la arena: no tienen pilares).
+     * Una vez fijado manda sobre los pilares de la selva: la aventura no vuelve atrás.
+     * @type {string | null}
+     */
+    this.punto = null;
     /** @type {Record<number, {material: THREE.MeshStandardMaterial, objetivo: number, centro: THREE.Vector3}>} */
     this.pilares = {};
     for (const [n, obj] of Object.entries(pilares)) {
@@ -56,8 +62,14 @@ export class Checkpoints {
     if (inmediato) p.material.emissiveIntensity = p.objetivo;
   }
 
+  /** Al llegar a un escenario nuevo: aquí se reaparece desde ahora. @param {string} nombreSpawn */
+  fijar(nombreSpawn) {
+    if (this.spawns[nombreSpawn]) this.punto = nombreSpawn;
+  }
+
   /** @returns {import('./level_loader.js').Spawn} */
   get reaparicion() {
+    if (this.punto && this.spawns[this.punto]) return this.spawns[this.punto];
     return this.spawns[`checkpoint_${this.registro.actual}`] ?? this.spawns.jugador;
   }
 

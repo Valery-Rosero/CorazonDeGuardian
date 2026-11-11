@@ -80,6 +80,14 @@ export class Santuario {
     }
   }
 
+  /** Al continuar una partida guardada: el acertijo ya estaba resuelto (cristal encendido, puerta abierta, sin cinemática). */
+  restaurarResuelto() {
+    this.acertijo.logica.resuelto = true;
+    this.espejosVisitados = true;
+    this._encenderCristal();
+    this._abrirPuerta();
+  }
+
   /** Victoria llega a la puerta de la arena. */
   puertaArena() {
     if (this.avisoArena > 0) return;

@@ -23,7 +23,7 @@ Victoria Solano, una joven cartógrafa, sigue el mapa de su padre desaparecido h
 
 ## Tecnología
 
-Three.js 0.160 · cannon-es 0.20 · Vite · Blender 5.2 (Python) · numpy · 98 pruebas automáticas con `node --test`.
+Three.js 0.160 · cannon-es 0.20 · Vite · Blender 5.2 (Python) · numpy · 101 pruebas automáticas con `node --test`.
 
 ## Pilares de diseño
 

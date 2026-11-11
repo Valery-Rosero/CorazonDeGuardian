@@ -18,6 +18,8 @@
 | Modo foto | F (o el botón de la pausa); F o Esc para volver |
 | Saltar una cinemática | Mantener Espacio 1 segundo |
 
+**Partida guardada:** se guarda sola al encender un pilar solar, al llegar a un escenario nuevo (el santuario, la sala de columnas al tomar el escudo, la sala de los espejos y la arena) y al leer una página. Si Victoria cae, reaparece en el último de esos puntos. En el menú, «Continuar» recupera la partida y «Nueva partida» empieza de cero.
+
 Los poderes se desbloquean en orden. El Pulso solar y la Manipulación se obtienen al tomar el brazalete del altar del claro. El Escudo llega en el altar del santuario.
 
 ## Opciones (menú principal)
@@ -46,6 +48,7 @@ Volumen general, de música, de efectos y de voces; sensibilidad del ratón; sac
 | `/?debug&auto&poderes&final=derrota` | La cinemática de la derrota del Guardián |
 | `/?debug&auto&poderes&final=amanecer` | La cinemática final y, después, el epílogo |
 | `/?debug&auto&poderes&final=epilogo` | El epílogo «La marcha» directamente |
+| `&partida=<JSON>` | Recupera esa partida como «Continuar» (para probar el guardado) |
 | `&stats` | Añadido a cualquier dirección: llamadas, triángulos y luces en pantalla |
 | `&calidad=baja`, `media` o `alta` | Fuerza una calidad gráfica |
 
