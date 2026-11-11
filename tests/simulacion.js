@@ -16,7 +16,7 @@ import { Vida } from '../src/player/health.js';
 import { ControladorJugador } from '../src/player/player_controller.js';
 import { Puente } from '../src/world/bridge.js';
 import { RegistroCheckpoints } from '../src/world/checkpoint_logic.js';
-import { construirNivel } from '../src/world/level_loader.js';
+import { combinarNiveles, construirNivel } from '../src/world/level_loader.js';
 import { SistemaTriggers } from '../src/world/triggers.js';
 
 export const DT = 1 / 60;
@@ -37,13 +37,15 @@ class EntradaFalsa {
   pulso(a) { return this.pulsadas.has(a); }
 }
 
-/** @param {string} [ruta]  .glb de la zona (por defecto la selva) */
+/** @param {string | string[]} [ruta]  .glb de la zona (por defecto la selva); con varias, se juntan en un mismo mundo */
 export async function crearSimulacion(ruta = 'public/models/zona_1_selva.glb') {
-  const gltf = await cargarGlb(ruta);
+  const rutas = Array.isArray(ruta) ? ruta : [ruta];
   const escena = new THREE.Scene();
   const fisica = new MundoFisico();
   const triggers = new SistemaTriggers();
-  const nivel = construirNivel(gltf, escena, fisica, triggers, { vegetacion: 0.1 });
+  const niveles = [];
+  for (const r of rutas) niveles.push(construirNivel(await cargarGlb(r), escena, fisica, triggers, { vegetacion: 0.1 }));
+  const nivel = niveles.length > 1 ? combinarNiveles(niveles) : niveles[0];
   const entrada = new EntradaFalsa();
   const modelo = new THREE.Object3D();
   const jugador = new ControladorJugador(fisica, /** @type {any} */ (entrada), modelo, { ...PLAYER });

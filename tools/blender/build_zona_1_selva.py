@@ -496,6 +496,13 @@ def triggers_y_puntos():
     vacio('spawn_debug_1', (0, 10, 0))
     vacio('spawn_debug_2', (0, -103, CORNISA[2]))
     vacio('spawn_debug_3', (0, -132, MESETA[2]))
+    # Escape: al salir del santuario Victoria aparece en el pasadizo, mirando hacia el puente
+    vacio('spawn_salida_santuario', (0, -158.4, MESETA[2] + 2.4), rot_z=180)
+    # Final: al llegar a la cornisa durante el escape (el juego lo ignora antes)
+    caja_invisible('trg_box_final', (-6, -106.5, 11.5), (6, -101.5, 16), props={'evento': 'final'})
+    # Victoria espera en el borde mirando el amanecer sobre el mar de nubes; Mateo sale del portal de runas detrás
+    vacio('spawn_final', (5.0, -104.2, CORNISA[2]), rot_z=90)   # mira al este: el sol sale sobre el abismo
+    vacio('spawn_mateo_final', (4.2, -101.9, CORNISA[2]))
     vacio('hint_cascada', (0, -84, 14))
     vacio('hint_fachada', (0, -156, 20))
     vacio('trg_rad_cascada', (0, -79, 0), props={'radio': 14.0, 'evento': 'area_cascada'})

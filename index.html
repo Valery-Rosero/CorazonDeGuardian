@@ -44,6 +44,11 @@
           <span class="poder-nombre">Manipulación</span>
         </div>
       </div>
+      <div id="jefe-barra" class="oculto" aria-label="Vida del Guardián del Sol">
+        <span class="jefe-nombre">Guardián del Sol</span>
+        <div class="jefe-marco"><div id="jefe-relleno"></div><span class="jefe-marca"></span></div>
+      </div>
+      <div id="escape-reloj" class="oculto" aria-label="Tiempo del escape">1:15</div>
       <div id="aviso-interaccion" class="oculto"><span class="tecla">E</span><span id="aviso-texto"></span></div>
       <div id="tutorial" class="oculto"></div>
       <div id="reticula" aria-hidden="true"></div>
@@ -60,17 +65,41 @@
     </div>
 
     <div id="pantalla-inicio" class="pantalla oculto">
-      <h1 class="titulo-oro">El Templo del Sol Perdido</h1>
-      <p class="aviso">Haz clic para comenzar</p>
-      <p class="controles">WASD moverse · Shift correr · Espacio saltar · C esquivar · Ratón cámara · P o Esc pausa</p>
+      <h1 class="titulo-oro titulo-menu">El Templo del Sol Perdido</h1>
+      <div class="menu" id="menu-principal">
+        <button type="button" class="boton" id="boton-jugar">Jugar</button>
+        <button type="button" class="boton secundario" id="boton-opciones">Opciones</button>
+        <button type="button" class="boton secundario" id="boton-demo" disabled title="Llega el día 6">Demostración técnica</button>
+      </div>
+      <div class="opciones oculto" id="opciones">
+        <label>Volumen general <input type="range" id="opcion-volumen" min="0" max="1" step="0.05" value="1"></label>
+        <label>Sensibilidad del ratón <input type="range" id="opcion-sensibilidad" min="0.3" max="2" step="0.05" value="1"></label>
+        <label>Sacudida de cámara <input type="range" id="opcion-sacudida" min="0" max="1" step="0.05" value="1"></label>
+        <button type="button" class="boton" id="boton-opciones-volver">Volver</button>
+      </div>
+      <p class="controles">WASD moverse · Shift correr · Espacio saltar · C esquivar · Clic Pulso · Q Escudo · E Manipular · Esc pausa</p>
+    </div>
+
+    <div id="cine-franjas" aria-hidden="true"><div class="franja arriba"></div><div class="franja abajo"></div></div>
+    <div id="cine-saltar" class="oculto" aria-hidden="true"><span class="anillo"></span>Mantén Espacio para saltar</div>
+    <div id="rotulo" class="oculto" aria-hidden="true"></div>
+
+    <div id="victoria" class="pantalla oculto">
+      <h1 class="titulo-oro titulo-victoria">VICTORIA</h1>
+      <dl class="estadisticas">
+        <div><dt>Tiempo total</dt><dd id="est-tiempo">0:00</dd></div>
+        <div><dt>Caídas</dt><dd id="est-muertes">0</dd></div>
+        <div><dt>Páginas del diario</dt><dd id="est-paginas">0/6</dd></div>
+      </dl>
+      <button type="button" class="boton" id="boton-victoria-menu">Volver al menú</button>
     </div>
 
     <div id="destello" aria-hidden="true"></div>
     <div id="fundido" aria-hidden="true"></div>
 
     <div id="derrota" class="pantalla oculto">
-      <h2 class="titulo-rojo">Victoria ha caído</h2>
-      <p class="controles">El último pilar solar te espera.</p>
+      <h2 class="titulo-rojo" id="derrota-titulo">Victoria ha caído</h2>
+      <p class="controles" id="derrota-texto">El último pilar solar te espera.</p>
       <button id="boton-reintentar" type="button" class="boton">Reintentar</button>
     </div>
 

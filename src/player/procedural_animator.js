@@ -75,6 +75,13 @@ const GESTOS = {
     poncho_delante: [-0.3, 0, 0] } },
   chisporroteo: { duracion: 0.35, huesos: {
     brazo_sup_der: [-0.9, 0, 0.1], brazo_inf_der: [-0.6, 0, 0], mano_der: [0.3, 0, 0], poncho_delante: [-0.2, 0, 0] } },
+  // Mateo (tablero «Mateo Solano»): liberado, de rodillas con los hombros caídos; y en el final se acomoda las gafas
+  arrodillado: { duracion: 600, huesos: {
+    pierna_sup_izq: [-1.45, 0, 0], pierna_inf_izq: [2.1, 0, 0], pierna_sup_der: [0.15, 0, 0], pierna_inf_der: [1.75, 0, 0],
+    bota_der: [-0.6, 0, 0], torso: [0.4, 0, 0], cabeza: [0.32, 0, 0], brazo_sup_izq: [-0.35, 0, 0.15], brazo_sup_der: [-0.35, 0, -0.15],
+    brazo_inf_izq: [-0.5, 0, 0], brazo_inf_der: [-0.5, 0, 0] } },
+  ajustar_gafas: { duracion: 1.6, huesos: {
+    brazo_sup_der: [-2.0, 0, 0.55], brazo_inf_der: [-1.7, 0, 0], mano_der: [0.5, 0, 0], cabeza: [-0.12, 0, 0] } },
   mirar_brazalete: { duracion: 2.4, huesos: {
     brazo_sup_der: [-0.55, 0, 0.3], brazo_inf_der: [-1.75, 0, 0], mano_der: [0.2, 0, 0], cabeza: [0.38, 0.15, 0],
     poncho_delante: [-0.25, 0, 0] } },
@@ -117,7 +124,9 @@ export class AnimadorProcedural {
     this.pesoMov = 0;
     this.pesoAire = 0;
     this.orientacionPrevia = 0;
-    this.trenza = Array.from({ length: 6 }, (_, i) => ({ x: new Resorte(), z: new Resorte(), hueso: this.h[`trenza_${i + 1}`] }));
+    // La trenza y el poncho son de Victoria; Mateo usa el mismo animador sin ellos
+    this.trenza = Array.from({ length: 6 }, (_, i) => ({ x: new Resorte(), z: new Resorte(), hueso: this.h[`trenza_${i + 1}`] }))
+      .filter((r) => r.hueso);
     this.ponchoDelante = new Resorte();
     this.ponchoDetras = new Resorte();
     this.aplastamiento = new Resorte();
@@ -218,7 +227,7 @@ export class AnimadorProcedural {
     const amort = cfg.resorte_amortiguacion;
     const atras = v * 0.07 + THREE.MathUtils.clamp(-est.velVertical * 0.04, -0.3, 0.4);
     const lado = THREE.MathUtils.clamp(-giro * 0.05, -0.5, 0.5);
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < this.trenza.length; i++) {
       const r = this.trenza[i];
       const retraso = 1 - i * 0.1;
       const bx = r.x.paso(atras * 0.35, dt, k * retraso, amort);
@@ -227,8 +236,8 @@ export class AnimadorProcedural {
       r.hueso.rz += bz;
     }
     // +rx lleva la punta hacia atrás: al correr el viento pega el poncho al cuerpo; al saltar se levanta
-    h.poncho_delante.rx += this.ponchoDelante.paso(0.05 * vNorm - pa * 0.18, dt, k, amort);
-    h.poncho_detras.rx += this.ponchoDetras.paso(0.16 * vNorm + pa * 0.12, dt, k, amort);
+    if (h.poncho_delante) h.poncho_delante.rx += this.ponchoDelante.paso(0.05 * vNorm - pa * 0.18, dt, k, amort);
+    if (h.poncho_detras) h.poncho_detras.rx += this.ponchoDetras.paso(0.16 * vNorm + pa * 0.12, dt, k, amort);
 
     // --- Capa de gestos: entrada en 0,08 s y salida en 0,15 s
     if (this.gestoActual) {

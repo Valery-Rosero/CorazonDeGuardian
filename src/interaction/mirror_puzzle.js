@@ -4,7 +4,7 @@ import { PALETA } from '../config/palette.js';
 import { AcertijoEspejos } from '../world/light_beam_logic.js';
 
 /** Haz de luz: cilindro aditivo que se desvanece hacia los bordes (lo bastante barato para la Iris Xe). */
-function materialHaz() {
+export function materialHaz() {
   return new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,

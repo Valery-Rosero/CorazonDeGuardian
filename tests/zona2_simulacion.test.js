@@ -72,7 +72,8 @@ test('santuario: el acertijo con los datos reales del .glb se resuelve y abre el
 
 test('santuario: las páginas 4, 5 y 6, la flor, el altar del escudo y los espejos son interactuables', () => {
   const tipos = sim.interactuables.lista.map((o) => `${o.tipo}:${o.datos.pagina ?? o.datos.espejo ?? ''}`).sort();
-  assert.deepEqual(tipos, ['altar_escudo:', 'espejo:0', 'espejo:1', 'espejo:2', 'pagina:4', 'pagina:5', 'pagina:6']);
+  // 'losa' es la puerta de la arena, que se abre con la Manipulación
+  assert.deepEqual(tipos, ['altar_escudo:', 'espejo:0', 'espejo:1', 'espejo:2', 'losa:', 'pagina:4', 'pagina:5', 'pagina:6']);
   assert.ok(sim.nivel.flores[4], 'flor solar de la antesala');
   const enemigos = Object.values(sim.nivel.spawns).filter((s) => s.datos.enemigo);
   assert.equal(enemigos.filter((s) => s.datos.enemigo === 'centinela' && s.datos.despierta === 'escudo').length, 2);

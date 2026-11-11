@@ -20,7 +20,12 @@ import { BucleJuego } from './core/game_loop.js';
 import { Entrada } from './core/input.js';
 import { MundoFisico } from './core/physics_world.js';
 import { ajustarAlRedimensionar, crearRenderer } from './core/renderer.js';
+import { ReproductorCine } from './cinematics/cinematic_player.js';
 import { GestorEnemigos } from './enemies/enemy_manager.js';
+import { ActoFinal } from './game/final_act.js';
+import { MateoNPC } from './player/mateo_npc.js';
+import { Dialogos } from './ui/dialogue_player.js';
+import { InterfazFinal } from './ui/endgame_ui.js';
 import { chispaEn, crearEstela, crearParticulasDeEmisor, crearRafagas, rafagaEn } from './fx/particle_presets.js';
 import { texturaPunto } from './fx/particles.js';
 import { Interactuables } from './interaction/interactables.js';
@@ -93,8 +98,8 @@ async function iniciar() {
   // ---------------- Carga
   const [modelos, buffers] = await Promise.all([
     cargarModelos({
-      zona: '/models/zona_1_selva.glb', santuario: '/models/zona_2_santuario.glb',
-      victoria: '/models/victoria.glb', enemigos: '/models/enemigos.glb',
+      zona: '/models/zona_1_selva.glb', santuario: '/models/zona_2_santuario.glb', camara: '/models/zona_3_camara.glb',
+      victoria: '/models/victoria.glb', enemigos: '/models/enemigos.glb', guardian: '/models/guardian.glb', mateo: '/models/mateo.glb',
     }, (f, texto) => pantallas.progreso(f * 0.85, texto)),
     cargarSonidos(SONIDOS),
   ]);
@@ -102,7 +107,9 @@ async function iniciar() {
 
   const opcionesNivel = { vegetacion: calidad.vegetacion };
   const nivelSantuario = construirNivel(modelos.santuario, escena, fisica, triggers, opcionesNivel);
-  const nivel = combinarNiveles([construirNivel(modelos.zona, escena, fisica, triggers, opcionesNivel), nivelSantuario]);
+  const nivelCamara = construirNivel(modelos.camara, escena, fisica, triggers, opcionesNivel);
+  const nivel = { ...combinarNiveles([construirNivel(modelos.zona, escena, fisica, triggers, opcionesNivel), nivelSantuario, nivelCamara]),
+    raizCamara: nivelCamara.raiz };
   const luces = crearLucesNivel(escena, nivel.luces);
 
   // ---------------- Victoria
@@ -137,6 +144,7 @@ async function iniciar() {
   const audio = new GestorAudio(oyente, buffers, escena);
   const ambienteSelva = audio.bucleGlobal('ambiente_selva', 0.55);
   const ambienteSantuario = audio.bucleGlobal('ambiente_santuario', 0);
+  const rumorDerrumbe = audio.bucleGlobal('derrumbe', 0);
   for (const em of nivel.emisores) {
     if (em.tipo === 'cascada') audio.buclePosicional('cascada', em.objeto, POSICIONAL.cascada);
     if (em.tipo === 'fuego') audio.buclePosicional('antorcha', em.objeto, POSICIONAL.antorcha);
@@ -155,14 +163,12 @@ async function iniciar() {
   const hud = new Hud();
   hud.vida(vida.actual, vida.maxima);
   const subtitulos = new Subtitulos();
-  let finSubtitulo = -1;
+  // Diálogos del guion (subtítulo, voz y boca) y la interfaz del final
+  const dialogos = new Dialogos(subtitulos, audio, cara);
   /** @param {string} texto @param {string} emocion */
-  const decir = (texto, emocion) => {
-    cara.ponerEmocion(emocion);
-    cara.hablar(texto);
-    subtitulos.mostrar(texto, 'calido');
-    finSubtitulo = -1;
-  };
+  const decir = (texto, emocion) => dialogos.decirLibre(texto, emocion);
+  const ui = new InterfazFinal();
+  const cine = new ReproductorCine(camara, ui);
 
   // ---------------- Puente, checkpoints, portales
   const puente = new Puente(nivel.dinamicos.filter((d) => d.datos.cae_al_pisar), PUENTE, {
@@ -172,17 +178,21 @@ async function iniciar() {
   const checkpoints = new Checkpoints(nivel.pilares, nivel.spawns, CHECKPOINT);
 
   // ---------------- Zonas: la selva y el santuario (que está lejos, más allá de la niebla)
-  let dentroSantuario = false;
+  let zonaActual = 1;
+  let amanecer = false;
+  /** 1 selva, 2 santuario, 3 cámara del sol (el santuario y la arena están lejos, más allá de la niebla). @param {THREE.Vector3} pos */
+  const zonaDe = (pos) => (pos.z < 400 ? 1 : pos.z < 673.5 ? 2 : 3);
   /** @param {THREE.Vector3} pos */
-  const esSantuario = (pos) => pos.z > 400;
-  /** Luces, atmósfera y ambiente de la zona donde está Victoria. @param {boolean} dentro */
-  const aplicarZona = (dentro) => {
-    if (dentro === dentroSantuario) return;
-    dentroSantuario = dentro;
-    ambiente.ponerInterior(dentro);
-    luces.encenderGrupo(dentro ? 2 : 1);
-    audio.volumenBucle(ambienteSelva, dentro ? 0 : 0.55);
-    audio.volumenBucle(ambienteSantuario, dentro ? 0.6 : 0);
+  const esSantuario = (pos) => zonaDe(pos) > 1;
+  /** Luces, atmósfera y ambiente de la zona donde está Victoria. @param {number} zona */
+  const aplicarZona = (zona) => {
+    if (zona === zonaActual || amanecer) return;
+    const antes = zonaActual;
+    zonaActual = zona;
+    if ((antes > 1) !== (zona > 1)) ambiente.ponerInterior(zona > 1);
+    luces.encenderGrupo(zona);
+    audio.volumenBucle(ambienteSelva, zona === 1 ? 0.55 : 0);
+    audio.volumenBucle(ambienteSantuario, zona === 2 ? 0.6 : zona === 3 ? 0.3 : 0);
   };
   const transicion = new Transicion();
 
@@ -192,7 +202,7 @@ async function iniciar() {
     if (!s) return;
     jugador.colocar(s.pos, s.rumbo);
     rig.reorientar(s.rumbo);
-    aplicarZona(esSantuario(s.pos));
+    aplicarZona(zonaDe(s.pos));
   };
   /** Del pasadizo del pórtico al vestíbulo del santuario, con fundido a negro. */
   const entrarAlSantuario = () => {
@@ -219,7 +229,7 @@ async function iniciar() {
     alImpactar: (p, cuerpo) => {
       rafagaEn(rafagas, p, 22, PALETA.oro_brillante, 4);
       audio.efectoEn('pulso_impacto', p, 0.9);
-      enemigos.golpear(cuerpo, PULSO.dano, p);
+      if (!actoFinal.golpear(cuerpo, PULSO.dano, p)) enemigos.golpear(cuerpo, PULSO.dano, p);
     },
     estela: (p) => chispaEn(estela, p, PALETA.oro_brillante, 1, 0.22),
   });
@@ -269,7 +279,7 @@ async function iniciar() {
     origenPulso.addScaledVector(dirCamara, 0.45);
     dirPulso.subVectors(mira, origenPulso).normalize();
     // Asistencia de puntería (sección 5.5): si un enemigo está casi bajo la retícula, va hacia él
-    const asistido = enemigos.asistencia(origenPulso, dirPulso, PULSO.asistencia, PULSO.alcance);
+    const asistido = actoFinal.asistencia(origenPulso, dirPulso) ?? enemigos.asistencia(origenPulso, dirPulso, PULSO.asistencia, PULSO.alcance);
     if (asistido) dirPulso.copy(asistido);
     pulsos.disparar(origenPulso, dirPulso);
     animador.gesto('disparo');
@@ -366,13 +376,14 @@ async function iniciar() {
     jugador.mirarHacia(Math.atan2(o.pos.x - jugador.posicion.x, o.pos.z - jugador.posicion.z), 0.6);
     audio.efecto('manipular', 0.8);
     rafagaEn(rafagas, o.pos, 18, PALETA.gema_manipulacion, 2.5);
-    if (santuario.usar(o)) return;
+    if (santuario.usar(o) || actoFinal.usar(o)) return;
     if (o.tipo === 'pagina') leerPagina(o);
     else if (o.tipo === 'losa' && losas.activar(o.objeto)) {
       interactuables.desactivar(o);
       audio.efectoEn('losa_mover', o.pos, 1);
       rig.sacudida.agregar(0.3);
-      hud.nota(o.objeto.name === 'dyn_puerta_santuario' ? 'La puerta del santuario se hunde en el suelo' : 'La losa se hunde en la piedra');
+      hud.nota(o.objeto.name === 'dyn_puerta_santuario' ? 'La puerta del santuario se hunde en el suelo'
+        : o.objeto.name === 'dyn_puerta_arena' ? 'La puerta de la arena se abre. Se oye un latido.' : 'La losa se hunde en la piedra');
     }
   };
 
@@ -459,6 +470,32 @@ async function iniciar() {
     },
   });
 
+  // ---------------- Acto final (secciones 7, 8.3 y 9.4)
+  const mateo = new MateoNPC(modelos.mateo.scene, (r) => aplicarMaterialesPersonaje(r, rampa), { ...ANIMACION }, cfgJugador, EXPRESIONES);
+  escena.add(mateo.raiz);
+  const destello = () => {
+    const d = document.getElementById('destello');
+    d.classList.remove('activo');
+    void d.offsetWidth;
+    d.classList.add('activo');
+  };
+  const estadisticas = { tiempo: 0, muertes: 0 };
+  const actoFinal = new ActoFinal({
+    escena, fisica, nivel, modelos, jugador, animador, rig, audio, hud, ui, dialogos, cine, puente, enemigos, ambiente,
+    interactuables, toon: toonEnemigos, rumorDerrumbe, manoDer, mateo, transicion, teletransportar,
+    reloj: () => reloj,
+    rafaga: (pos, n, color, fuerza) => rafagaEn(rafagas, pos, n, color, fuerza),
+    chispa: (pos, color, n) => chispaEn(estela, pos, color, n ?? 1, 0.4),
+    destello,
+    recibirDano,
+    alVictoria: () => {
+      amanecer = true;
+      ui.victoria({ tiempo: estadisticas.tiempo, muertes: estadisticas.muertes, paginas: paginas.size, total: TOTAL_PAGINAS });
+      bucle.pausado = false;
+      rig.controles.unlock();
+    },
+  });
+
   /** @param {number} dt */
   const usarPoderes = (dt) => {
     poderes.actualizar(dt);
@@ -499,7 +536,9 @@ async function iniciar() {
     if (muerta || !vida.matar()) return;
     muerta = true;
     tiempoMuerte = 0;
+    estadisticas.muertes++;
     jugador.bloqueado = true;
+    ui.textosDerrota('Victoria ha caído', actoFinal.enEscape ? 'El escape vuelve a empezar.' : 'El último pilar solar te espera.');
     audio.efecto('derrota');
     bus.emitir(EVENTOS.JUGADOR_MUERTO);
   };
@@ -507,12 +546,15 @@ async function iniciar() {
     const s = checkpoints.reaparicion;
     puente.reiniciar();
     enemigos.reiniciar();
-    aplicarZona(esSantuario(s.pos));
     vida.reiniciar();
     poderes.reiniciarRecargas();
-    jugador.colocar(s.pos, s.rumbo);
     jugador.bloqueado = false;
-    rig.reorientar(s.rumbo);
+    // En el escape se reintenta desde su inicio; si no, desde el último pilar solar
+    if (!actoFinal.alReaparecer()) {
+      aplicarZona(zonaDe(s.pos));
+      jugador.colocar(s.pos, s.rumbo);
+      rig.reorientar(s.rumbo);
+    }
     muerta = false;
     hud.mostrarDerrota(false);
   };
@@ -539,6 +581,11 @@ async function iniciar() {
         break;
       case 'puerta_arena':
         santuario.puertaArena();
+        break;
+      case 'despertar':
+      case 'salida':
+      case 'final':
+        actoFinal.trigger(d.evento);
         break;
       case 'checkpoint': {
         const disco = checkpoints.pasar(Number(d.checkpoint));
@@ -593,12 +640,16 @@ async function iniciar() {
 
   // ---------------- Bucle único
   let reloj = 0;
+  let enMenu = false;
   let tChispas = 0;
   const bucle = new BucleJuego(renderer, {
-    fisica: (dt) => fisica.paso(dt),
+    fisica: (dt) => fisica.paso(dt * cine.escalaTiempo),
     sincronizar: () => fisica.sincronizar(),
-    logica: (dt, t) => {
+    logica: (dtReal, t) => {
       depuracion?.inicio();
+      // La cámara lenta de la derrota frena el juego, no la cinemática
+      const dt = dtReal * cine.escalaTiempo;
+      if (!amanecer) estadisticas.tiempo += dtReal;
       reloj = t;
       uTiempo.value = t;
       usarPoderes(dt);
@@ -609,8 +660,13 @@ async function iniciar() {
       pulsos.actualizar(dt);
       losas.actualizar(dt);
       // La zona (luces, atmósfera, ambiente) sigue a Victoria esté donde esté (teletransportes de depuración incluidos)
-      if (!transicion.activa) aplicarZona(esSantuario(jugador.posicion));
+      if (!transicion.activa) aplicarZona(zonaDe(jugador.posicion));
       enemigos.actualizar(dt, t, jugador.posicion, !muerta);
+      if (actoFinal.actualizar(dt, t, cine.activo) === 'agotado') {
+        ui.textosDerrota('El templo se derrumbó', 'Reintenta desde el inicio del escape.');
+        morir();
+      }
+      dialogos.actualizar(dtReal);
       santuario.actualizar(dt, t);
       pantallas.fundido(transicion.actualizar(dt));
       avanzarBrazalete(dt);
@@ -652,7 +708,8 @@ async function iniciar() {
       }
     },
     camara: (dt) => {
-      rig.actualizar(dt, jugador.posicion, jugador);
+      if (cine.activo) cine.actualizar(dt, entrada.mantiene('saltar'));
+      else rig.actualizar(dt, jugador.posicion, jugador);
       ambiente.seguir(jugador.posicion);
       oclusion.actualizar(dt, camara.position, pecho);
     },
@@ -676,6 +733,13 @@ async function iniciar() {
       }
     },
     hud: (dt) => {
+      if (enMenu) {
+        // Menú principal (el juego está en pausa): vista lenta del claro hacia la cima dorada de la pirámide
+        const r = performance.now() / 1000;
+        const s = Math.sin(r * 0.12);
+        camara.position.set(7 + s * 2.5, 3.2 + Math.sin(r * 0.2) * 0.3, -15);
+        camara.lookAt(s * 6, 14, 80);
+      }
       camara.getWorldDirection(dirCamara);
       panel.actualizar(dt, triggers.zona, jugador.posicion, -Math.atan2(dirCamara.x, -dirCamara.z));
       hud.vida(vida.actual, vida.maxima);
@@ -684,14 +748,6 @@ async function iniciar() {
       hud.poder('manipulacion', poderes.tiene('manipulacion'), poderes.progreso('manipulacion'));
       hud.avisoInteraccion(interactuables.objetivo && !secuenciaBrazalete ? String(interactuables.objetivo.datos.etiqueta) : '');
       hud.actualizar(dt);
-      if (cara.hablando) {
-        subtitulos.actualizar(cara.progreso);
-      } else if (finSubtitulo < 0) {
-        subtitulos.actualizar(1);
-        finSubtitulo = reloj + 1.2;
-      } else if (reloj > finSubtitulo) {
-        subtitulos.ocultar();
-      }
       depuracion?.fin(dt);
     },
     render: () => renderer.render(escena, camara),
@@ -708,6 +764,22 @@ async function iniciar() {
     pantallas.ocultarInicio();
     document.getElementById('pantalla-carga').classList.add('oculto');
     if (params.has('hablar')) setTimeout(() => decir('Te dije que llegaría antes que tú.', 'ternura'), 400);
+    // &final=derrota o &final=amanecer salta al final del combate o al amanecer (para revisar las cinemáticas)
+    if (params.get('final') === 'derrota') {
+      teletransportar('debug_6');
+      setTimeout(() => {
+        // El adelanto (&tcine) es para la derrota, no para el despertar que se salta
+        const adelanto = cine.adelanto;
+        cine.adelanto = 0;
+        actoFinal.trigger('despertar');
+        cine.saltar();
+        cine.adelanto = adelanto;
+        actoFinal._derrota();
+      }, 300);
+    }
+    if (params.get('final') === 'amanecer') setTimeout(() => { actoFinal.etapa = 'escape'; actoFinal._final(); }, 300);
+    // &tcine=N adelanta N segundos la próxima cinemática (para revisar cada plano)
+    cine.adelanto = Number(params.get('tcine') ?? 0);
     const destino = params.get('ir');
     if (destino) teletransportar(destino);
     // ?auto&pos=x,y,z,grados coloca a Victoria en cualquier punto (coordenadas de Three.js)
@@ -732,13 +804,25 @@ async function iniciar() {
     return;
   }
   pantallas.mostrarInicio();
-  pantallas.alHacerClicInicio(() => {
-    oyente.context.resume();
-    audio.iniciar();
-    pantallas.ocultarInicio();
-    rig.controles.lock();
-    hud.mensajeTutorial(TUTORIAL.inicio, 7);
+  enMenu = true;
+  document.body.classList.add('en-menu');
+  ui.menu({
+    jugar: () => {
+      enMenu = false;
+      document.body.classList.remove('en-menu');
+      oyente.context.resume();
+      audio.iniciar();
+      pantallas.ocultarInicio();
+      rig.controles.lock();
+      hud.mensajeTutorial(TUTORIAL.inicio, 7);
+    },
+    opciones: (o) => {
+      oyente.setMasterVolume(o.volumen);
+      rig.controles.pointerSpeed = o.sensibilidad;
+      rig.sacudida.intensidad = o.sacudida;
+    },
   });
+  ui.alVolverDeVictoria(() => location.reload());
   hud.alReintentar(() => {
     reaparecer();
     rig.controles.lock();
@@ -756,6 +840,7 @@ async function iniciar() {
     pantallas.pausa(false);
   });
   rig.controles.addEventListener('unlock', () => {
+    if (amanecer) return;   // la pantalla de victoria deja el juego de fondo
     bucle.pausado = true;
     if (panelDiario.abierto) panelDiario.cerrar();
     if (!muerta) pantallas.pausa(true);

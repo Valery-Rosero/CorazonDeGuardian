@@ -93,6 +93,34 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
   return {
     sol,
     /**
+     * Final (tablero «Cámara del sol», «Final al amanecer»): sol bajo y rosado delante de la cornisa,
+     * cielo de amanecer y niebla clara (el mar de nubes).
+     * @param {THREE.Vector3} haciaSol  dirección horizontal hacia donde sale el sol
+     */
+    ponerAmanecer(haciaSol) {
+      const d = new THREE.Vector3(haciaSol.x, 0, haciaSol.z).normalize();
+      const dir = new THREE.Vector3(d.x * Math.cos(0.07), Math.sin(0.07), d.z * Math.cos(0.07));
+      const u = cielo.material.uniforms;
+      u.sunPosition.value.copy(dir);
+      u.rayleigh.value = 2.6;
+      u.turbidity.value = 3.5;
+      u.mieCoefficient.value = 0.004;
+      u.mieDirectionalG.value = 0.92;
+      const niebla = /** @type {THREE.FogExp2} */ (escena.fog);
+      niebla.color.set('#F0BFB4');
+      niebla.density = exterior.densidad * 0.8;
+      sol.color.set('#FFB38A');
+      sol.intensity = 1.8;
+      hemi.color.set('#FFD8C8');
+      hemi.groundColor.set('#6A4E58');
+      hemi.intensity = 0.7;
+      ambiente.intensity = 0.3;
+      desplazamiento.copy(dir).multiplyScalar(35);
+      escena.environment = exterior.entorno;
+      escena.background = null;
+      sol.castShadow = true;
+    },
+    /**
      * Cambia la atmósfera entre la selva y el interior del santuario (de golpe: se llama durante
      * el fundido a negro de la transición).
      * @param {boolean} dentro

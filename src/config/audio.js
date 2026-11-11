@@ -1,4 +1,6 @@
 // @ts-check
+import { LINEAS } from './dialogues.js';
+
 /**
  * Sonidos generados por tools/audio/audio_synth.py en public/sounds/.
  * Los bucles van en .wav (sin silencio al repetir); los efectos cortos, en .mp3.
@@ -41,6 +43,18 @@ export const SONIDOS = Object.freeze({
   dano: '/sounds/dano.mp3',
   espejo_girar: '/sounds/espejo_girar.mp3',
   acertijo_resuelto: '/sounds/acertijo_resuelto.mp3',
+  // Día 5: el Guardián, el escape y las voces (murmullo sintetizado por línea del guion)
+  nucleo_latido: '/sounds/nucleo_latido.wav',
+  derrumbe: '/sounds/derrumbe.wav',
+  guardian_rugido: '/sounds/guardian_rugido.mp3',
+  guardian_sismico: '/sounds/guardian_sismico.mp3',
+  guardian_barrido: '/sounds/guardian_barrido.mp3',
+  guardian_rayo: '/sounds/guardian_rayo.mp3',
+  guardian_aviso: '/sounds/guardian_aviso.mp3',
+  roca_cae: '/sounds/roca_cae.mp3',
+  pilar_enciende: '/sounds/pilar_enciende.mp3',
+  victoria: '/sounds/victoria.mp3',
+  ...Object.fromEntries(Object.keys(LINEAS).map((c) => [`voz/${c}`, `/sounds/voz/${c}.mp3`])),
 });
 
 /** Volúmenes por categoría (se podrán cambiar en Opciones). */

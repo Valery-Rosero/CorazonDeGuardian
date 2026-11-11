@@ -5,7 +5,7 @@ Este guion reúne todo lo que se dice o se lee en el juego. Cada línea tiene un
 - **Sin grabación:** el juego funciona igual, con subtítulos y la boca siguiendo el texto.
 - **Con grabación:** basta con poner el archivo en `public/sounds/voz/` con el nombre indicado y sonará en lugar de la voz sintetizada.
 
-*Estado: los subtítulos y la boca que sigue el texto ya funcionan. El sistema de diálogos que lee estos códigos y busca los audios se construye junto con las cinemáticas (días 5 y 6).*
+*Estado: el sistema de diálogos (`src/ui/dialogue_player.js`) ya lee estos códigos desde `src/config/dialogues.js`, reproduce las voces sintetizadas de `public/sounds/voz/` y mueve la boca y la expresión de quien habla. Las líneas *propuesta* todavía no están en el juego: esperan tu aprobación.*
 
 La duración estimada es la que el juego le da a la línea para mover la boca. Una toma grabada puede durar un poco más o menos; el juego se ajusta a la duración real del audio.
 

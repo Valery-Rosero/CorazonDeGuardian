@@ -69,14 +69,31 @@
 | Al reaparecer, los enemigos vivos vuelven a su puesto con la vida completa; los muertos siguen muertos. | El jugador no repite peleas ya ganadas. |
 | El rayo del acertijo se calcula en 2D (segmentos que reflejan por las dos caras) a 3 m de altura. | Pasa por encima de Victoria y de los espectros; la prueba revisa las 512 combinaciones: ninguna queda bloqueada. |
 
+## Decisiones técnicas del día 5
+
+| Decisión | Motivo |
+|---|---|
+| La cámara del sol se diseñó primero como tablero («Zona 3 · La cámara del sol») y se construyó con sus medidas (`docs/previews/camara_vs_tablero.png`). El Guardián y Mateo salen de sus bocetos (`docs/previews/jefe_vs_boceto.png`): 1.858 y 1.566 triángulos. | Misma regla de siempre: primero el diseño, después la construcción. |
+| La arena es otro `.glb` (`zona_3_camara.glb`) pegado a la antesala, a la altura donde termina su rampa (z = -3 en Blender). Del santuario a la arena se pasa caminando, sin fundido; la zona se decide por la posición. | La antesala ya baja 3 m hacia la puerta: la arena continúa el recorrido sin cortes. |
+| Luces del grupo 3 (cámara): 3 puntuales. | Igual que en el santuario, solo se enciende el grupo de la zona donde está Victoria. |
+| El Pulso solo daña al Guardián con el núcleo abierto (los 3 pilares solares encendidos) y si el golpe llega cerca del pecho. | Obliga a usar los pilares y a acercarse; un golpe en los pies no cuenta (la prueba lo revisa). |
+| Las placas del pecho son piezas aparte con el origen en su bisagra, y el núcleo es su propia malla con un sombreado de remolino. | Se abren girando como en el boceto y el núcleo se ve detrás. |
+| Las cinemáticas son datos (`src/cinematics/guardian_cines.js`): despertar, fase 2, fase 3, derrota y final. Se saltan manteniendo Espacio 1 s, y tras morir las ya vistas se saltan solas. | Sección 9.1. Se ajustan los planos sin tocar el reproductor. |
+| Escape: 75 s y faltan las tablas 3 y 4 del puente. La salida del vestíbulo lleva con fundido al pasadizo del pórtico. | La ruta limpia ronda 23 s (`tests/escape_simulacion.test.js`): queda margen para las rocas, los tropiezos y un checkpoint. |
+| El final ocurre en la cornisa al amanecer: Victoria mira al este, hacia el sol, y Mateo sale del portal de runas detrás de ella. | Lo dice el tablero de la cámara; mirando al este el sol queda de frente, en silueta. |
+| El menú principal es básico: jugar y opciones de volumen, sensibilidad del ratón y sacudida de cámara, guardadas en `localStorage`. | Lo mínimo para jugar de principio a fin; el resto de opciones queda para el día 6. |
+| Las voces de los diálogos son el murmullo sintetizado (`public/sounds/voz/*.mp3`, generado por `tools/audio/audio_synth.py`). | Opción A aprobada. Una grabación con el mismo nombre la reemplaza. |
+| Parámetros de depuración: `&final=derrota` o `&final=amanecer` saltan al final del combate o al amanecer, y `&tcine=N` adelanta N segundos la siguiente cinemática. | Chrome sin ventana dibuja pocos fotogramas: sin ellos no se pueden revisar los planos. |
+
 ## Pendiente
 
-- La **puerta de la arena** (zona 3) solo muestra un aviso hasta el día 5.
-- La **voz de Victoria** al oír la voz tras la puerta de los espejos (`vic_voz_01`, propuesta) espera tu aprobación del guion.
+- La **voz de Victoria** al oír la voz tras la puerta de los espejos (`vic_voz_01`, propuesta) espera tu aprobación del guion, igual que las otras tres líneas *propuesta*.
 - `OrbitControls` en el modo foto (día 6).
-- Opciones de volumen y de sacudida de cámara en el menú (día 6). Los valores ya están en `src/config/audio.js` y en `Sacudida.intensidad`.
-- Las flores solares solo curan si Victoria ha recibido daño; hasta que lleguen los enemigos (día 4) se ven, pero no hacen falta.
+- Opciones completas en el menú (día 6). El volumen, la sensibilidad y la sacudida ya están.
+- Cinemáticas que faltan (día 6): intro, brazalete, puente y puerta del santuario. Modo demo y modo foto.
+- Las flores solares solo curan si Victoria ha recibido daño.
 - Medir los FPS reales en el equipo de referencia (Iris Xe). Chrome sin ventana no sirve para medir rendimiento.
+- Medir los FPS en la arena durante la fase 3 (rocas, rayo y los espectros invocados).
 - Medir los FPS con la selva nueva: 82 árboles jóvenes instanciados (≈ 200 triángulos cada uno), 461 helechos y 700 matas.
 - Medir los FPS en el santuario con los espectros (cuerpo transparente) y las 7 luces.
 

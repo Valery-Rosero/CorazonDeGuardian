@@ -115,7 +115,7 @@ test('zona 2: presupuesto, pocas luces a la vez y los datos del acertijo', () =>
   const { json: s } = leerGlb('public/models/zona_2_santuario.glb');
   const n = s.nodes.map((x) => x.name);
   for (const nombre of ['spawn_santuario', 'rayo_origen', 'rayo_sala_min', 'rayo_sala_max', 'prop_cristal_solar',
-    'dyn_puerta_espejos', 'prop_altar_escudo', 'trg_box_sala_espejos', 'trg_box_puerta_arena']) {
+    'dyn_puerta_espejos', 'dyn_puerta_arena', 'prop_altar_escudo', 'trg_box_sala_espejos', 'trg_box_salida_santuario']) {
     assert.ok(n.includes(nombre), `falta ${nombre}`);
   }
   for (const x of n) assert.ok(!x.includes('.'), `GLTFLoader borra los puntos: ${x}`);

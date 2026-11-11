@@ -16,7 +16,7 @@ export class Puente {
   constructor(tablas, cfg, avisos = {}) {
     this.cfg = cfg;
     this.avisos = avisos;
-    this.tablas = tablas.map((t) => ({ ...t, estado: crearEstadoTabla() }));
+    this.tablas = tablas.map((t) => ({ ...t, estado: crearEstadoTabla(), rota: false }));
     this._p = new THREE.Vector3();
   }
 
@@ -28,6 +28,7 @@ export class Puente {
     const cfg = this.cfg;
     for (let i = 0; i < this.tablas.length; i++) {
       const t = this.tablas[i];
+      if (t.rota) continue;
       const evento = actualizarTabla(t.estado, dt, t.cuerpo === cuerpoBajoVictoria, cfg);
       const b = t.cuerpo;
       if (evento === 'tiembla') {
@@ -69,6 +70,23 @@ export class Puente {
 
   /** Al reaparecer Victoria, el puente vuelve a estar entero. */
   reiniciar() {
-    for (const t of this.tablas) this._restaurar(t);
+    for (const t of this.tablas) {
+      t.rota = false;
+      this._restaurar(t);
+    }
+  }
+
+  /**
+   * Escape: quita para siempre estas tablas (el hueco del salto final). Se restauran con reiniciar().
+   * @param {string[]} nombres
+   */
+  romper(nombres) {
+    for (const t of this.tablas) {
+      if (!nombres.includes(t.malla.name)) continue;
+      t.rota = true;
+      t.cuerpo.type = CANNON.Body.KINEMATIC;
+      t.cuerpo.position.set(t.inicio.p.x, t.inicio.p.y - 400, t.inicio.p.z);
+      t.estado.estado = TABLA.FIRME;
+    }
   }
 }

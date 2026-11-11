@@ -471,6 +471,211 @@ EFECTOS_DIA4 = {
     'acertijo_resuelto': acertijo_resuelto,
 }
 
+# ---------------------------------------------------------------------------
+# Día 5: el Guardián, el escape y las voces (murmullo sintetizado, opción A del guion).
+# Van al final para no cambiar ningún sonido anterior.
+# ---------------------------------------------------------------------------
+
+# Copia de src/config/dialogues.js (una prueba comprueba que cada línea tiene su voz)
+LINEAS = {
+    'mat_despertar_01': ('mateo', '¿Victoria…? No… vete… no me deja soltarla…', 5.9, True),
+    'gem_despertar_01': ('gema', 'Otra mano que quiere robar el sol.', 2.7, False),
+    'gem_fase2_01': ('gema', '¡Nadie saldrá de este templo con mi luz!', 3.2, False),
+    'vic_fase2_01': ('victoria', '¡Papá, resiste!', 1.6, False),
+    'mat_fase3_01': ('mateo', 'Hija… el núcleo… rómpelo… no tengas miedo.', 5.1, True),
+    'mat_derrota_01': ('mateo', 'Victoria… viniste.', 2.1, False),
+    'vic_derrota_01': ('victoria', 'Te dije que llegaría antes que tú.', 2.7, False),
+    'mat_escape_01': ('mateo', '¡Corre! Estoy justo detrás de ti.', 2.9, False),
+}
+
+# Formantes (F1, F2) de las vocales del español
+FORMANTES = {'a': (780, 1300), 'e': (480, 1850), 'i': (300, 2250), 'o': (500, 900), 'u': (330, 780)}
+SIN_TILDE = str.maketrans('áéíóúü', 'aeiouu')
+VOCES = {'victoria': 235.0, 'mateo': 112.0, 'gema': 196.0}
+
+
+def silabas(texto):
+    """Sílabas aproximadas (una por grupo de vocales) y pausas: '…' larga, ',' y '.' cortas."""
+    t = texto.lower().translate(SIN_TILDE)
+    salida = []
+    i = 0
+    while i < len(t):
+        c = t[i]
+        if c in 'aeiou':
+            j = i
+            while j < len(t) and t[j] in 'aeiou':
+                j += 1
+            # La vocal que suena es la más abierta del grupo
+            grupo = t[i:j]
+            vocal = max(grupo, key=lambda v: 'iueoa'.index(v))
+            salida.append(('s', vocal))
+            i = j
+            continue
+        if c == '…' or t[i:i + 3] == '...':
+            salida.append(('p', 0.42))
+        elif c in ',;':
+            salida.append(('p', 0.18))
+        elif c in '.!?':
+            salida.append(('p', 0.12))
+        i += 1
+    return salida
+
+
+def murmullo(texto, dur, quien, dentro=False):
+    """Voz sin palabras: cada sílaba es un pulso de voz con los formantes de su vocal y una melodía
+    que baja al final de la frase (y sube en las preguntas)."""
+    f0 = VOCES[quien]
+    partes = silabas(texto)
+    pausas = sum(x for k, x in partes if k == 'p')
+    n_sil = max(1, sum(1 for k, _ in partes if k == 's'))
+    d_sil = max(0.07, (dur * 0.92 - pausas) / n_sil)
+    pregunta = '?' in texto
+    exclamacion = '!' in texto
+    trozos = []
+    k = 0
+    for tipo, valor in partes:
+        if tipo == 'p':
+            trozos.append(np.zeros(int(valor * SR)))
+            continue
+        n = int(d_sil * SR)
+        t = np.arange(n) / SR
+        avance = k / n_sil
+        melodia = 1.0 + 0.12 * np.sin(np.pi * avance) - 0.1 * avance + (0.18 * avance ** 3 if pregunta else 0)
+        melodia *= 1.08 if exclamacion else 1.0
+        f = f0 * melodia * (1 + 0.02 * RNG.normal()) * (1 + 0.015 * np.sin(2 * np.pi * 5.2 * t))
+        fase = 2 * np.pi * np.cumsum(f) / SR
+        fuente = sum(np.sin(fase * h) / h ** 1.1 for h in range(1, 28))
+        if quien == 'gema':
+            # Susurro: ruido filtrado por los mismos formantes, con un hilo de voz cantada
+            fuente = RNG.normal(0, 1, n) * 1.4 + 0.25 * fuente
+        f1, f2 = FORMANTES[valor]
+        filtro = lambda fr, f1=f1, f2=f2: (paso_banda(f1, 0.22)(fr) + 0.7 * paso_banda(f2, 0.18)(fr) +
+                                            0.25 * paso_banda(2900, 0.2)(fr)) * paso_alto(90)(fr)
+        silaba = filtrar(fuente, SR, filtro) * envolvente(n, SR, 0.018, d_sil * 0.45)
+        trozos.append(silaba * (0.85 + 0.3 * RNG.random()))
+        k += 1
+    s = np.concatenate(trozos)
+    n_total = int(dur * SR)
+    s = np.pad(s, (0, max(0, n_total - len(s))))[:n_total]
+    if quien == 'gema':
+        # Coro: la misma voz un poco antes, un poco después y más grave
+        coro = s.copy()
+        for retraso, g in ((0.017, 0.55), (0.031, 0.45), (0.046, 0.35)):
+            d = int(retraso * SR)
+            coro[d:] += s[:-d] * g
+        s = coro
+    if dentro:
+        # Mateo atrapado en el Guardián: suena lejano, con eco de piedra
+        s = filtrar(s, SR, paso_bajo(2200))
+        eco = s.copy()
+        for retraso, g in ((0.11, 0.5), (0.23, 0.32), (0.37, 0.2)):
+            d = int(retraso * SR)
+            eco[d:] += s[:-d] * g
+        s = eco
+    return normalizar(s, 0.8)
+
+
+def guardian_rugido():
+    dur = 1.8
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    grave = sum(np.sin(2 * np.pi * np.cumsum(f * (1 - 0.25 * t / dur) * (1 + 0.04 * np.sin(2 * np.pi * 7 * t))) / SR) / i
+                for i, f in enumerate((55, 82, 110), start=1))
+    roca = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(500)) * 0.7
+    return normalizar((grave + roca) * envolvente(n, SR, 0.25, 1.0))
+
+
+def guardian_sismico():
+    dur = 1.6
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    golpe = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(220)) * np.exp(-t * 3.5)
+    grave = np.sin(2 * np.pi * np.cumsum(45 * np.exp(-t * 0.8) + 20) / SR) * np.exp(-t * 2)
+    return normalizar(golpe + grave)
+
+
+def guardian_barrido():
+    dur = 0.9
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    # Barrido: el roce pasa de grave a agudo (dos bandas que se cruzan)
+    ruido = RNG.normal(0, 1, n)
+    s = (filtrar(ruido, SR, paso_banda(350, 0.6)) * (1 - t / dur) + filtrar(ruido, SR, paso_banda(1200, 0.6)) * (t / dur))
+    s *= np.sin(np.pi * t / dur) ** 1.5
+    return normalizar(s)
+
+
+def guardian_rayo():
+    dur = 2.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    zumbido = sum(np.sin(2 * np.pi * f * t * (1 + 0.6 * t / dur)) for f in (220, 330, 440)) * (t / dur)
+    chispa = filtrar(RNG.normal(0, 1, n), SR, paso_banda(4000, 0.5)) * (t > 1.5) * 0.8
+    return normalizar((zumbido + chispa) * envolvente(n, SR, 0.1, 1.6, forma='lineal'))
+
+
+def guardian_aviso():
+    """El zumbido grave que acompaña el círculo dorado del golpe sísmico."""
+    dur = 1.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    s = np.sin(2 * np.pi * np.cumsum(70 + 60 * t) / SR) * (0.6 + 0.4 * np.sin(2 * np.pi * 8 * t))
+    return normalizar(s * envolvente(n, SR, 0.05, 0.9, forma='lineal'), 0.75)
+
+
+def roca_cae():
+    dur = 0.8
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    s = filtrar(RNG.normal(0, 1, n), SR, paso_bajo(900)) * np.exp(-t * 7)
+    s += np.sin(2 * np.pi * 70 * t) * np.exp(-t * 6) * 0.8
+    return normalizar(s)
+
+
+def pilar_enciende():
+    return campana((659.25, 987.77, 1318.5), 1.6, 0.06, 1.0)
+
+
+def nucleo_latido():
+    """Bucle del latido del núcleo (el juego lo acelera en cada fase cambiando la velocidad)."""
+    n = int(SR_BUCLE * 1.2)
+    t = np.arange(n) / SR_BUCLE
+    s = np.zeros(n)
+    for inicio in (0.0, 0.28):
+        tt = np.maximum(t - inicio, 0)
+        s += np.sin(2 * np.pi * 52 * tt) * np.exp(-tt * 14) * (t >= inicio)
+    return normalizar(s, 0.8)
+
+
+def derrumbe():
+    """Bucle del escape: rumor de piedra y crujidos."""
+    n = SR_BUCLE * 8
+    rumor = normalizar(ruido_espectral(n, SR_BUCLE, lambda f: paso_bajo(180)(f) * paso_alto(25)(f)), 0.6)
+    crujidos = np.zeros(n)
+    for _ in range(30):
+        largo = int(SR_BUCLE * RNG.uniform(0.03, 0.15))
+        g = filtrar(RNG.normal(0, 1, largo), SR_BUCLE, paso_banda(RNG.uniform(200, 1200), 0.7)) * np.exp(-np.arange(largo) / (largo / 3))
+        pegar_circular(crujidos, g * RNG.uniform(0.2, 0.6), int(RNG.uniform(0, n)))
+    return normalizar(rumor + crujidos, 0.75)
+
+
+def victoria():
+    """Fanfarria cálida de la pantalla de victoria."""
+    s = campana((392.0, 523.25, 659.25, 783.99, 1046.5, 1318.5), 4.0, 0.16, 1.8)
+    n = len(s)
+    t = np.arange(n) / SR
+    pad = sum(np.sin(2 * np.pi * f * t) for f in (261.63, 329.63, 392.0, 523.25)) * envolvente(n, SR, 0.8, 2.4) * 0.35
+    return normalizar(s + pad)
+
+
+BUCLES_DIA5 = {'nucleo_latido': nucleo_latido, 'derrumbe': derrumbe}
+EFECTOS_DIA5 = {
+    'guardian_rugido': guardian_rugido, 'guardian_sismico': guardian_sismico, 'guardian_barrido': guardian_barrido,
+    'guardian_rayo': guardian_rayo, 'guardian_aviso': guardian_aviso, 'roca_cae': roca_cae,
+    'pilar_enciende': pilar_enciende, 'victoria': victoria,
+}
+VOCES_DIA5 = {f'voz/{c}': (lambda c=c: murmullo(LINEAS[c][1], LINEAS[c][2], LINEAS[c][0], LINEAS[c][3])) for c in LINEAS}
+
 
 def buscar_ffmpeg():
     ruta = shutil.which('ffmpeg')
@@ -486,7 +691,8 @@ def main():
     if not ffmpeg:
         print('[audio] AVISO: ffmpeg no está instalado; los efectos quedan en .wav', file=sys.stderr)
     # El orden importa: primero lo de los días 1 a 3 (los mismos sonidos de siempre), después lo nuevo
-    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4)):
+    os.makedirs(os.path.join(SALIDA, 'voz'), exist_ok=True)
+    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, {**EFECTOS_DIA5, **VOCES_DIA5})):
         generar(bucles, efectos, ffmpeg)
 
 

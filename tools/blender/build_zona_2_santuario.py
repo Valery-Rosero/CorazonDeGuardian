@@ -293,7 +293,7 @@ def mural(k):
     temple_builder.glifo_sol(k, colocar(pm(*VENTANA_RAYO)) @ colocar(rot=(0, 0, 90)), 0.18, 'dorado_solar')
 
 
-def antesala(k, m, rnd):
+def antesala(k, m, rnd):  # noqa: C901
     x, y0, y1, t = ANTE['x'], ANTE['y0'], ANTE['y1'], ANTE['techo']
     # Suelo inclinado (colisionador girado) y escalones visuales suaves
     largo = y0 - y1
@@ -317,14 +317,20 @@ def antesala(k, m, rnd):
             k.agregar(caja_biselada(0.06, 1.6, 0.18, 0.02), 'dorado_solar' if i < 3 else 'oro_brillante', 'escenario',
                       colocar(L(sx * (x - 0.03), yy, z_ante(yy) + 2.2)), material=MAT['oro'] if i >= 3 else 0)
     caja(k, -x - GROSOR, y0 - GROSOR, x + GROSOR, y1, t - 0.5, t + 0.5, 'piedra_oscura', 'ante_techo')
-    # Puerta tallada de la arena (cerrada hasta el día 5) con grietas naranjas
-    caja(k, -x - GROSOR, y1, x + GROSOR, y1 - GROSOR, -ANTE['bajada'], t, 'piedra_sombra', 'puerta_arena')
-    temple_builder.glifo_sol(k, colocar(L(0, y1 + 0.02, -ANTE['bajada'] + 2.0)), 0.7, 'dorado_solar')
+    # Puerta tallada de la arena con grietas naranjas: se hunde con la Manipulación (detrás, la cámara del sol)
+    alto_puerta = t - 0.5 + ANTE['bajada']
+    pu = Constructor(PALETA, semilla=62, variacion=0.03)
+    pu.agregar(caja_biselada(2 * x, GROSOR * 0.8, alto_puerta, 0.08), 'piedra_sombra', 'escenario')
+    temple_builder.glifo_sol(pu, colocar((0, -GROSOR * 0.4 - 0.02, -alto_puerta / 2 + 2.0)), 0.7, 'dorado_solar')
     for (a, b) in (((-0.4, 0.4), (-0.1, 1.2)), ((0.3, 0.2), (0.6, 1.4)), ((-1.2, 2.6), (-0.6, 3.4))):
-        mm, largo2 = segmento(Vector(L(a[0], y1 + 0.03, -ANTE['bajada'] + a[1])), Vector(L(b[0], y1 + 0.03, -ANTE['bajada'] + b[1])))
-        k.agregar(prisma(4, 0.04, largo2, tapas=False), 'flor_centro', 'escenario', mm, material=MAT['oro'])
-    caja_invisible('trg_box_puerta_arena', L(-x, y1 + 2.2, -ANTE['bajada']), L(x, y1, -ANTE['bajada'] + 3),
-                   props={'evento': 'puerta_arena'})
+        mm, largo2 = segmento(Vector((a[0], -GROSOR * 0.4 - 0.03, -alto_puerta / 2 + a[1])),
+                              Vector((b[0], -GROSOR * 0.4 - 0.03, -alto_puerta / 2 + b[1])))
+        pu.agregar(prisma(4, 0.04, largo2, tapas=False), 'flor_centro', 'escenario', mm, material=1)
+    # El objeto mira hacia la antesala (-Y local hacia +Y del nivel): se gira 180°
+    obj = objeto_suelto('dyn_puerta_arena', pu, [m['toon'], m['oro']], L(0, y1 - GROSOR * 0.4, -ANTE['bajada'] + alto_puerta / 2),
+                        {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa',
+                         'etiqueta': 'Abrir la puerta de la arena', 'mover': [0.0, 0.0, -alto_puerta - 0.2], 'duracion': 3.0})
+    obj.rotation_euler = (0, 0, math.pi)
     for i, yy in enumerate((-61, -70)):
         vacio(f'luz_antesala_{i + 1}', L(0, yy, z_ante(yy) + 2.6),
               props={'color': PALETA['fuego'] if i < 2 else PALETA['flor_centro'], 'intensidad': 3.0 + i * 1.5,
@@ -361,6 +367,8 @@ def triggers_y_puntos():
                                  ('antesala', (-2.5, -56.5, -4), (2.5, -74, 5), 'interior')):
         caja_invisible(f'trg_box_cam_s_{nombre}', L(*a), L(*b), props={'perfil_camara': perfil})
     caja_invisible('trg_box_sala_espejos', L(-10, -37, -1), L(10, -56, 6), props={'evento': 'sala_espejos'})
+    # En el escape, al llegar a la entrada del vestíbulo se vuelve a la selva (el juego lo ignora antes del escape)
+    caja_invisible('trg_box_salida_santuario', L(-2, 0.5, -1), L(2, -1.8, 4), props={'evento': 'salida'})
     vacio('spawn_santuario', L(0, -1.5, 0))
     vacio('spawn_debug_4', L(0, -14, 0))
     vacio('spawn_debug_5', L(0, -39, 0))
