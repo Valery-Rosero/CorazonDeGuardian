@@ -5,14 +5,35 @@
  * en el tiempo. Esta clase solo lleva la cuenta del tiempo; CinematicPlayer mueve la cámara.
  *
  * @typedef {{x: number, y: number, z: number}} V3
- * @typedef {{duracion: number, camara: V3[], mira: V3[], fov?: number, holandes?: number, sacudida?: number,
- *            escalaTiempo?: number}} Plano  camara/mira: puntos del recorrido (CatmullRom si hay más de 2)
+ * @typedef {'suave' | 'lineal' | 'entra' | 'sale'} Curva
+ * @typedef {{duracion: number, camara: V3[], mira: V3[], fov?: number, lente?: number | [number, number],
+ *            curva?: Curva, retener?: number, holandes?: number, sacudida?: number, escalaTiempo?: number}} Plano
+ *   camara/mira: puntos del recorrido (CatmullRom si hay más de 2). `lente`: milímetros (equivalente de
+ *   35 mm, campo horizontal); con dos valores, zoom de uno a otro. `curva`: cómo avanza el movimiento.
+ *   `retener`: segundos que el plano se sostiene quieto antes de empezar a moverse.
  * @typedef {{t: number, accion: string, datos?: any}} SucesoCine
  * @typedef {{nombre: string, planos: Plano[], sucesos: SucesoCine[], mezclaFinal?: number}} Cinematica
  */
 
 /** Suavizado de entrada y salida. @param {number} u */
 export const suave = (u) => u * u * (3 - 2 * u);
+
+/** Curvas de movimiento de cámara. @type {Record<Curva, (u: number) => number>} */
+export const CURVAS = {
+  suave,
+  lineal: (u) => u,
+  entra: (u) => u * u,                     // arranca despacio (grúas que despegan)
+  sale: (u) => 1 - (1 - u) * (1 - u),      // frena al llegar (acercamientos)
+};
+
+/**
+ * Campo de visión vertical de una lente (mm, equivalente de 35 mm) medido en horizontal: así el
+ * encuadre es el mismo en cualquier proporción de pantalla. @param {number} mm @param {number} aspecto
+ */
+export function fovDeLente(mm, aspecto) {
+  const h = 2 * Math.atan(18 / mm);
+  return (2 * Math.atan(Math.tan(h / 2) / aspecto) * 180) / Math.PI;
+}
 
 export class LineaTiempo {
   /** @param {Cinematica} cine */
@@ -32,8 +53,9 @@ export class LineaTiempo {
     for (let i = 0; i < this.cine.planos.length; i++) {
       const p = this.cine.planos[i];
       if (this.t < acum + p.duracion || i === this.cine.planos.length - 1) {
-        const u = Math.min(1, Math.max(0, (this.t - acum) / p.duracion));
-        return { indice: i, plano: p, u: suave(u), crudo: u };
+        const r = Math.min(p.retener ?? 0, p.duracion * 0.9);
+        const u = Math.min(1, Math.max(0, (this.t - acum - r) / (p.duracion - r)));
+        return { indice: i, plano: p, u: CURVAS[p.curva ?? 'suave'](u), crudo: u };
       }
       acum += p.duracion;
     }

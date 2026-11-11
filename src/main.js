@@ -23,6 +23,7 @@ import { ajustarAlRedimensionar, crearRenderer } from './core/renderer.js';
 import { ReproductorCine } from './cinematics/cinematic_player.js';
 import { GestorEnemigos } from './enemies/enemy_manager.js';
 import { ActoFinal } from './game/final_act.js';
+import { Historia } from './game/story.js';
 import { MateoNPC } from './player/mateo_npc.js';
 import { Dialogos } from './ui/dialogue_player.js';
 import { InterfazFinal } from './ui/endgame_ui.js';
@@ -175,6 +176,17 @@ async function iniciar() {
   const decir = (texto, emocion) => dialogos.decirLibre(texto, emocion);
   const ui = new InterfazFinal();
   const cine = new ReproductorCine(camara, ui);
+  /** @type {number | undefined} */
+  let nieblaSelva;
+  const historia = new Historia({
+    cine, jugador, animador, modeloVictoria, dialogos, ui, audio, nivel, rig,
+    alTerminarIntro: () => hud.mensajeTutorial(TUTORIAL.inicio, 7),
+    niebla: (k) => {
+      const f = /** @type {THREE.FogExp2} */ (escena.fog);
+      nieblaSelva ??= f.density;
+      f.density = nieblaSelva * k;
+    },
+  });
 
   // ---------------- Puente, checkpoints, portales
   const puente = new Puente(nivel.dinamicos.filter((d) => d.datos.cae_al_pisar), PUENTE, {
@@ -223,7 +235,8 @@ async function iniciar() {
     teletransportar(destino);
     audio.efecto('portal');
     rig.sacudida.agregar(0.3);
-    hud.nota('Portal activado');
+    if (destino === 'portal_cornisa') historia.llegadaPuente();
+    else hud.nota('Portal activado');
   });
 
   // ---------------- Poderes del brazalete (sección 5.5)
@@ -304,10 +317,18 @@ async function iniciar() {
   /** @param {import('./interaction/interactables.js').Interactuable} o */
   const tomarBrazalete = (o) => {
     interactuables.desactivar(o);
-    secuenciaBrazalete = { t: 0, desde: o.objeto.position.clone(), objeto: o.objeto };
-    animador.gesto('mirar_brazalete');
-    jugador.mirarHacia(Math.atan2(o.pos.x - jugador.posicion.x, o.pos.z - jugador.posicion.z), 0.8);
+    jugador.mirarHacia(Math.atan2(o.pos.x - jugador.posicion.x, o.pos.z - jugador.posicion.z), 7);
     jugador.bloqueado = true;
+    const altar = o.pos.clone();
+    altar.y = jugador.posicion.y;
+    historia.brazalete(altar, () => {
+      secuenciaBrazalete = { t: 0, desde: o.objeto.position.clone(), objeto: o.objeto };
+    }, () => {
+      jugador.bloqueado = false;
+      cara.ponerEmocion('neutral');
+      hud.mensajeTutorial(TUTORIAL.pulso, 8);
+      tutorial.pulso = true;
+    });
   };
   /** @param {number} dt */
   const avanzarBrazalete = (dt) => {
@@ -327,16 +348,9 @@ async function iniciar() {
       rafagaEn(rafagas, posMano, 70, PALETA.oro_brillante, 5);
       audio.efecto('brazalete');
       cara.ponerEmocion('ternura');
-      hud.nota('El brazalete despierta: Pulso solar y Manipulación', 4);
       bus.emitir(EVENTOS.PODER_DESBLOQUEADO, ['pulso', 'manipulacion']);
     }
-    if (s.t > 2.2) {
-      secuenciaBrazalete = null;
-      jugador.bloqueado = false;
-      cara.ponerEmocion('neutral');
-      hud.mensajeTutorial(TUTORIAL.pulso, 8);
-      tutorial.pulso = true;
-    }
+    if (s.t > 2.2) secuenciaBrazalete = null;
   };
 
   /** @param {import('./interaction/interactables.js').Interactuable} o */
@@ -350,11 +364,14 @@ async function iniciar() {
     audio.efecto('pagina');
     bus.emitir(EVENTOS.PAGINA_ENCONTRADA, pagina.n);
     panelDiario.abrir(pagina);
+    paginaAbierta = pagina.n;
     bucle.pausado = true;
   };
+  let paginaAbierta = 0;
   panelDiario.alCerrar = () => {
     entrada.pulsadas.clear(); // la misma E que cierra el diario no debe volver a interactuar
     if (!muerta && rig.controles.isLocked) bucle.pausado = false;
+    historia.paginaLeida(paginaAbierta);
     if (!tutorial.esquiva) {
       tutorial.esquiva = true;
       hud.mensajeTutorial(TUTORIAL.esquiva, 5);
@@ -455,6 +472,7 @@ async function iniciar() {
   const santuario = new Santuario({
     raiz: nivelSantuario.raiz, escena, interactuables, enemigos, losas, dinamicos: nivel.dinamicos,
     luzCristal: luces.porDato('cristal'),
+    cinematica: (puerta, cristal, acciones) => historia.puertaEspejos(puerta, cristal, acciones),
     avisos: {
       nota: (texto, seg) => hud.nota(texto, seg),
       tutorial: (texto, seg) => hud.mensajeTutorial(texto, seg),
@@ -717,7 +735,10 @@ async function iniciar() {
     },
     camara: (dt) => {
       if (cine.activo) cine.actualizar(dt, entrada.mantiene('saltar'));
-      else rig.actualizar(dt, jugador.posicion, jugador);
+      else {
+        rig.actualizar(dt, jugador.posicion, jugador);
+        cine.mezclar(dt);
+      }
       ambiente.seguir(jugador.posicion);
       oclusion.actualizar(dt, camara.position, pecho);
     },
@@ -789,12 +810,13 @@ async function iniciar() {
 
   // ---------------- Inicio, pausa y derrota
   // Depuración: acceso desde la consola (y desde los scripts de medición y de revisión de cinemáticas)
-  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, jugador, teletransportar, mateo, rig, nivel, bucle } });
+  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, jugador, teletransportar, mateo, rig, nivel, bucle } });
   bucle.pausado = !AUTOMATICO;
   bucle.iniciar();
   if (AUTOMATICO) {
     pantallas.ocultarInicio();
     document.getElementById('pantalla-carga').classList.add('oculto');
+    if (params.has('intro')) setTimeout(() => historia.introduccion(), 300);
     if (params.has('hablar')) setTimeout(() => decir('Te dije que llegaría antes que tú.', 'ternura'), 400);
     // &final=derrota o &final=amanecer salta al final del combate o al amanecer (para revisar las cinemáticas)
     if (params.get('final') === 'derrota') {
@@ -805,6 +827,7 @@ async function iniciar() {
         cine.adelanto = 0;
         actoFinal.trigger('despertar');
         cine.saltar();
+        dialogos.callar();
         cine.adelanto = adelanto;
         actoFinal._derrota();
       }, 300);
@@ -846,7 +869,7 @@ async function iniciar() {
       audio.iniciar();
       pantallas.ocultarInicio();
       rig.controles.lock();
-      hud.mensajeTutorial(TUTORIAL.inicio, 7);
+      historia.introduccion();
     },
     opciones: (o) => {
       oyente.setMasterVolume(o.volumen);

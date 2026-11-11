@@ -1,14 +1,16 @@
 // @ts-check
 import * as THREE from 'three';
-import { LineaTiempo } from './timeline.js';
+import { fovDeLente, LineaTiempo, suave } from './timeline.js';
 
 const _p = new THREE.Vector3();
 const _m = new THREE.Vector3();
+/** Temporal propio de punto(): no puede ser el mismo vector que la salida. */
+const _fin = new THREE.Vector3();
 
 /** Punto en un recorrido: lineal con 2 puntos, CatmullRom con más (sección 9.1). */
 function punto(curvas, puntos, u, out) {
   if (puntos.length === 1) return out.set(puntos[0].x, puntos[0].y, puntos[0].z);
-  if (puntos.length === 2) return out.set(puntos[0].x, puntos[0].y, puntos[0].z).lerp(_m.set(puntos[1].x, puntos[1].y, puntos[1].z), u);
+  if (puntos.length === 2) return out.set(puntos[0].x, puntos[0].y, puntos[0].z).lerp(_fin.set(puntos[1].x, puntos[1].y, puntos[1].z), u);
   let c = curvas.get(puntos);
   if (!c) {
     c = new THREE.CatmullRomCurve3(puntos.map((q) => new THREE.Vector3(q.x, q.y, q.z)));
@@ -43,6 +45,13 @@ export class ReproductorCine {
     this.reloj = 0;
     /** Depuración (?auto&tcine=N): la próxima cinemática empieza N segundos adelantada. */
     this.adelanto = 0;
+    /** Mezcla con la cámara de juego al terminar (sección 9.4). */
+    this.salida = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), fov: 70, t: 0, d: 0 };
+  }
+
+  /** ¿Se está mezclando la última pose de la cinemática con la cámara de juego? */
+  get mezclando() {
+    return this.salida.t < this.salida.d;
   }
 
   get activo() {
@@ -81,6 +90,12 @@ export class ReproductorCine {
   }
 
   _terminar() {
+    const mezcla = this.linea?.cine.mezclaFinal ?? 1.2;
+    this.salida.pos.copy(this.camara.position);
+    this.salida.quat.copy(this.camara.quaternion);
+    this.salida.fov = this.camara.fov;
+    this.salida.t = 0;
+    this.salida.d = mezcla;
     this.linea = null;
     this.camara.fov = this.fovBase;
     this.camara.updateProjectionMatrix();
@@ -119,10 +134,35 @@ export class ReproductorCine {
     this.camara.up.set(0, 1, 0);
     this.camara.lookAt(_m);
     if (plano.holandes) this.camara.rotateZ(THREE.MathUtils.degToRad(plano.holandes));
-    const fov = plano.fov ?? this.fovBase;
+    let fov = plano.fov ?? this.fovBase;
+    if (plano.lente !== undefined) {
+      const [a, b] = Array.isArray(plano.lente) ? plano.lente : [plano.lente, plano.lente];
+      fov = fovDeLente(a + (b - a) * u, this.camara.aspect);
+    }
+    if (Math.abs(this.camara.fov - fov) > 0.01) {
+      this.camara.fov = fov;
+      this.camara.updateProjectionMatrix();
+    }
+  }
+
+  /**
+   * Después de que la cámara de juego se colocó: la acerca a la última pose de la cinemática
+   * y la suelta poco a poco, en lugar de saltar. @param {number} dt
+   */
+  mezclar(dt) {
+    const s = this.salida;
+    if (s.t >= s.d) return;
+    s.t += dt;
+    const w = suave(Math.min(1, s.t / s.d));
+    _q.copy(s.quat).slerp(this.camara.quaternion, w);
+    this.camara.position.lerpVectors(s.pos, this.camara.position, w);
+    this.camara.quaternion.copy(_q);
+    const fov = s.fov + (this.camara.fov - s.fov) * w;
     if (Math.abs(this.camara.fov - fov) > 0.01) {
       this.camara.fov = fov;
       this.camara.updateProjectionMatrix();
     }
   }
 }
+
+const _q = new THREE.Quaternion();

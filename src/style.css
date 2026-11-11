@@ -187,6 +187,10 @@ body.en-cine #cartografa, body.en-cine #poderes, body.en-cine #vida { opacity: 0
 #rotulo { position: fixed; left: 0; right: 0; top: 30%; text-align: center; z-index: 16; pointer-events: none;
   font: normal clamp(34px, 6vw, 76px) Georgia, serif; letter-spacing: 0.24em; color: #ffd45e;
   text-shadow: 0 0 30px rgba(255, 170, 50, 0.7), 0 3px 6px #000; animation: rotulo 3.2s ease-in-out forwards; }
+#titulo-intro { position: fixed; left: 0; right: 0; top: 24%; text-align: center; z-index: 16; pointer-events: none;
+  font: normal clamp(30px, 5vw, 64px) Georgia, serif; letter-spacing: 0.08em; color: #ffd45e;
+  text-shadow: 0 0 40px rgba(255, 170, 50, 0.65), 0 3px 8px rgba(0, 0, 0, 0.8); animation: titulo-intro 4.4s ease-in-out forwards; }
+@keyframes titulo-intro { 0% { opacity: 0; transform: translateY(10px); } 25% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes rotulo { 0% { opacity: 0; letter-spacing: 0.5em; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.24em; } }
 #victoria { background: radial-gradient(circle at 50% 35%, rgba(255, 200, 140, 0.45), rgba(30, 14, 10, 0.92)); cursor: default; }
 .titulo-victoria { font-size: clamp(54px, 10vw, 128px); letter-spacing: 0.18em; }

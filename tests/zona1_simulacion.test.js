@@ -17,13 +17,19 @@ const reiniciar = () => {
   sim.teclas();
 };
 
-test('Victoria aparece en el claro y queda de pie sobre el suelo', () => {
+test('Victoria aparece de pie sobre la roca del mirador y baja al sendero caminando', () => {
   reiniciar();
   sim.ir('jugador');
   sim.correr(1.5);
-  assert.ok(sim.jugador.enSuelo, 'debería estar en el suelo');
-  assert.ok(Math.abs(sim.jugador.posicion.y) < 0.15, `altura ${sim.jugador.posicion.y}`);
+  assert.ok(sim.jugador.enSuelo, 'debería estar apoyada');
+  assert.ok(Math.abs(sim.jugador.posicion.y - 1.16) < 0.15, `sobre la roca (altura ${sim.jugador.posicion.y.toFixed(2)})`);
   assert.equal(sim.triggers.zona, 'La selva olvidada — Claro de entrada');
+  sim.mirar(0);
+  sim.teclas('adelante');
+  sim.correr(1.5);
+  sim.teclas();
+  sim.correr(0.8);
+  assert.ok(Math.abs(sim.jugador.posicion.y) < 0.15, `en el sendero (altura ${sim.jugador.posicion.y.toFixed(2)})`);
 });
 
 test('camina hacia delante a la velocidad configurada sin atravesar el suelo', () => {

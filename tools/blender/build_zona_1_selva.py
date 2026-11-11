@@ -45,6 +45,8 @@ SENDERO = [(0, 18), (0, 4), (-5, -10), (-11, -24), (-9, -36), (0, -47), (6, -57)
            (5.5, -82.4), (2.6, -83.6), (0, -86)]
 POZA = (0, -76, 6.2)          # centro x, y y radio de la poza
 ALTAR = (0, -7, 0)
+# Roca del mirador (sección 9.4, intro): Victoria empieza encima, con el mapa abierto
+MIRADOR = (0.0, 15.4, 1.2)    # x, y y altura de la cara de arriba
 CUEVA_Y = (-94, -84)          # interior de la cueva
 CORNISA = ((-6, -107), (6, -100), 12.0)
 PUENTE = (-107, -127, 12.0)   # y_inicio, y_fin, z del tablero
@@ -148,6 +150,10 @@ def claro(k, m, rnd):
         if dist_a_polilinea((x, y), SENDERO) < 4:
             continue
         rock_builder.canto(k, (x, y, 0), rnd.uniform(0.6, 1.5), rnd)
+    # Roca del mirador, con su propio azar para no mover nada de lo que viene después
+    mx, my, mh = MIRADOR
+    rock_builder.piedra_poza(k, (mx, my, 0), 2.5, mh, random.Random(915))
+    caja_invisible('col_box_roca_mirador', (mx - 1.05, my - 1.05, 0), (mx + 1.05, my + 1.05, mh * 0.97))
 
 
 def _lejos_de_todo(x, y, minimo_sendero):
@@ -490,7 +496,7 @@ def triggers_y_puntos():
     caja_invisible('col_box_limite_o', (-26, -52, -1), (-24, 20, 10))
     caja_invisible('col_box_limite_e', (24, -52, -1), (26, 20, 10))
 
-    vacio('spawn_jugador', (0, 14, 0))
+    vacio('spawn_jugador', (MIRADOR[0], MIRADOR[1] - 0.2, MIRADOR[2]))
     vacio('spawn_portal_cornisa', (0.0, -103.2, CORNISA[2]))
     vacio('spawn_portal_cascada', (0.0, -87.6, 0), rot_z=180)
     vacio('spawn_debug_1', (0, 10, 0))

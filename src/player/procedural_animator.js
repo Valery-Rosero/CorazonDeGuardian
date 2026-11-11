@@ -80,6 +80,16 @@ const GESTOS = {
     pierna_sup_izq: [-1.45, 0, 0], pierna_inf_izq: [2.1, 0, 0], pierna_sup_der: [0.15, 0, 0], pierna_inf_der: [1.75, 0, 0],
     bota_der: [-0.6, 0, 0], torso: [0.4, 0, 0], cabeza: [0.32, 0, 0], brazo_sup_izq: [-0.35, 0, 0.15], brazo_sup_der: [-0.35, 0, -0.15],
     brazo_inf_izq: [-0.5, 0, 0], brazo_inf_der: [-0.5, 0, 0] } },
+  // Victoria sostiene el mapa abierto delante del pecho (intro) y lo mira
+  leer_mapa: { duracion: 15, huesos: {
+    brazo_sup_der: [-0.62, 0, 0.32], brazo_inf_der: [-1.15, 0, 0], mano_der: [0.15, 0, 0],
+    brazo_sup_izq: [-0.62, 0, -0.32], brazo_inf_izq: [-1.15, 0, 0], mano_izq: [0.15, 0, 0],
+    cabeza: [0.32, 0, 0], poncho_delante: [-0.35, 0, 0] } },
+  // De rodillas, pero con la cara levantada hacia Victoria (diálogo de la derrota)
+  arrodillado_mira: { duracion: 600, huesos: {
+    pierna_sup_izq: [-1.45, 0, 0], pierna_inf_izq: [2.1, 0, 0], pierna_sup_der: [0.15, 0, 0], pierna_inf_der: [1.75, 0, 0],
+    bota_der: [-0.6, 0, 0], torso: [0.22, 0, 0], cabeza: [-0.3, 0, 0], brazo_sup_izq: [-0.35, 0, 0.15], brazo_sup_der: [-0.35, 0, -0.15],
+    brazo_inf_izq: [-0.5, 0, 0], brazo_inf_der: [-0.5, 0, 0] } },
   ajustar_gafas: { duracion: 1.6, huesos: {
     brazo_sup_der: [-2.0, 0, 0.55], brazo_inf_der: [-1.7, 0, 0], mano_der: [0.5, 0, 0], cabeza: [-0.12, 0, 0] } },
   mirar_brazalete: { duracion: 2.4, huesos: {

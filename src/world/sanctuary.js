@@ -18,6 +18,8 @@ export class Santuario {
    *   losas: import('../interaction/slabs.js').Losas,
    *   dinamicos: import('./level_loader.js').Dinamico[],
    *   luzCristal: {luz: THREE.PointLight} | null,
+   *   cinematica?: (puerta: THREE.Vector3, cristal: THREE.Vector3,
+   *     acciones: {runas: () => void, abrir: () => void, alTerminar: () => void}) => void,
    *   avisos: {
    *     nota: (texto: string, segundos?: number) => void,
    *     tutorial: (texto: string, segundos?: number) => void,
@@ -86,24 +88,46 @@ export class Santuario {
   }
 
   _resuelto() {
+    const c = this.acertijo.cristal;
+    const cristal = c ? c.getWorldPosition(new THREE.Vector3()) : null;
+    // Con cinemática (guion gráfico): ella decide cuándo se encienden las runas, cuándo se abre la puerta
+    // y, al terminar, aparecen los espectros. Sin ella (pruebas), el orden de siempre.
+    if (this.d.cinematica && this.puerta && cristal) {
+      const pie = this.puerta.malla.getWorldPosition(new THREE.Vector3());
+      pie.y = cristal.y - 3;
+      this.d.cinematica(pie, cristal, {
+        runas: () => this._encenderCristal(),
+        abrir: () => this._abrirPuerta(),
+        alTerminar: () => this.d.enemigos.aparecer('espejos_resueltos'),
+      });
+      return;
+    }
+    this._encenderCristal();
+    setTimeout(() => {
+      this._abrirPuerta();
+      this.d.enemigos.aparecer('espejos_resueltos');
+    }, 900);
+  }
+
+  _encenderCristal() {
     const a = this.d.avisos;
     a.sonido('acertijo_resuelto');
-    a.nota('El rayo llega al cristal solar', 4);
     a.sacudida(0.45);
     const c = this.acertijo.cristal;
     if (c) a.rafaga(c.getWorldPosition(this._p), 70, PALETA.oro_brillante, 5);
     if (this.d.luzCristal) this.d.luzCristal.luz.intensity = 6;
-    setTimeout(() => {
-      if (this.puerta && this.d.losas.activar(this.puerta.malla)) {
-        a.sonido('losa_mover', this.puerta.malla.position, 1);
-        a.sacudida(0.5);
-        for (let i = 0; i < 4; i++) {
-          this._p.copy(this.puerta.malla.position).add(new THREE.Vector3((i - 1.5) * 0.9, -1, 0.6));
-          a.rafaga(this._p, 18, PALETA.piedra_luz, 2.2);
-        }
+  }
+
+  _abrirPuerta() {
+    const a = this.d.avisos;
+    if (this.puerta && this.d.losas.activar(this.puerta.malla)) {
+      a.sonido('losa_mover', this.puerta.malla.position, 1);
+      a.sacudida(0.5);
+      for (let i = 0; i < 4; i++) {
+        this._p.copy(this.puerta.malla.position).add(new THREE.Vector3((i - 1.5) * 0.9, -1, 0.6));
+        a.rafaga(this._p, 18, PALETA.piedra_luz, 2.2);
       }
-      this.d.enemigos.aparecer('espejos_resueltos');
-    }, 900);
+    }
   }
 
   /** @param {number} dt @param {number} t */

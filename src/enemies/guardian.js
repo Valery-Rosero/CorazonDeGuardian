@@ -182,6 +182,11 @@ export class ActorGuardian {
   }
 
   /** Cambia los colores de la fase: runas, grietas, núcleo y la silueta de Mateo. @param {number} fase */
+  /** Ritmo de las voces (Dialogos.voz): Mateo hace latir el núcleo y asomar su silueta; la gema, las runas. */
+  get voz() {
+    return this._voz ?? (this._voz = { mateo: 0, gema: 0 });
+  }
+
   ponerFase(fase) {
     this.fase = fase;
     const c = RUNAS[fase] ?? RUNAS[1];
@@ -216,8 +221,12 @@ export class ActorGuardian {
     }
     this.colocar();
     this.matNucleo.uniforms.uTiempo.value = this.reloj;
-    this.silueta.material.opacity += ((estado.nucleoAbierto ? MATEO[this.fase] : MATEO[this.fase] * 0.3) - this.silueta.material.opacity) * Math.min(1, dt * 3);
-    this.luz.intensity += ((estado.nucleoAbierto ? 8 : 1.5) - this.luz.intensity) * Math.min(1, dt * 4);
+    const v = this.voz;
+    this.matNucleo.uniforms.uBrillo.value = 1 + v.mateo * 1.6;
+    const silueta = (estado.nucleoAbierto ? MATEO[this.fase] : MATEO[this.fase] * 0.3) + v.mateo * 0.55;
+    this.silueta.material.opacity += (Math.min(1, silueta) - this.silueta.material.opacity) * Math.min(1, dt * (v.mateo > 0.05 ? 10 : 3));
+    this.luz.intensity += ((estado.nucleoAbierto ? 8 : 1.5) + v.mateo * 6 - this.luz.intensity) * Math.min(1, dt * 6);
+    this.runas.emissiveIntensity = 2.4 * (1 + v.gema * 1.4);
     this._animar(dt, estado, d);
   }
 

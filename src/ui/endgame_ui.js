@@ -59,6 +59,17 @@ export class InterfazFinal {
     setTimeout(() => r.classList.add('oculto'), 3300);
   }
 
+  /** Título del juego al final de la introducción (aparece y se desvanece). @param {string} texto */
+  titulo(texto) {
+    const r = $('titulo-intro');
+    r.textContent = texto;
+    r.classList.remove('oculto');
+    r.style.animation = 'none';
+    void r.offsetWidth;
+    r.style.animation = '';
+    setTimeout(() => r.classList.add('oculto'), 4600);
+  }
+
   /** @param {{tiempo: number, muertes: number, paginas: number, total: number}} e */
   victoria(e) {
     const m = Math.floor(e.tiempo / 60);

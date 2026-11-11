@@ -55,6 +55,7 @@ export const SONIDOS = Object.freeze({
   pilar_enciende: '/sounds/pilar_enciende.mp3',
   victoria: '/sounds/victoria.mp3',
   ...Object.fromEntries(Object.keys(LINEAS).map((c) => [`voz/${c}`, `/sounds/voz/${c}.mp3`])),
+  'voz/gem_susurro_puerta': '/sounds/voz/gem_susurro_puerta.mp3',
 });
 
 /** Volúmenes por categoría (se podrán cambiar en Opciones). */

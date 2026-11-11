@@ -5,7 +5,7 @@ Este guion reúne todo lo que se dice o se lee en el juego. Cada línea tiene un
 - **Sin grabación:** el juego funciona igual, con subtítulos y la boca siguiendo el texto.
 - **Con grabación:** basta con poner el archivo en `public/sounds/voz/` con el nombre indicado y sonará en lugar de la voz sintetizada.
 
-*Estado: el sistema de diálogos (`src/ui/dialogue_player.js`) ya lee estos códigos desde `src/config/dialogues.js`, reproduce las voces sintetizadas de `public/sounds/voz/` y mueve la boca y la expresión de quien habla. Las líneas *propuesta* todavía no están en el juego: esperan tu aprobación.*
+*Estado: el sistema de diálogos (`src/ui/dialogue_player.js`) ya lee estos códigos desde `src/config/dialogues.js`, reproduce las voces sintetizadas de `public/sounds/voz/` y mueve la boca y la expresión de quien habla. Las cuatro líneas que eran propuesta se aprobaron el 11/11 y ya están en el juego (brazalete, cascada, puente y voz tras la puerta).*
 
 La duración estimada es la que el juego le da a la línea para mover la boca. Una toma grabada puede durar un poco más o menos; el juego se ajusta a la duración real del audio.
 
@@ -25,15 +25,15 @@ La duración estimada es la que el juego le da a la línea para mover la boca. U
 
 | Código | Momento | Personaje | Línea | Emoción | Duración |
 |---|---|---|---|---|---|
-| `vic_brazalete_01` *(propuesta)* | El brazalete flota hacia su muñeca | Victoria | «Así que esto buscabas, papá.» | ternura | 2,4 s |
-| `vic_cascada_01` *(propuesta)* | Al llegar a la cascada, después de leer la página 2 | Victoria | «"Detrás del agua hay un camino". Como siempre, tenías razón.» | alegría | 5,2 s |
-| `vic_puente_01` *(propuesta)* | Plano general del puente | Victoria | «Te aguantó a ti… ojalá me aguante a mí.» | determinación | 3,7 s |
+| `vic_brazalete_01` | El brazalete flota hacia su muñeca | Victoria | «Así que esto buscabas, papá.» | ternura | 2,4 s |
+| `vic_cascada_01` | Al llegar a la cascada, después de leer la página 2 | Victoria | «"Detrás del agua hay un camino". Como siempre, tenías razón.» | alegría | 5,2 s |
+| `vic_puente_01` | Plano general del puente | Victoria | «Te aguantó a ti… ojalá me aguante a mí.» | determinación | 3,7 s |
 
 ## 2. Santuario
 
 | Código | Momento | Personaje | Línea | Emoción | Duración |
 |---|---|---|---|---|---|
-| `vic_voz_01` *(propuesta)* | Tras la puerta de los espejos se oye una voz | Victoria | «¿Papá? ¿Eres tú?» | sorpresa | 1,8 s |
+| `vic_voz_01` | Tras la puerta de los espejos se oye una voz | Victoria | «¿Papá? ¿Eres tú?» | sorpresa | 1,8 s |
 
 ## 3. Combate contra el Guardián (sección 3.4 del documento maestro)
 
@@ -72,9 +72,9 @@ Se leen en un panel de papel. Si se graban, las lee **Mateo en voz en off**, cad
 
 ---
 
-## Las líneas marcadas como *propuesta*
+## Las cuatro líneas nuevas (aprobadas el 11/11)
 
-El documento maestro solo fija los diálogos del combate y las páginas del diario. Las cuatro líneas *propuesta* son nuevas: momentos cortos de Victoria que ayudan a que el jugador la conozca antes del final. Respetan el pilar de «poco texto y mucha intención».
+El documento maestro solo fija los diálogos del combate y las páginas del diario. Las cuatro líneas de Victoria (brazalete, cascada, puente y voz) son nuevas: momentos cortos de Victoria que ayudan a que el jugador la conozca antes del final. Respetan el pilar de «poco texto y mucha intención».
 
 **Hay que aprobarlas.** Si no se aprueban, se quitan sin tocar nada más.
 

@@ -98,12 +98,27 @@ Medido con Chrome sin ventana y swiftshader a 1920 × 1080: el tiempo absoluto n
 | No se parte el escenario en trozos. | Probado con celdas de 30 y 45 m: el mismo tiempo y más llamadas de dibujo (325). | El sobredibujado no era el problema. |
 | `Material.clone()` no copia `onBeforeCompile`: se usa `clonarMaterial()`. | — | Sin eso, los objetos interactuables perdían la luz del cielo. |
 
+## Historia y cinematografía (día 6)
+
+Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del juego: https://claude.ai/artifact/AYcTKYeEyFFgUgv9WxaYBK
+
+| Decisión | Motivo |
+|---|---|
+| Cada cinemática se diseña primero como guion gráfico (tamaño de plano, ángulo, lente, movimiento, sonido e intención), se construye y se compara contra capturas del juego. | Pediste que la historia y la cinematografía estén muy bien construidas; misma regla de coherencia que los tableros. |
+| Motivos visuales: cuando habla Mateo, el plano es el pecho (el núcleo late y asoma su silueta con cada sílaba); cuando habla la gema, la máscara (sus runas brillan con su voz). Los ojos redondos de la máscara recuerdan las gafas de Mateo; al final, él se las acomoda. | La revelación se entiende sin texto (pilar «poco texto y mucha intención»). |
+| Lentes en milímetros con campo horizontal fijo; 18–24 mm para los grandes planos y 65–85 mm para los primeros planos. Al terminar, la cámara se mezcla con la de juego (1–1,6 s). | Encuadre igual en cualquier pantalla; caras sin deformar; sin saltos al volver al juego. |
+| Nuevas: introducción (con la roca del mirador, el mapa de Mateo dibujado con código y niebla espesa en los planos aéreos), brazalete, llegada al puente y puerta de los espejos. | Sección 9.4. Las cuatro líneas aprobadas tienen su momento en cuadro. |
+| La partida empieza sobre la roca del mirador, en el claro de entrada. | La intro pide a Victoria «en lo alto de una roca»; la roca usa su propio azar para no mover nada de la selva. |
+| El despertar dura 18,5 s, las fases 2 y 3 tienen dos planos y la derrota es plano y contraplano sin cruzar el eje. | La voz de Mateo necesita su plano; la respuesta de Victoria va en cuadro. |
+| En el puente, el plano va de cenital sobre Victoria a la fachada; el plano general del despertar es la mirada del Guardián. | El terreno no permite el encuadre original (risco de 26 m detrás de la cornisa; muro de la arena a 16 m). |
+| Durante la derrota se retiran los trozos del caparazón que se cruzan entre la cámara y Mateo. | Caen con impulso al azar y a veces tapaban el primer plano. |
+| Se arregló un fallo del reproductor: con dos puntos, la mira se quedaba en el punto final (`tests/cine.test.js`). | Ninguna panorámica se movía. |
+
 ## Pendiente
 
-- La **voz de Victoria** al oír la voz tras la puerta de los espejos (`vic_voz_01`, propuesta) espera tu aprobación del guion, igual que las otras tres líneas *propuesta*.
 - `OrbitControls` en el modo foto (día 6).
 - Opciones completas en el menú (día 6). El volumen, la sensibilidad y la sacudida ya están.
-- Cinemáticas que faltan (día 6): intro, brazalete, puente y puerta del santuario. Modo demo y modo foto.
+- Modo demo y modo foto (día 6).
 - Las flores solares solo curan si Victoria ha recibido daño.
 - Volver a medir los FPS en el equipo de referencia (Iris Xe) tras las mejoras de rendimiento. El día 5 daba ~30 FPS.
 - Medir los FPS en la arena durante la fase 3 (rocas, rayo y los espectros invocados).

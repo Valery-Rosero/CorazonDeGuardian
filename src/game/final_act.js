@@ -136,7 +136,12 @@ export class ActoFinal {
   _fase(f) {
     const c = this.c;
     const pecho = this.combate.actor.pecho(new THREE.Vector3());
-    if (f === 2) c.cine.reproducir(fase2(pecho, this.combate.actor.rumbo), { alSuceso: (/** @type {any} */ e) => e.accion === 'decir' && c.dialogos.decir(...e.datos) });
+    if (f === 2) {
+      // Victoria mira al Guardián: su respuesta va en cuadro, de frente
+      const v = c.jugador.posicion;
+      c.jugador.mirarHacia(Math.atan2(pecho.x - v.x, pecho.z - v.z), 5.4);
+      c.cine.reproducir(fase2(pecho, this.combate.actor.rumbo, v.clone()), { alSuceso: (/** @type {any} */ e) => e.accion === 'decir' && c.dialogos.decir(...e.datos) });
+    }
     if (f === 3) {
       c.cine.reproducir(fase3(pecho, this.combate.actor.rumbo), {
         alSuceso: (/** @type {any} */ e) => {
@@ -166,8 +171,10 @@ export class ActoFinal {
     }
     const f = new THREE.Vector3(Math.sin(rumbo), 0, Math.cos(rumbo));
     const posVictoria = pie.clone().addScaledVector(f, 3.4);
+    // Para el diálogo se acerca (el corte al plano por encima del hombro oculta el paso)
+    const cerca = pie.clone().addScaledVector(f, 1.5);
     c.jugador.colocar(posVictoria, rumbo + Math.PI);
-    c.cine.reproducir(derrota(pie, rumbo, posVictoria), {
+    c.cine.reproducir(derrota(pie, rumbo, posVictoria, cerca), {
       alSuceso: (/** @type {any} */ e) => {
         if (e.accion === 'destello') {
           c.destello();
@@ -194,16 +201,25 @@ export class ActoFinal {
           c.rig.sacudida.agregar(0.6);
         }
         if (e.accion === 'mateo') {
+          // Ningún trozo del caparazón donde va la cámara del primer plano de Mateo
+          this.caparazon.despejar(_v.copy(pie).addScaledVector(f, 3.15).add(_w.set(f.z, 0, -f.x).multiplyScalar(1.25)), 1.4);
           c.mateo.raiz.visible = true;
           c.mateo.colocar(pie, rumbo);
           c.mateo.arrodillar();
           c.dialogos.ponerCaraMateo(c.mateo.cara);
           c.rafaga(_v.copy(pie).setY(pie.y + 1), 40, PALETA.oro_brillante, 3);
         }
+        if (e.accion === 'acercarse') {
+          c.jugador.colocar(cerca, rumbo + Math.PI);
+          this.caparazon.despejar(pie, 2.6);
+          // Él levanta la cara hacia ella
+          c.mateo.animador.gesto('arrodillado_mira');
+        }
         if (e.accion === 'decir') c.dialogos.decir(...e.datos);
         if (e.accion === 'gema') {
           // La gema vuela al brazalete y queda sellada (destello azul y dorado)
           this.gema = 0;
+          c.animador.gesto('mirar_brazalete', 2.6);
           c.audio.efecto('brazalete');
         }
         if (e.accion === 'temblor') {
@@ -262,12 +278,21 @@ export class ActoFinal {
           c.mateo.raiz.visible = true;
           c.rafaga(_v.copy(m.pos).setY(m.pos.y + 1.2), 50, PALETA.cristal_runa, 4);
           c.audio.efecto('portal', 0.7);
-          c.mateo.caminarHasta(_w.copy(s.pos).add(new THREE.Vector3(1.0, 0, -0.2)), 2.6);
+          // Da un par de pasos fuera del portal, hacia ella, y se detiene
+          _w.subVectors(s.pos, m.pos).setY(0).normalize();
+          c.mateo.caminarHasta(_v.copy(m.pos).addScaledVector(_w, 0.5), 0.8);
+        }
+        // El gesto de siempre: vuelve a ser él
+        if (e.accion === 'gafas') c.mateo.animador.gesto('ajustar_gafas');
+        if (e.accion === 'acercarse') {
+          // A su lado, a la derecha de Victoria (los dos frente al sol)
+          const f = new THREE.Vector3(Math.sin(s.rumbo), 0, Math.cos(s.rumbo));
+          _w.set(-f.z, 0, f.x);
+          c.mateo.caminarHasta(_v.copy(s.pos).addScaledVector(_w, 1.15).addScaledVector(f, -0.1), 1.6);
         }
         if (e.accion === 'mirar_sol') {
           c.jugador.mirarHacia(s.rumbo, 3);
           c.mateo.mirar(s.rumbo);
-          c.mateo.animador.gesto('ajustar_gafas');
         }
         if (e.accion === 'victoria') this._victoria();
       },
@@ -305,6 +330,9 @@ export class ActoFinal {
   actualizar(dt, t, enCine) {
     const c = this.c;
     const pies = c.jugador.posicion;
+    const voz = this.combate.actor.voz;
+    voz.mateo = c.dialogos.voz.mateo;
+    voz.gema = c.dialogos.voz.gema;
     if (this.levantando >= 0) {
       this.levantando += dt;
       this.combate.levantar(Math.min(1, this.levantando / 2.4));
@@ -315,6 +343,10 @@ export class ActoFinal {
     }
     this.rocas.actualizar(dt, pies, (n) => c.recibirDano(n));
     this.caparazon.actualizar(dt);
+    // En la derrota ningún trozo del caparazón se queda entre la cámara y la cara de Mateo
+    if (this.etapa === 'derrota' && enCine && c.mateo.raiz.visible) {
+      this.caparazon.despejarLinea(c.cine.camara.position, _v.copy(c.mateo.raiz.position).setY(c.mateo.raiz.position.y + 0.95), 0.8);
+    }
     // La gema vuela del pecho al brazalete
     if (this.gema >= 0) {
       this.gema += dt;

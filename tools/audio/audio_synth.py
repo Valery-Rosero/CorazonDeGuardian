@@ -486,6 +486,11 @@ LINEAS = {
     'mat_derrota_01': ('mateo', 'Victoria… viniste.', 2.1, False),
     'vic_derrota_01': ('victoria', 'Te dije que llegaría antes que tú.', 2.7, False),
     'mat_escape_01': ('mateo', '¡Corre! Estoy justo detrás de ti.', 2.9, False),
+    # Aprobadas el 11/11 (al final: las voces anteriores no cambian)
+    'vic_brazalete_01': ('victoria', 'Así que esto buscabas, papá.', 2.4, False),
+    'vic_cascada_01': ('victoria', '«Detrás del agua hay un camino». Como siempre, tenías razón.', 5.2, False),
+    'vic_puente_01': ('victoria', 'Te aguantó a ti… ojalá me aguante a mí.', 3.7, False),
+    'vic_voz_01': ('victoria', '¿Papá? ¿Eres tú?', 1.8, False),
 }
 
 # Formantes (F1, F2) de las vocales del español
@@ -677,6 +682,10 @@ EFECTOS_DIA5 = {
 VOCES_DIA5 = {f'voz/{c}': (lambda c=c: murmullo(LINEAS[c][1], LINEAS[c][2], LINEAS[c][0], LINEAS[c][3])) for c in LINEAS}
 
 
+# Día 6: la voz que se oye detrás de la puerta de los espejos (la gema susurra, sin subtítulo)
+VOCES_DIA6 = {'voz/gem_susurro_puerta': lambda: murmullo('Vi… to… ri… a…', 3.0, 'gema', True)}
+
+
 def buscar_ffmpeg():
     ruta = shutil.which('ffmpeg')
     if ruta:
@@ -692,7 +701,7 @@ def main():
         print('[audio] AVISO: ffmpeg no está instalado; los efectos quedan en .wav', file=sys.stderr)
     # El orden importa: primero lo de los días 1 a 3 (los mismos sonidos de siempre), después lo nuevo
     os.makedirs(os.path.join(SALIDA, 'voz'), exist_ok=True)
-    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, {**EFECTOS_DIA5, **VOCES_DIA5})):
+    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, {**EFECTOS_DIA5, **VOCES_DIA5}), ({}, VOCES_DIA6)):
         generar(bucles, efectos, ffmpeg)
 
 

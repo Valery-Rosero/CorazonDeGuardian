@@ -10,6 +10,9 @@ const LEJOS = -9000;
  * del espectro. Pool creado al cargar: cada pieza tiene varias copias con su cuerpo dinámico de
  * cannon-es, que duermen lejos hasta que se usan. Desaparecen encogiéndose a los 3 s.
  */
+const _ab = new THREE.Vector3();
+const _ap = new THREE.Vector3();
+
 export class PoolPiezas {
   /**
    * @param {THREE.Scene} escena
@@ -67,6 +70,41 @@ export class PoolPiezas {
     p.cuerpo.velocity.set(impulso.x, impulso.y, impulso.z);
     p.cuerpo.angularVelocity.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
     p.cuerpo.wakeUp();
+  }
+
+  /**
+   * Retira de golpe las piezas a menos de 'radio' de un punto (en un corte de cámara: que no tapen un diálogo).
+   * @param {THREE.Vector3} centro @param {number} radio
+   */
+  despejar(centro, radio) {
+    for (const lista of Object.values(this.piezas)) {
+      for (const p of lista) {
+        if (!p.activo) continue;
+        const b = p.cuerpo;
+        if (Math.hypot(b.position.x - centro.x, b.position.z - centro.z) > radio) continue;
+        p.vida = 0;
+      }
+    }
+    this.actualizar(0);
+  }
+
+  /**
+   * Retira las piezas que se cruzan entre dos puntos (la cámara y la cara de quien habla).
+   * @param {THREE.Vector3} a @param {THREE.Vector3} b @param {number} radio
+   */
+  despejarLinea(a, b, radio) {
+    _ab.subVectors(b, a);
+    const l2 = _ab.lengthSq() || 1;
+    let alguna = false;
+    for (const lista of Object.values(this.piezas)) {
+      for (const p of lista) {
+        if (!p.activo || p.vida <= 0) continue;
+        _ap.set(p.cuerpo.position.x, p.cuerpo.position.y, p.cuerpo.position.z).sub(a);
+        const u = Math.max(0, Math.min(1, _ap.dot(_ab) / l2));
+        if (_ap.addScaledVector(_ab, -u).length() < radio) { p.vida = 0; alguna = true; }
+      }
+    }
+    if (alguna) this.actualizar(0);
   }
 
   /** @param {number} dt */

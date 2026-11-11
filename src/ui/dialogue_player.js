@@ -21,6 +21,8 @@ export class Dialogos {
     this.ocultarEn = -1;
     /** Línea libre de Victoria (depuración): la boca lleva el ritmo. */
     this.libre = false;
+    /** Ritmo de la voz (0 a 1, suavizado) de quien habla: hace latir el núcleo con Mateo y las runas con la gema. */
+    this.voz = { mateo: 0, gema: 0, victoria: 0 };
   }
 
   /** Cara de Mateo cuando ya está libre (escena de la derrota y final). @param {import('../player/face_animator.js').AnimadorCara | null} c */
@@ -53,8 +55,25 @@ export class Dialogos {
     this.subtitulos.ocultar();
   }
 
+  /**
+   * Sílaba que suena ahora en la línea de 'quien' (vocal abierta = 1, consonante = 0,45, pausa = 0).
+   * @param {'mateo' | 'gema' | 'victoria'} quien
+   */
+  _silabaDe(quien) {
+    if (!this.cola.hablando) return 0;
+    const l = LINEAS[this.cola.actual];
+    if (l.quien !== quien) return 0;
+    const u = this.cola.t / (l.duracion * 0.92);
+    if (u >= 1) return 0;
+    const ch = (l.texto[Math.floor(u * l.texto.length)] ?? '').toLowerCase();
+    return 'aeiouáéíóú'.includes(ch) ? 1 : /[a-zñ]/.test(ch) ? 0.45 : 0;
+  }
+
   /** @param {number} dt */
   actualizar(dt) {
+    for (const q of /** @type {const} */ (['mateo', 'gema', 'victoria'])) {
+      this.voz[q] += (this._silabaDe(q) - this.voz[q]) * Math.min(1, dt * 16);
+    }
     if (this.libre) {
       const c = this.caras.victoria;
       if (c.hablando) {
