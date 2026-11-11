@@ -15,16 +15,21 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
  * }} sistemas
  */
 export function crearPanelDepuracion({ renderer, cfgJugador, camara, cara, decir, emociones }) {
+  // FPS arriba a la derecha (el cuaderno de la cartógrafa ocupa la esquina izquierda)
   const stats = new Stats();
-  stats.dom.style.cssText = 'position:fixed;bottom:8px;right:8px;z-index:30;';
+  stats.dom.id = 'depuracion-fps';
+  stats.dom.style.cssText = 'position:fixed;top:8px;right:8px;z-index:30;';
   document.body.appendChild(stats.dom);
 
   const info = document.createElement('div');
   info.id = 'depuracion-info';
   document.body.appendChild(info);
 
-  const gui = new GUI({ title: 'Depuración' });
+  // Deslizadores para afinar valores en vivo mientras se desarrolla: ocultos al jugar, se abren con la tecla º
+  const gui = new GUI({ title: 'Ajustes en vivo (tecla º)' });
   gui.domElement.style.zIndex = '30';
+  gui.domElement.style.top = '82px';
+  gui.hide();
 
   const fj = gui.addFolder('Victoria');
   fj.add(cfgJugador, 'velocidad_caminar', 1, 10, 0.1).name('caminar (m/s)');
@@ -54,6 +59,7 @@ export function crearPanelDepuracion({ renderer, cfgJugador, camara, cara, decir
   return {
     stats,
     info,
+    gui,
     inicio() {
       stats.begin();
     },
