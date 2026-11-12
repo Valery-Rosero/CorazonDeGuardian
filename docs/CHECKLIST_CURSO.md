@@ -112,7 +112,7 @@ Detalle de cada requisito, con archivos y funciones: [REQUISITOS_CURSO.md](REQUI
 
 | Tema de la clase | Estado | En el juego |
 |---|---|---|
-| Modelado de pocos polígonos y presupuesto | Hecho | Presupuesto por zona (50.000 triángulos) comprobado en cada exportación (`tools/blender/stats.py`) |
+| Modelado de pocos polígonos y presupuesto | Hecho | Presupuesto por zona (50.000 triángulos; 70.000 en la selva desde la pirámide nueva) comprobado en cada exportación (`tools/blender/stats.py`) |
 | Origen, transformaciones aplicadas, exportación `.glb` | Hecho | `tools/blender/common.py` (`exportar_glb`) |
 | Automatización con Python | Hecho | Todo el arte: `npm run assets` regenera los modelos |
 
