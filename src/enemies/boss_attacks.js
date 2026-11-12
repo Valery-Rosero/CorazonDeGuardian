@@ -50,7 +50,7 @@ export class PoolRocas {
       cuerpo.addShape(new CANNON.Sphere(r));
       cuerpo.position.set(i * 3, LEJOS, 0);
       cuerpo.sleep();
-      fisica.world.addBody(cuerpo);
+      // Fuera del mundo físico mientras está guardada: entra al soltarse (MundoFisico.sacar)
       return { malla, sombra, cuerpo, r, activo: false, t: 0, aviso: 1, suelo: new THREE.Vector3(), golpeo: false, dano: 0 };
     });
   }
@@ -72,6 +72,7 @@ export class PoolRocas {
     // Sale desde arriba con la velocidad justa para llegar al suelo al terminar el aviso
     const h = this.cfg.altura;
     const vy = -(h - 0.5 * 9.82 * aviso * aviso) / aviso;
+    this.fisica.sacar(p.cuerpo);
     p.cuerpo.position.set(suelo.x, suelo.y + h + p.r, suelo.z);
     p.cuerpo.velocity.set(0, vy, 0);
     p.cuerpo.angularVelocity.set(Math.random() * 4, Math.random() * 4, Math.random() * 4);
@@ -106,6 +107,7 @@ export class PoolRocas {
         b.velocity.set(0, 0, 0);
         b.position.set(b.position.x, LEJOS, 0);
         b.sleep();
+        this.fisica.guardar(b);
       }
     }
   }

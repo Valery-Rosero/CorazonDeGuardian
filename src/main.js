@@ -54,6 +54,7 @@ import { Musica } from './core/music.js';
 import { MURAL, MuralVivo } from './world/living_mural.js';
 import { crearPosproceso, excluirDelBrillo } from './fx/postprocess.js';
 import { precompilar } from './core/warmup.js';
+import { Banco } from './game/benchmark.js';
 import { avanza, borrarPartida, guardarPartida, leerPartida } from './game/save.js';
 import { Ejercito, crearMapaAlturas } from './world/army.js';
 import { combinarNiveles, construirNivel } from './world/level_loader.js';
@@ -93,7 +94,7 @@ function prepararVictoria(modelo, rampa) {
 
 async function iniciar() {
   const lienzo = /** @type {HTMLCanvasElement} */ (document.getElementById('lienzo'));
-  const { renderer, calidad } = crearRenderer(lienzo, params.get('calidad'));
+  const { renderer, calidad, nombreCalidad } = crearRenderer(lienzo, params.get('calidad'));
   const escena = new THREE.Scene();
   const camara = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 600);
   camara.rotation.order = 'YXZ';
@@ -103,6 +104,8 @@ async function iniciar() {
   window.addEventListener('resize', () => posproceso.tamano());
   // Resolución dinámica: si no llega a ~55 FPS dibuja a menos resolución (hasta el 67 %)
   const pixelRatioBase = renderer.getPixelRatio();
+  /** Prueba de rendimiento (?banco), si está corriendo. @type {Banco | null} */
+  let banco = null;
   const resolucion = new ResolucionDinamica((e) => { renderer.setPixelRatio(pixelRatioBase * e); posproceso.tamano(); });
   resolucion.activa = !MEDIR && params.get('resolucion') !== 'fija';
   const oyente = new THREE.AudioListener();
@@ -126,10 +129,15 @@ async function iniciar() {
   pantallas.progreso(0.95, 'Despertando la selva…');
 
   const opcionesNivel = { vegetacion: calidad.vegetacion };
+  // Cuerpos que crean los escenarios (para la física por sectores, ver MundoFisico.sectorizar)
+  const cuerposPrevios = new Set(fisica.world.bodies);
+  const nivelSelva = construirNivel(modelos.zona, escena, fisica, triggers, opcionesNivel);
   const nivelSantuario = construirNivel(modelos.santuario, escena, fisica, triggers, opcionesNivel);
   const nivelCamara = construirNivel(modelos.camara, escena, fisica, triggers, opcionesNivel);
-  const nivel = { ...combinarNiveles([construirNivel(modelos.zona, escena, fisica, triggers, opcionesNivel), nivelSantuario, nivelCamara]),
-    raizCamara: nivelCamara.raiz };
+  const nivel = { ...combinarNiveles([nivelSelva, nivelSantuario, nivelCamara]), raizCamara: nivelCamara.raiz };
+  const cuerposEscenario = fisica.world.bodies.filter((c) => !cuerposPrevios.has(c));
+  /** Sector de la física y del dibujo: 'selva' (zona 1) o 'templo' (santuario y arena, que se unen caminando). @param {number} z */
+  const sectorDeZ = (z) => (z < 400 ? 'selva' : 'templo');
   const luces = crearLucesNivel(escena, nivel.luces, calidad.luces);
   // SpotLight del santuario (requisito 1): un foco cálido desde lo alto del nicho sobre el altar del
   // escudo. Siempre en la escena (el número de luces no cambia: sin recompilar); solo luce en la zona 2.
@@ -191,7 +199,16 @@ async function iniciar() {
 
   // ---------------- Partículas (requisito 5)
   const textura = texturaPunto();
-  const particulas = nivel.emisores.flatMap((em) => crearParticulasDeEmisor(em, textura, calidad.particulas));
+  /** @type {ReturnType<typeof crearParticulasDeEmisor>} */
+  const particulas = [];
+  /** Sector de cada sistema de partículas (null: los del juego, que siguen a Victoria a todas partes). @type {(string | null)[]} */
+  const sectorParticula = [];
+  for (const em of nivel.emisores) {
+    for (const s of crearParticulasDeEmisor(em, textura, calidad.particulas)) {
+      particulas.push(s);
+      sectorParticula.push(sectorDeZ(em.pos.z));
+    }
+  }
   const rafagas = crearRafagas(textura);
   const estela = crearEstela(textura);
   // Brasas de la fase 3 y polvo del derrumbe: los mueve y enciende el juego
@@ -200,7 +217,23 @@ async function iniciar() {
   /** @type {import('./fx/particle_presets.js').FuenteParticulas} */
   const fuentePolvo = { pos: new THREE.Vector3(), activo: false };
   particulas.push(rafagas, estela, crearBrasas(textura, calidad.particulas, fuenteBrasas), crearPolvoDerrumbe(textura, calidad.particulas, fuentePolvo));
+  while (sectorParticula.length < particulas.length) sectorParticula.push(null);
   for (const p of particulas) escena.add(p.puntos);
+  /**
+   * Dibujo por sectores: solo se dibuja (y se animan sus partículas) el escenario donde está Victoria.
+   * Desde la arena, la cámara mirando a la entrada metía en la vista la selva entera, a 400 m tras los muros.
+   */
+  let sectorVisible = '';
+  /** @param {string} s */
+  const ponerSectorVisible = (s) => {
+    sectorVisible = s;
+    nivelSelva.raiz.visible = s === 'selva';
+    nivelSantuario.raiz.visible = s === 'templo';
+    nivelCamara.raiz.visible = s === 'templo';
+    for (let i = 0; i < particulas.length; i++) {
+      if (sectorParticula[i] !== null) particulas[i].puntos.visible = sectorParticula[i] === s;
+    }
+  };
 
   // ---------------- Interfaz
   const panel = new PanelCartografa();
@@ -249,6 +282,9 @@ async function iniciar() {
     if (zona === zonaActual || amanecer) return;
     const antes = zonaActual;
     zonaActual = zona;
+    // Física y dibujo por sectores: solo el escenario donde está Victoria
+    fisica.activarSector(zona === 1 ? 'selva' : 'templo');
+    ponerSectorVisible(zona === 1 ? 'selva' : 'templo');
     if ((antes > 1) !== (zona > 1)) ambiente.ponerInterior(zona > 1);
     if (lago) lago.visible = zona === 1;
     alCambiarZona?.(zona);
@@ -519,6 +555,7 @@ async function iniciar() {
   // ---------------- Enemigos (sección 6)
   const toonEnemigos = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: rampa });
   const posAviso = new THREE.Vector3();
+  const cuerposAntesEnemigos = new Set(fisica.world.bodies);
   const enemigos = new GestorEnemigos(escena, fisica, modelos.enemigos.scene, Object.values(nivel.spawns),
     { centinela: CENTINELA, espectro: ESPECTRO, orbe: ORBE }, toonEnemigos, {
       danarJugador: (cantidad, origen, orbe) => {
@@ -558,6 +595,11 @@ async function iniciar() {
       },
       estela: (p, color) => chispaEn(estela, p, color, 1, 0.5),
     });
+  // Física por sectores (MundoFisico.sectorizar): los cuerpos de cada escenario y los centinelas, de pie en
+  // su suelo, solo están en el mundo mientras Victoria pisa su sector; los espectros entran y salen solos
+  const centinelas = fisica.world.bodies.filter((c) => !cuerposAntesEnemigos.has(c));
+  fisica.sectorizar([...cuerposEscenario, ...centinelas], (c) => sectorDeZ(c.position.z));
+  fisica.activarSector(sectorDeZ(jugador.posicion.z));
 
   // ---------------- Santuario: altar del escudo, espejos y puertas (sección 8.2)
   const santuario = new Santuario({
@@ -1001,6 +1043,7 @@ async function iniciar() {
     particulas: (dt) => {
       const escala = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(camara.fov) / 2));
       for (let i = 0; i < particulas.length; i++) {
+        if (sectorParticula[i] !== null && sectorParticula[i] !== sectorVisible) continue;
         particulas[i].material.uniforms.uEscala.value = escala;
         particulas[i].actualizar(dt, reloj);
       }
@@ -1049,7 +1092,9 @@ async function iniciar() {
     render: () => {
       // En las cinemáticas, la profundidad de campo enfoca lo que mira la cámara (calidad alta)
       posproceso.enfocar(cine.activo && cine.distanciaMira > 0 ? cine.distanciaMira : null);
+      banco?.antes();
       posproceso.render();
+      banco?.despues();
       // &stats: llamadas, triángulos, luces puntuales encendidas y mallas con sombra en el título (para medir sin ventana)
       if (MEDIR) {
         let luces = 0;
@@ -1071,6 +1116,7 @@ async function iniciar() {
       }
     },
     finFotograma: () => {
+      banco?.fotograma(bucle.dtReal, bucle.msCpu);
       entrada.finFotograma();
       if (entrada.pulso('pausa') && rig.controles.isLocked) rig.controles.unlock();
     },
@@ -1168,6 +1214,28 @@ async function iniciar() {
     await precompilar(renderer, escena, camara, posproceso.destino, [() => ambiente.ponerInterior(true), () => ambiente.ponerInterior(false)],
       () => posproceso.render());
     posproceso.enfocar(null);
+  }
+  // Tras precompilar (con todo visible), solo queda a la vista el sector de Victoria
+  ponerSectorVisible(sectorDeZ(jugador.posicion.z));
+  // ---------------- Prueba de rendimiento (?banco): recorre seis lugares y mide FPS, procesador y tarjeta
+  if (params.has('banco')) {
+    pantallas.ocultarInicio();
+    document.getElementById('pantalla-carga')?.classList.add('oculto');
+    document.querySelectorAll('#depuracion-fps, #depuracion-info').forEach((el) => /** @type {HTMLElement} */ (el).style.visibility = 'hidden');
+    resolucion.activa = false;   // se mide la calidad elegida tal cual
+    renderer.setPixelRatio(pixelRatioBase);
+    posproceso.tamano();
+    vida.dios = true;
+    banco = new Banco({
+      renderer, calidad: nombreCalidad,
+      ir: (spawn) => teletransportar(spawn),
+      girar: (rumbo) => rig.reorientar(rumbo),
+      saltarCine: () => { if (cine.activo) { cine.saltar(); dialogos.callar(); } },
+    });
+    bucle.pausado = false;
+    bucle.iniciar();
+    banco.empezar();
+    Object.assign(window, { __banco: banco });
   }
   bucle.pausado = !AUTOMATICO && !demo.activo;
   bucle.iniciar();

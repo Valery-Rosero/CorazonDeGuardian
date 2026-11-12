@@ -36,4 +36,4 @@ Los 8 requisitos funcionan en el juego completo. Cada uno se puede demostrar en 
 
 ## Pruebas automáticas
 
-`npm test` ejecuta 104 pruebas. Las simulaciones (`tests/*_simulacion.test.js`) cargan los `.glb` reales y hacen correr la física sin gráficos: el recorrido completo de la selva, el acertijo de los espejos, el combate contra el Guardián (que camina, salta y solo recibe daño con el núcleo abierto) y el escape de la arena a la cornisa en menos de 75 s.
+`npm test` ejecuta 106 pruebas. Las simulaciones (`tests/*_simulacion.test.js`) cargan los `.glb` reales y hacen correr la física sin gráficos: el recorrido completo de la selva, el acertijo de los espejos, el combate contra el Guardián (que camina, salta y solo recibe daño con el núcleo abierto) y el escape de la arena a la cornisa en menos de 75 s.

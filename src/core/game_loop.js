@@ -44,6 +44,10 @@ export class BucleJuego {
      * fotograma avanza exactamente esto, juego y cinemática juntos, por lento que se dibuje.
      */
     this.pasoFijo = 0;
+    /** s reales desde el fotograma anterior (sin límite: para medir el rendimiento). */
+    this.dtReal = 0;
+    /** ms del procesador en el último fotograma, del principio al final del dibujo (prueba de rendimiento). */
+    this.msCpu = 0;
     this._alFotograma = this._fotograma.bind(this);
   }
 
@@ -53,8 +57,10 @@ export class BucleJuego {
 
   /** @param {number} ahoraMs */
   _fotograma(ahoraMs) {
+    const inicio = performance.now();
     const ahora = ahoraMs / 1000;
     const transcurrido = this.ultimo < 0 ? 0 : ahora - this.ultimo;
+    this.dtReal = transcurrido;
     const dtReal = this.pasoFijo > 0 && this.ultimo >= 0 ? this.pasoFijo : Math.min(DT_MAXIMO, transcurrido);
     this.dtCine = this.pasoFijo > 0 ? dtReal : Math.min(DT_MAXIMO_CINE, transcurrido);
     this.ultimo = ahora;
@@ -71,6 +77,7 @@ export class BucleJuego {
     }
     e.hud?.(dtReal);
     e.render();
+    this.msCpu = performance.now() - inicio;
     e.finFotograma?.();
   }
 }

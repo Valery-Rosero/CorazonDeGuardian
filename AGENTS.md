@@ -37,11 +37,12 @@ Abre el juego en el navegador, en http://localhost:5173. Hace falta Chrome o Edg
 
 | Comando | Para qué |
 |---|---|
-| `npm test` | 104 pruebas (lógica y simulaciones con los escenarios reales); tardan unos minutos |
+| `npm test` | 106 pruebas (lógica y simulaciones con los escenarios reales); tardan unos minutos |
 | `npm run check` | Comprobación de tipos |
 | `npm run build` | Compilación de producción en `dist/` |
 | `npm run assets` | Regenera modelos (Blender), sonidos y música (Python) y el video. Solo con la instalación `-Completo` |
 | `npm run zfighting` | Busca caras superpuestas en los escenarios |
+| `npm run banco` | Prueba de rendimiento: recorre seis lugares y muestra FPS, el 1 % más lento, procesador y tarjeta (meta: 60 FPS, mínimo 50, en una PC con tarjeta dedicada) |
 
 ## Si algo falla
 

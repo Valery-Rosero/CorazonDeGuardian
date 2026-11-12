@@ -168,9 +168,20 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 |---|---|
 | El juego se llama **El Corazón del Guardián** (antes «El Templo del Sol Perdido»): título de la página, portada de carga, menú, título de la introducción, documentos y diapositivas. La propuesta y el documento maestro conservan el nombre original; el repositorio y el paquete siguen llamándose `ElTemploDelSol` / `templo-del-sol`. | Lo pediste: pone en el centro la historia (Mateo atrapado dentro del Guardián). Cambiar el nombre del repositorio rompería el enlace de GitHub y el instalador. |
 
+## Optimización por sectores (12/11)
+
+| Decisión | Motivo |
+|---|---|
+| La meta de rendimiento es una PC con tarjeta gráfica dedicada: 60 FPS, nunca menos de 50. La portátil con gráficos integrados no cuenta. | Lo pediste así; sin bajar nada de la calidad. |
+| Física por sectores (`MundoFisico.sectorizar` / `activarSector`): solo están en el mundo los cuerpos del escenario donde está Victoria (selva o templo) y los centinelas de ese escenario. | cannon-es compara los cuerpos de a pares; con los tres escenarios juntos pagaba por 334. Ahora 113 a 143 y la física cuesta la mitad (medido con el mismo recorrido). |
+| Los grupos reutilizables (pulsos, fragmentos, rocas del Guardián) salen del mundo físico mientras están guardados. | Los pulsos guardados seguían cayendo para siempre y despiertos: de 20 cuerpos despiertos a 2–5. |
+| Dibujo por sectores (`ponerSectorVisible`): solo se dibuja el escenario de Victoria, con su vegetación y sus partículas. | Desde la arena, mirando a la entrada, la cámara dibujaba la selva entera tras los muros: de 227 a 96 llamadas y de 303 000 a 68 000 triángulos. En la selva no cambia nada. |
+| No se partió la malla de la selva en trozos. | En una tarjeta dedicada sobran triángulos; partirla añade llamadas de dibujo, que cuestan procesador. Se decide con la prueba de rendimiento en la PC de prueba. |
+| Prueba de rendimiento (`npm run banco` o `/?banco`): seis lugares, la cámara da una vuelta en cada uno, y muestra FPS, el 1 % más lento, el tiempo del procesador y el de la tarjeta (consulta de tiempo de WebGL 2), con un botón para copiar los resultados. | Aquí no hay tarjeta dedicada: la cifra real sale de la PC de prueba y dice quién limita. |
+
 ## Pendiente
 
-- Medir los FPS en una computadora con tarjeta gráfica dedicada (calidad media y alta).
+- Medir los FPS en una computadora con tarjeta gráfica dedicada con `npm run banco` (calidad media y alta) y mandar los resultados copiados.
 - Escuchar la música y los efectos en el juego y ajustar volúmenes.
 - Grabar el video (`docs/GUION_VIDEO.md`) y completar la ficha (`docs/FICHA_CONCEPTO.md`) con los nombres del equipo.
 - Publicar `dist/` en la raíz de un dominio (Netlify o Vercel) si se quiere un enlace directo.

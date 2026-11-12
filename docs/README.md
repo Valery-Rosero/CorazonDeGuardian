@@ -35,7 +35,8 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 | `npm run build` | Compilación de producción en `dist/` |
 | `npm run preview` | Probar la compilación de producción |
 | `npm run check` | Comprobación de tipos JSDoc |
-| `npm test` | 104 pruebas (`node --test`): lógica, y simulaciones que cargan los `.glb` reales y hacen correr la física |
+| `npm test` | 106 pruebas (`node --test`): lógica, y simulaciones que cargan los `.glb` reales y hacen correr la física |
+| `npm run banco` | Prueba de rendimiento (`/?banco`): recorre seis lugares, gira la cámara en cada uno y muestra FPS, el 1 % más lento y el tiempo del procesador y de la tarjeta, con un botón para copiar los resultados |
 | `npm run zfighting` | Busca caras superpuestas en el mismo plano en los tres escenarios (el parpadeo con «dientes» de dos superficies que se pelean) |
 | `npm run assets` | Regenera los `.glb` con Blender y los sonidos y la música con Python. La ruta de Blender se lee de `BLENDER_PATH`. |
 

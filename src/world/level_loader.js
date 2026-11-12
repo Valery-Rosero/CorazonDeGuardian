@@ -89,7 +89,8 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
       if (malla.isMesh && Array.isArray(o.userData.puntos)) {
         // 'fijo': plantas con colisionador (árboles jóvenes); la calidad baja no puede quitarlas
         const fraccion = o.userData.fijo ? 1 : (opciones.vegetacion ?? 1);
-        escena.add(crearInstancias(malla, o.userData.puntos, fraccion, Number(o.userData.viento ?? 1), Boolean(o.userData.borde_sol)));
+        // Dentro de la raíz de su escenario: se oculta con él (dibujo por sectores)
+        raiz.add(crearInstancias(malla, o.userData.puntos, fraccion, Number(o.userData.viento ?? 1), Boolean(o.userData.borde_sol)));
         quitar.push(o);
       }
     }
@@ -107,6 +108,8 @@ export function construirNivel(gltf, escena, fisica, triggers, opciones = {}) {
   raiz.traverse((o) => {
     const m = /** @type {THREE.Mesh} */ (o);
     if (!m.isMesh || !m.visible || clasificarNombre(m.name).tipo === 'trg_box') return;
+    // La vegetación instanciada ya trae su material (y no proyecta sombra): no se vuelve a ajustar
+    if (/** @type {THREE.InstancedMesh} */ (m).isInstancedMesh) return;
     m.castShadow = true;
     m.receiveShadow = true;
     const original = /** @type {THREE.MeshStandardMaterial} */ (m.material);

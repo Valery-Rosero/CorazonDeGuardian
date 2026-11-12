@@ -42,6 +42,51 @@ export class MundoFisico {
 
     /** @type {{malla: import('three').Object3D, cuerpo: CANNON.Body}[]} */
     this.pares = [];
+    /** Sector → cuerpos del escenario que le pertenecen (ver sectorizar). @type {Map<string, CANNON.Body[]>} */
+    this.sectores = new Map();
+    /** @type {string | null} */
+    this.sectorActivo = null;
+  }
+
+  /**
+   * Física por sectores (optimización, sin cambiar nada de lo que se ve): cada cuerpo del escenario
+   * pertenece a un sector (la selva, el interior del templo) y solo los del sector activo están en el
+   * mundo. cannon-es compara los cuerpos de a pares y su matriz de colisiones crece con el cuadrado de
+   * cuántos hay: con los tres escenarios juntos pagaba por más de 330 cuerpos aunque Victoria solo pise uno.
+   * @param {CANNON.Body[]} cuerpos  @param {(cuerpo: CANNON.Body) => string} sectorDe
+   */
+  sectorizar(cuerpos, sectorDe) {
+    for (const c of cuerpos) {
+      const s = sectorDe(c);
+      if (!this.sectores.has(s)) this.sectores.set(s, []);
+      /** @type {CANNON.Body[]} */ (this.sectores.get(s)).push(c);
+    }
+  }
+
+  /**
+   * Deja en el mundo solo los cuerpos del sector 'nombre' (los demás conservan su estado y vuelven igual).
+   * Se llama fuera del paso de la física (al cambiar de zona), nunca dentro de un evento de choque.
+   * @param {string} nombre
+   */
+  activarSector(nombre) {
+    if (nombre === this.sectorActivo) return;
+    for (const [s, cuerpos] of this.sectores) {
+      for (const c of cuerpos) {
+        if (s === nombre) this.sacar(c);
+        else this.guardar(c);
+      }
+    }
+    this.sectorActivo = nombre;
+  }
+
+  /** Retira un cuerpo del mundo (una pieza guardada de un grupo reutilizable no cuesta nada). @param {CANNON.Body} cuerpo */
+  guardar(cuerpo) {
+    if (cuerpo.world) this.world.removeBody(cuerpo);
+  }
+
+  /** Lo devuelve al mundo (al usar la pieza o al volver a su sector). @param {CANNON.Body} cuerpo */
+  sacar(cuerpo) {
+    if (!cuerpo.world) this.world.addBody(cuerpo);
   }
 
   /**

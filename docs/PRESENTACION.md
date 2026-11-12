@@ -31,7 +31,7 @@ El checklist completo, tema por tema de las semanas 1 a 10, está en [CHECKLIST_
 | Vite | 8 | Servidor de desarrollo y empaquetado (`npm run dev`, `npm run build`), como desde la semana 6 |
 | Blender | 5.2 con Python (`bpy`) | Todos los modelos: escenarios, personajes y enemigos, **generados con scripts**, no a mano |
 | Python + numpy / Pillow / ffmpeg | 3.12 | Sonidos y música sintetizados; el video del mural dibujado cuadro a cuadro |
-| node:test | Node 24 | 104 pruebas automáticas |
+| node:test | Node 24 | 106 pruebas automáticas |
 
 **Mensaje:** no hay ni un modelo, ni una imagen ni un sonido descargado. Todo sale de código.
 
@@ -411,12 +411,16 @@ malla.quaternion.set(cuerpo.quaternion.x, cuerpo.quaternion.y, cuerpo.quaternion
 | Precompilar los sombreadores en la carga | `core/warmup.js` (`compileAsync`) | Ningún tirón en las 10 cinemáticas |
 | Resolución dinámica | `core/dynamic_resolution.js` | Baja la resolución si no llega a ~55 FPS |
 | Tres calidades | `config/quality.js` | Baja, media y alta |
+| Física por sectores: solo los cuerpos del escenario donde está Victoria | `core/physics_world.js` | De 334 a 113–143 cuerpos; la física cuesta la mitad |
+| Dibujo por sectores: solo se dibuja ese escenario | `main.js` (ponerSectorVisible) | Arena: de 227 a 96 llamadas y de 303 000 a 68 000 triángulos |
+| Grupos reutilizables fuera del mundo físico mientras se guardan | pulsos, fragmentos, rocas | De 20 a 2–5 cuerpos despiertos |
+| Prueba de rendimiento (`npm run banco`) | `game/benchmark.js` | FPS, 1 % más lento, procesador y tarjeta por lugar |
 
 ---
 
 ## 20. Pruebas y verificación
 
-- **104 pruebas** con `npm test`. Algunas cargan los `.glb` reales y hacen correr la física:
+- **106 pruebas** con `npm test`. Algunas cargan los `.glb` reales y hacen correr la física:
   - recorren la selva entera;
   - resuelven el acertijo de los espejos (las 512 combinaciones);
   - pelean con el Guardián;

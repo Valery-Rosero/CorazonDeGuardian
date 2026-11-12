@@ -46,7 +46,7 @@ export class PoolPulsos {
       });
       cuerpo.addShape(new CANNON.Sphere(cfg.radio));
       cuerpo.position.set(0, LEJOS - i, 0);
-      fisica.world.addBody(cuerpo);
+      // Fuera del mundo físico mientras está guardado: solo entra al dispararse (MundoFisico.sacar)
       const p = {
         malla, cuerpo, activo: false, vida: 0, nacido: 0,
         dir: new THREE.Vector3(), previa: new CANNON.Vec3(), choque: /** @type {CANNON.Body | null} */ (null),
@@ -73,6 +73,7 @@ export class PoolPulsos {
     p.nacido = this.reloj;
     p.vida = this.cfg.alcance / this.cfg.velocidad;
     p.dir.copy(dir);
+    this.fisica.sacar(p.cuerpo);
     p.cuerpo.position.set(origen.x, origen.y, origen.z);
     p.previa.copy(p.cuerpo.position);
     p.cuerpo.velocity.set(dir.x * this.cfg.velocidad, dir.y * this.cfg.velocidad, dir.z * this.cfg.velocidad);
@@ -127,6 +128,7 @@ export class PoolPulsos {
     p.malla.visible = false;
     p.cuerpo.velocity.set(0, 0, 0);
     p.cuerpo.position.set(0, LEJOS - i, 0);
+    this.fisica.guardar(p.cuerpo);
   }
 
   get activos() {

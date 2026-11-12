@@ -46,7 +46,7 @@ export class PoolPiezas {
         cuerpo.addShape(new CANNON.Box(new CANNON.Vec3(Math.max(0.05, tam.x / 2), Math.max(0.05, tam.y / 2), Math.max(0.05, tam.z / 2))));
         cuerpo.position.set(k++ * 3, LEJOS, 0);
         cuerpo.sleep();
-        fisica.world.addBody(cuerpo);
+        // Fuera del mundo físico mientras está guardada: entra al soltarse (MundoFisico.sacar)
         // Radio de la esfera que envuelve la pieza: una placa grande tapa aunque su centro quede lejos de la línea
         return { malla, cuerpo, vida: 0, activo: false, escala: 1, radio: tam.length() / 2 };
       });
@@ -66,6 +66,7 @@ export class PoolPiezas {
     p.vida = this.vida;
     p.malla.visible = true;
     p.malla.scale.setScalar(1);
+    this.fisica.sacar(p.cuerpo);
     p.cuerpo.position.set(pos.x, pos.y, pos.z);
     p.cuerpo.quaternion.set(giro.x, giro.y, giro.z, giro.w);
     p.cuerpo.velocity.set(impulso.x, impulso.y, impulso.z);
@@ -124,6 +125,7 @@ export class PoolPiezas {
           b.velocity.set(0, 0, 0);
           b.position.set(b.position.x, LEJOS, 0);
           b.sleep();
+          this.fisica.guardar(b);
         }
       }
     }
