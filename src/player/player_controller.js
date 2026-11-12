@@ -53,6 +53,11 @@ export class ControladorJugador {
     this.cuerpoSuelo = null;
     /** Mientras está muerta o en una cinemática, el jugador no controla a Victoria. */
     this.bloqueado = false;
+    /**
+     * Cinemáticas: Victoria corre sola por estos puntos (con su animación de siempre) y frena al llegar.
+     * Se vacía al llegar al último. @type {THREE.Vector3[]}
+     */
+    this.autopiloto = [];
     /** Mantiene el clic derecho: la cámara va sobre el hombro y Victoria mira hacia donde apunta. */
     this.apuntando = false;
     /** Posición de los pies (para la cámara, el HUD y los triggers). */
@@ -156,12 +161,25 @@ export class ControladorJugador {
       if (e.mantiene('izquierda')) ix -= 1;
     }
     this._dir.set(0, 0, 0).addScaledVector(this._adelante, iz).addScaledVector(this._derecha, ix);
+    // Piloto automático (cinemáticas): la dirección va al siguiente punto; frena en los últimos metros
+    let frenoPiloto = Infinity;
+    if (this.autopiloto.length) {
+      const p = this.autopiloto[0];
+      this._dir.set(p.x - b.position.x, 0, p.z - b.position.z);
+      const d = this._dir.length();
+      const ultimo = this.autopiloto.length === 1;
+      if (d < (ultimo ? 0.15 : 0.6)) {
+        this.autopiloto.shift();
+        this._dir.set(0, 0, 0);
+      } else if (ultimo) frenoPiloto = d * 2.6;
+    }
     const hayEntrada = this._dir.lengthSq() > 1e-4;
     if (hayEntrada) this._dir.normalize();
 
     // Apuntando (clic derecho) no corre y camina más despacio, de lado o hacia atrás sin dejar de apuntar
-    this.corriendo = hayEntrada && e.mantiene('correr') && !this.apuntando;
-    const vmax = this.apuntando ? cfg.velocidad_caminar * cfg.factor_apuntar : this.corriendo ? cfg.velocidad_correr : cfg.velocidad_caminar;
+    this.corriendo = hayEntrada && (e.mantiene('correr') || this.autopiloto.length > 0) && !this.apuntando;
+    const vmax = Math.min(frenoPiloto,
+      this.apuntando ? cfg.velocidad_caminar * cfg.factor_apuntar : this.corriendo ? cfg.velocidad_correr : cfg.velocidad_caminar);
     const acel = this.enSuelo ? (hayEntrada ? cfg.aceleracion : cfg.frenado) : cfg.aceleracion_aire;
     if (this._esquivaT > 0) {
       this._esquivaT -= dt;

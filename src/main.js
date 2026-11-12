@@ -51,7 +51,7 @@ import { Checkpoints } from './world/checkpoints.js';
 import { crearAmbienteSelva, crearLucesNivel } from './world/environment.js';
 import { ResolucionDinamica } from './core/dynamic_resolution.js';
 import { Musica } from './core/music.js';
-import { MuralVivo } from './world/living_mural.js';
+import { MURAL, MuralVivo } from './world/living_mural.js';
 import { crearPosproceso, excluirDelBrillo } from './fx/postprocess.js';
 import { precompilar } from './core/warmup.js';
 import { avanza, borrarPartida, guardarPartida, leerPartida } from './game/save.js';
@@ -804,6 +804,9 @@ async function iniciar() {
     hud.mostrarDerrota(false);
   };
 
+  /** Puntos de interés que la cámara ya señaló una vez. @type {Set<string>} */
+  const hintsVistos = new Set();
+
   // ---------------- Triggers (requisito 4)
   const puntoTrigger = new THREE.Vector3();
   triggers.alCambiar = (t, entra) => {
@@ -815,7 +818,12 @@ async function iniciar() {
       if (entra && !muerta) avanzarPunto('debug_5');
     }
     if (!entra) return;
-    if (d.hint && nivel.hints[d.hint]) rig.mirarHacia(nivel.hints[d.hint]);
+    // Punto de interés (la pirámide, la cascada, la fachada): la cámara lo señala solo la primera vez y
+    // nunca durante el escape ni una cinemática. La cámara es del jugador: no se mueve sola
+    if (d.hint && nivel.hints[d.hint] && !hintsVistos.has(d.hint) && !actoFinal.enEscape && !cine.activo) {
+      hintsVistos.add(d.hint);
+      rig.mirarHacia(nivel.hints[d.hint]);
+    }
     if (muerta) return;
     switch (d.evento) {
       case 'portal':
@@ -920,6 +928,9 @@ async function iniciar() {
         ui.textosDerrota('El templo se derrumbó', 'Reintenta desde el inicio del escape.');
         morir();
       }
+      // La leyenda del mural se lee en subtítulos mientras está despierto y Victoria está cerca
+      const leyenda = mural.subtitulo();
+      dialogos.narrar(leyenda && jugador.posicion.distanceTo(mural.malla.position) < MURAL.lectura ? leyenda : null);
       dialogos.actualizar(bucle.dtCine);
       ejercito.actualizar(bucle.dtCine);
       santuario.actualizar(dt, t);

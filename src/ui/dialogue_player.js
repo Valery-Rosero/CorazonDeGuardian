@@ -21,6 +21,8 @@ export class Dialogos {
     this.ocultarEn = -1;
     /** Línea libre de Victoria (depuración): la boca lleva el ritmo. */
     this.libre = false;
+    /** Texto narrado fuera del guion (la leyenda del mural): se lee mientras nadie habla. @type {string | null} */
+    this.narracion = null;
     /** Ritmo de la voz (0 a 1, suavizado) de quien habla: hace latir el núcleo con Mateo y las runas con la gema. */
     this.voz = { mateo: 0, gema: 0, victoria: 0 };
   }
@@ -48,6 +50,24 @@ export class Dialogos {
     this.caras.victoria.hablar(texto);
     this.subtitulos.mostrar(texto, 'calido');
     this.ocultarEn = -1;
+  }
+
+  /**
+   * Subtítulo narrado (la leyenda del mural): se muestra entero mientras nadie habla; una línea de diálogo
+   * pasa por delante y, al terminar, vuelve. null lo quita. @param {string | null} texto
+   */
+  narrar(texto) {
+    if (texto === this.narracion) return;
+    this.narracion = texto;
+    if (this.cola.hablando || this.cola.cola.length || this.libre) return;
+    if (texto) {
+      this.subtitulos.mostrar(texto, 'leyenda');
+      this.subtitulos.actualizar(1);
+      this.ocultarEn = -1;
+    } else {
+      this.subtitulos.ocultar();
+      this.subtitulos.texto = '';
+    }
   }
 
   callar() {
@@ -99,6 +119,13 @@ export class Dialogos {
     if (this.cola.hablando) {
       const l = LINEAS[this.cola.actual];
       this.subtitulos.actualizar(Math.min(1, this.cola.t / (l.duracion * 0.92)));
+    } else if (!this.libre && !this.cola.cola.length && this.narracion) {
+      // Nadie habla: vuelve la leyenda
+      if (this.subtitulos.texto !== this.narracion) {
+        this.subtitulos.mostrar(this.narracion, 'leyenda');
+        this.subtitulos.actualizar(1);
+      }
+      this.ocultarEn = -1;
     } else if (!this.libre && this.ocultarEn < 0 && !this.cola.cola.length && this.subtitulos.texto) {
       this.subtitulos.actualizar(1);
       this.ocultarEn = 1.2;

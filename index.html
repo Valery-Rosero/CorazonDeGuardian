@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>El Templo del Sol Perdido</title>
+    <!-- La portada se pide antes que todo: es lo primero que se ve mientras carga el juego -->
+    <link rel="preload" as="image" href="/portada.jpg" />
   </head>
   <body>
     <canvas id="lienzo"></canvas>
@@ -58,10 +60,16 @@
       </div>
     </div>
 
-    <div id="pantalla-carga" class="pantalla">
-      <h1 class="titulo-oro">El Templo del Sol Perdido</h1>
-      <div class="barra"><div id="barra-progreso"></div></div>
-      <p id="texto-carga">Preparando la selva…</p>
+    <div id="pantalla-carga" class="pantalla portada">
+      <div class="portada-texto">
+        <p class="portada-antetitulo">Una aventura de Victoria Solano</p>
+        <h1 class="titulo-oro titulo-portada">El Templo del Sol Perdido</h1>
+        <p class="portada-lema">Siguió el mapa de su padre hasta donde nadie volvió</p>
+      </div>
+      <div class="portada-carga">
+        <div class="barra"><div id="barra-progreso"></div></div>
+        <p id="texto-carga">Preparando la selva…</p>
+      </div>
     </div>
 
     <div id="pantalla-inicio" class="pantalla oculto">

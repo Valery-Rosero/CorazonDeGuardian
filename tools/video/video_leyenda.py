@@ -19,7 +19,8 @@ from PIL import Image, ImageDraw, ImageFilter
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SALIDA = os.path.join(RAIZ, 'public', 'videos', 'leyenda.mp4')
-W, H, FPS = 640, 360, 24
+W, H, FPS = 640, 360, 24     # medidas de dibujo (las escenas están pensadas a este tamaño)
+K = 2                         # el video sale a 1280 × 720: el mural ocupa media pared y debe verse nítido
 ESCENA = 3.5          # segundos por escena
 FUNDIDO = 0.6
 TOTAL = ESCENA * 4
@@ -28,10 +29,33 @@ ESTUCO = (201, 180, 140)
 ROJO, OCRE, AZUL, ORO, PIEDRA, OSCURO = (165, 69, 47), (201, 138, 58), (62, 110, 142), (232, 179, 62), (110, 104, 96), (78, 61, 46)
 
 
+class Lienzo:
+    """ImageDraw que dibuja en coordenadas de 640 × 360 sobre una imagen K veces más grande."""
+
+    def __init__(self, img):
+        self.d = ImageDraw.Draw(img)
+
+    @staticmethod
+    def _xy(xy):
+        return [v * K for v in (c for p in xy for c in (p if isinstance(p, tuple) else (p,)))]
+
+    def line(self, xy, fill=None, width=1):
+        self.d.line(self._xy(xy), fill=fill, width=max(1, int(width * K)))
+
+    def ellipse(self, xy, fill=None, outline=None, width=1):
+        self.d.ellipse(self._xy(xy), fill=fill, outline=outline, width=max(1, int(width * K)))
+
+    def rectangle(self, xy, fill=None, outline=None, width=1):
+        self.d.rectangle(self._xy(xy), fill=fill, outline=outline, width=max(1, int(width * K)))
+
+    def polygon(self, xy, fill=None, outline=None):
+        self.d.polygon(self._xy(xy), fill=fill, outline=outline)
+
+
 def textura_estuco():
     """Fondo de estuco con manchas y grietas (se dibuja una vez)."""
-    img = Image.new('RGB', (W, H), ESTUCO)
-    d = ImageDraw.Draw(img)
+    img = Image.new('RGB', (W * K, H * K), ESTUCO)
+    d = Lienzo(img)
     import random
     r = random.Random(7)
     for _ in range(900):
@@ -81,7 +105,7 @@ def templo(d, cx, base, ancho):
 
 def escena(i, t, base_img):
     img = base_img.copy()
-    d = ImageDraw.Draw(img)
+    d = Lienzo(img)
     suelo = H - 70
     d.rectangle((24, suelo, W - 24, suelo + 6), fill=OSCURO)
     if i == 0:      # El pueblo adora al sol

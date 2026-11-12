@@ -45,7 +45,7 @@ export class MateoNPC {
     this.est = { velocidad: 0, enSuelo: true, velVertical: 0, aterrizaje: 0, orientacion: 0 };
     this._previa = new THREE.Vector3();
     this.arrodillado = false;
-    this.caminar = /** @type {{desde: THREE.Vector3, hasta: THREE.Vector3, t: number, d: number} | null} */ (null);
+    this.caminar = /** @type {{desde: THREE.Vector3, hasta: THREE.Vector3, t: number, d: number, frenar: boolean} | null} */ (null);
   }
 
   /** @param {THREE.Vector3} pos @param {number} rumbo */
@@ -72,10 +72,13 @@ export class MateoNPC {
     this.rastro.length = 0;
   }
 
-  /** Camina en línea recta hasta un punto (final). @param {THREE.Vector3} hasta @param {number} segundos */
-  caminarHasta(hasta, segundos) {
+  /**
+   * Camina (o corre, si es rápido) en línea recta hasta un punto (final).
+   * @param {THREE.Vector3} hasta @param {number} segundos @param {boolean} [frenar]  llega frenando, sin parar en seco
+   */
+  caminarHasta(hasta, segundos, frenar = false) {
     this.siguiendo = false;
-    this.caminar = { desde: this.raiz.position.clone(), hasta: hasta.clone(), t: 0, d: segundos };
+    this.caminar = { desde: this.raiz.position.clone(), hasta: hasta.clone(), t: 0, d: segundos, frenar };
   }
 
   /** @param {number} rumbo */
@@ -101,7 +104,7 @@ export class MateoNPC {
       const c = this.caminar;
       c.t += dt;
       const u = Math.min(1, c.t / c.d);
-      this.raiz.position.lerpVectors(c.desde, c.hasta, u);
+      this.raiz.position.lerpVectors(c.desde, c.hasta, c.frenar ? 1 - (1 - u) * (1 - u) : u);
       if (u >= 1) this.caminar = null;
     }
     const mov = this.raiz.position.clone().sub(this._previa);

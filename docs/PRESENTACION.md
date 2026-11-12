@@ -205,7 +205,9 @@ Cada punto dice primero **qué hace** el juego y después **qué herramienta lo 
 - **El santuario está a 600 m de la selva**, en el mismo mundo. Debajo de la pirámide, sus salas chocarían con la escalinata. Un fundido a negro oculta el viaje.
 - **Las cinemáticas son datos, no código.** Cada plano dice dónde está la cámara, qué mira, qué lente usa (en milímetros, como en el cine) y cuánto dura. La lente fija el ancho de la imagen, así que el encuadre es el mismo en cualquier pantalla.
 - **El ejército del final mide el terreno al cargar.** Lanza un rayo hacia abajo cada 2 m del monte y guarda las alturas, para que cada centinela pise la ladera sin calcular nada durante la escena.
-- **El mural vivo es un video fabricado con código.** Cada cuadro se dibuja con Python, se une en un video y se muestra sobre la pared con su propio coro posicional.
+- **El mural vivo es un video fabricado con código.** Cada cuadro se dibuja con Python, se une en un video y se muestra en grande sobre el muro este de la sala de los espejos, con su propio coro posicional y un subtítulo por escena que sigue el tiempo del video.
+- **La portada de la carga es un fotograma del propio juego**, dibujado en calidad alta desde una cámara colocada a propósito: Victoria en el sendero y la pirámide con su cima dorada.
+- **El final no tiene cortes desde el juego.** El primer plano arranca exactamente donde estaba la cámara del jugador y se aleja mientras Victoria corre sola hasta el borde. Mateo llega corriendo por el puente, porque venía detrás de ella en el escape. El amanecer empieza al salir del templo, bajo el fundido a negro.
 - **La partida se guarda en el navegador.** El punto de reaparición solo avanza: volver a cruzar el vestíbulo no te devuelve al principio del santuario.
 
 ### 4.3 Medir antes de optimizar

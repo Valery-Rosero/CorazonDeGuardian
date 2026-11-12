@@ -51,7 +51,7 @@ export class Subtitulos {
     this.mostrado = -1;
   }
 
-  /** @param {string} texto @param {'calido'|'gema'} [estilo] */
+  /** @param {string} texto @param {'calido'|'gema'|'leyenda'} [estilo] */
   mostrar(texto, estilo = 'calido') {
     this.texto = texto;
     this.mostrado = -1;

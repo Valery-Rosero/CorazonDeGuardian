@@ -113,6 +113,15 @@ export class CamaraTerceraPersona {
     this.reloj += dt;
     const lim = this.limites;
 
+    // La cámara de juego nunca se inclina de lado. La orientación sale de la propia cámara (el ratón la
+    // gira), así que si una cinemática la dejó ladeada (el plano holandés de la fase 3), el giro quedaba
+    // pegado; aquí se quita
+    this._euler.setFromQuaternion(this.camara.quaternion, 'YXZ');
+    if (Math.abs(this._euler.z) > 1e-5) {
+      this._euler.z = 0;
+      this.camara.quaternion.setFromEuler(this._euler);
+    }
+
     // Perfil: el de la zona más reciente; en exploración, correr cambia a 'carrera'
     let perfil = this.zonas.length ? this.zonas[this.zonas.length - 1] : 'exploracion';
     if (perfil === 'exploracion' && jugador.corriendo) perfil = 'carrera';

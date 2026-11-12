@@ -14,7 +14,7 @@ const B = { x: 3, y: 0, z: 12 };
 const C = { x: -2, y: 0, z: 6 };
 const CINES = [
   intro(A, B), brazalete(B, A), puente(A, B), puertaEspejos(B, mas(B, 3), A),
-  despertar(A, B), fase2(mas(B, 3), 0, A), fase3(mas(B, 3), 0), derrota(B, 0, A, C), final(A, 0, C),
+  despertar(A, B), fase2(mas(B, 3), 0, A), fase3(mas(B, 3), 0), derrota(B, 0, A, C), final(A, 0, C, { camara: mas(A, 2), mira: B, mm: 30 }),
   epilogo(A, { x: 1, y: 0, z: 0 }, C, (t) => ({ x: 120 - t, y: 30, z: 0 }), { x: 125, y: 34, z: 0 }, { x: -1, y: 0, z: 0 }, () => NaN),
 ];
 function mas(p, y) { return { x: p.x, y: p.y + y, z: p.z }; }

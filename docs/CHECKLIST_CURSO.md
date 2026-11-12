@@ -53,7 +53,7 @@ Detalle de cada requisito, con archivos y funciones: [REQUISITOS_CURSO.md](REQUI
 
 | Requisito del taller | Estado | En el juego |
 |---|---|---|
-| Video como textura 3D (`VideoTexture` sobre una malla) | Hecho | **Mural vivo** de la sala de los espejos (`src/world/living_mural.js`): la leyenda de la gema animada en cuatro escenas. El video se genera con código (`tools/video/video_leyenda.py`) |
+| Video como textura 3D (`VideoTexture` sobre una malla) | Hecho | **Mural vivo** de la sala de los espejos (`src/world/living_mural.js`): la leyenda de la gema animada en cuatro escenas, grande (7,2 × 4 m) y centrada en el muro este, con un subtítulo por escena. El video se genera con código a 1280 × 720 (`tools/video/video_leyenda.py`) |
 | Audio espacial (`PositionalAudio`) pegado al objeto | Hecho | El canto del mural es un `PositionalAudio` hijo del mural: sube al acercarse y baja al alejarse |
 | Interacción para iniciar o pausar video y sonido (autoplay) | Hecho | Tecla **E** frente al mural: «Despertar el mural» / «Dormir el mural» |
 | Animación fluida en el bucle | Hecho | Todo el juego |
@@ -61,7 +61,7 @@ Detalle de cada requisito, con archivos y funciones: [REQUISITOS_CURSO.md](REQUI
 | Concepto creativo propio | Hecho | Aventura de padre e hija en un templo del sol ([FICHA_CONCEPTO.md](FICHA_CONCEPTO.md)) |
 | Entrega: repositorio, video de 30–60 s, ficha PDF de una página con el nombre | Ver la sección 4 | |
 
-**Cómo mostrarlo:** `/?debug&auto&poderes&ir=debug_5`, girar hacia el muro norte (junto al paso de entrada) y pulsar **E** frente al mural.
+**Cómo mostrarlo:** `/?debug&auto&poderes&ir=debug_5`, girar hacia el muro este (a la derecha al entrar) y pulsar **E** frente al mural. Los subtítulos de la leyenda aparecen mientras Victoria está cerca.
 
 ### Semana 4 · PBR, luces, sombras y partículas
 

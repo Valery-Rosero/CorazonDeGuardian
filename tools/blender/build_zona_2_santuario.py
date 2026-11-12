@@ -396,7 +396,7 @@ def ornamentar(k, rnd):
     # ---- Sala de los espejos: misterio. Mosaico del sol, la leyenda pintada, pilastras y sacerdotes
     x, y0, y1, t = ESP['x'], ESP['y0'], ESP['y1'], ESP['techo']
     ib.mosaico_sol(k, *L(0, -45.0)[:2], 0, 3.2)
-    ib.mural(k, L(x, -43.5)[:2], L(x, -55.0)[:2], (-1.0, 0.0), 1.2, 4.6)
+    # La leyenda del muro este es el mural vivo (video, src/world/living_mural.js): ocupa el lugar de la pintura
     for lado in (-1, 1):
         a, b, n = _muro(lado, y0, y1, x)
         ib.friso_soles(k, a, b, n, 6.2, paso=2.2)

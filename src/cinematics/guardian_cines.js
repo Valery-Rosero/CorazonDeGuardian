@@ -151,37 +151,44 @@ export function derrota(pie, rumbo, victoria, cerca) {
 }
 
 /**
- * Final al amanecer (16 s): por primera vez el sol de frente. Victoria a la izquierda, Mateo a su derecha.
- * @param {V3} victoria  en el borde de la cornisa, mirando el amanecer
+ * Final al amanecer (18,5 s). Sin cortes desde el juego: el primer plano arranca donde estaba la cámara
+ * de juego, mientras Victoria llega corriendo al borde y se detiene frente al sol; la cámara se aleja y
+ * sube hasta el gran plano del horizonte. Mateo llega corriendo por el puente (venía detrás de ella en
+ * el escape), se detiene, recupera el aliento y se acomoda las gafas.
+ * @param {V3} victoria  donde se detiene Victoria, en el borde de la cornisa
  * @param {number} rumbo  hacia dónde mira Victoria (el sol)
- * @param {V3} mateo  sale del portal de runas detrás de ella
+ * @param {V3} mateo  donde se detiene Mateo al llegar del puente, detrás de ella
+ * @param {{camara: V3, mira: V3, mm: number}} juego  la cámara de juego en el instante del corte
  * @returns {Cinematica}
  */
-export function final(victoria, rumbo, mateo) {
+export function final(victoria, rumbo, mateo, juego) {
   const f = dir(rumbo);
   const horizonte = rel(victoria, f, 40, 0.5, 4);
   const alLado = rel(victoria, f, -0.1, 1.15, 0);
+  const hm = hacia(victoria, mateo);   // de Victoria hacia Mateo: el eje del reencuentro
   return {
     nombre: 'final',
     planos: [
-      // 1. Gran plano general desde el puente (12 m al lado de ella, 4 m sobre el tablero): el borde sobre
-      //    el mar de nubes; Victoria pequeña a la izquierda, el amanecer a la derecha
-      { duracion: 4, lente: 18, curva: 'lineal', camara: [rel(victoria, f, -5, 11.8, 4), rel(victoria, f, -4.6, 11.6, 4.1)], mira: [rel(victoria, f, 18, -7.5, 1.5), rel(victoria, f, 18, -7.2, 1.6)] },
-      // 2. Plano medio: Victoria oye pasos y se gira
-      { duracion: 2, lente: 50, camara: [rel(victoria, f, 2.9, -1.0, 1.45), rel(victoria, f, 2.8, -0.95, 1.45)], mira: [mas(victoria, 0, 1.3, 0), mas(victoria, 0, 1.32, 0)] },
-      // 3. Contraplano: Mateo sale del portal, se detiene y se acomoda las gafas
-      { duracion: 3, lente: 40, camara: [rel(victoria, f, 1.3, -0.45, 1.6), rel(victoria, f, 1.25, -0.43, 1.6)], mira: [mas(mateo, 0, 1.35, 0), mas(mateo, 0, 1.45, 0)] },
+      // 1. Desde la cámara de juego: Victoria corre al borde y se detiene; la cámara retrocede y sube
+      //    sobre el puente hasta el gran plano general: el borde sobre el mar de nubes y el amanecer
+      { duracion: 6.0, lente: [juego.mm, 18], curva: 'suave', camara: [juego.camara, rel(victoria, f, -5, 11.8, 4)], mira: [juego.mira, rel(victoria, f, 18, -7.2, 1.6)] },
+      // 2. Plano medio: Victoria oye pasos a su espalda y se gira
+      { duracion: 2.0, lente: 50, camara: [rel(victoria, f, 2.9, -1.0, 1.45), rel(victoria, f, 2.8, -0.95, 1.45)], mira: [mas(victoria, 0, 1.3, 0), mas(victoria, 0, 1.32, 0)] },
+      // 3. Por encima de su hombro: Mateo llega corriendo del puente, se detiene y se acomoda las gafas
+      { duracion: 3.5, lente: 40, camara: [rel(victoria, hm, -1.1, 0.45, 1.55), rel(victoria, hm, -1.05, 0.43, 1.55)], mira: [mas(mateo, 0, 1.35, 0), mas(mateo, 0, 1.45, 0)] },
       // 4. Los dos de espaldas, en silueta frente al sol (Mateo llega a su lado)
       { duracion: 3.5, lente: 35, curva: 'lineal', camara: [rel(alLado, f, -5, -0.55, 1.5), rel(alLado, f, -4.4, -0.55, 1.55)], mira: [horizonte, horizonte] },
       // 5. Grúa ascendente hacia el cielo
       { duracion: 3.5, lente: 28, curva: 'entra', camara: [rel(alLado, f, -4.4, -0.55, 1.6), rel(alLado, f, -7, -0.55, 15)], mira: [horizonte, mas(horizonte, 0, 14, 0)] },
     ],
     sucesos: [
-      { t: 4.2, accion: 'girar' },
-      { t: 6.0, accion: 'mateo' },
-      { t: 7.3, accion: 'gafas' },
-      { t: 8.7, accion: 'acercarse' },
-      { t: 10.4, accion: 'mirar_sol' },
+      { t: 0.0, accion: 'llegar' },
+      { t: 1.5, accion: 'frente_sol' },
+      { t: 6.3, accion: 'girar' },
+      { t: 8.0, accion: 'mateo' },
+      { t: 9.7, accion: 'gafas' },
+      { t: 11.0, accion: 'acercarse' },
+      { t: 12.2, accion: 'mirar_sol' },
     ],
     mezclaFinal: 0.01,
   };

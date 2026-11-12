@@ -67,6 +67,8 @@ export class ActoFinal {
     });
     /** 'antes', 'despertar', 'combate', 'derrota', 'escape', 'final', 'epilogo', 'fin' */
     this.etapa = 'antes';
+    /** El cielo ya es de amanecer (desde la salida del templo). */
+    this.amanecido = false;
     this.levantando = -1;
     this.gema = -1;
     this.velocidad = new THREE.Vector3();
@@ -124,7 +126,11 @@ export class ActoFinal {
     }
     if (evento === 'salida' && this.etapa === 'escape') {
       // Del vestíbulo al pasadizo del pórtico, con fundido (Mateo detrás)
-      c.transicion.iniciar(() => c.teletransportar('salida_santuario'));
+      // Al salir del templo ya amanece: Victoria cruza las ruinas y el puente con el sol naciendo
+      c.transicion.iniciar(() => {
+        c.teletransportar('salida_santuario');
+        this._amanecer();
+      });
       return true;
     }
     if (evento === 'final' && this.etapa === 'escape') {
@@ -286,40 +292,66 @@ export class ActoFinal {
     c.rig.zona('persecucion', false);
     c.jugador.bloqueado = true;
     const s = c.nivel.spawns.final;
-    const m = c.nivel.spawns.mateo_final;
-    c.jugador.colocar(s.pos, s.rumbo);
-    const haciaSol = new THREE.Vector3(Math.sin(s.rumbo), 0, Math.cos(s.rumbo));
-    c.ambiente.ponerAmanecer(haciaSol);
+    const f = new THREE.Vector3(Math.sin(s.rumbo), 0, Math.cos(s.rumbo));
+    const derecha = new THREE.Vector3(-f.z, 0, f.x);
+    // El amanecer ya llegó al salir del templo; si no (atajos de depuración), ahora
+    if (!this.amanecido) this._amanecer();
+    const enPunto = (/** @type {number} */ adelante, /** @type {number} */ lado) =>
+      s.pos.clone().addScaledVector(f, adelante).addScaledVector(derecha, lado);
+    // Victoria no salta de sitio: llega corriendo al borde. Si viene de lejos (depuración), empieza al
+    // final del puente. El punto intermedio rodea el pilar solar de la cornisa.
+    if (c.jugador.posicion.distanceTo(s.pos) > 12) c.jugador.colocar(enPunto(-5, 2.4), Math.atan2(f.x, f.z));
+    const intermedio = enPunto(-1.4, 2.1);
+    const ruta = c.jugador.posicion.clone().sub(s.pos).dot(f) < -1.4 ? [intermedio, s.pos.clone()] : [s.pos.clone()];
+    // Mateo venía detrás de ella: llega corriendo por el puente (ya pasadas las tablas rotas)
+    const desdePuente = enPunto(-6.5, 4.4);
+    const paradaMateo = enPunto(-2.4, 1.8);
     c.mateo.raiz.visible = false;
     c.mateo.siguiendo = false;
-    c.cine.reproducir(final(s.pos, s.rumbo, m.pos), {
+    c.mateo.caminar = null;
+    // La cámara de juego en este instante: el primer plano arranca exactamente ahí (sin corte)
+    const cam = c.cine.camara;
+    cam.getWorldDirection(_w);
+    const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect);
+    const juego = { camara: cam.position.clone(), mira: cam.position.clone().addScaledVector(_w, 8), mm: 18 / Math.tan(hfov / 2) };
+    c.cine.reproducir(final(s.pos, s.rumbo, paradaMateo, juego), {
       alSuceso: (/** @type {any} */ e) => {
-        if (e.accion === 'girar') c.jugador.mirarHacia(s.rumbo + Math.PI, 2.5);
-        if (e.accion === 'mateo') {
-          // Sale del portal de runas y camina hasta el lado de Victoria
-          c.mateo.colocar(m.pos, m.rumbo + Math.PI);
-          c.mateo.raiz.visible = true;
-          c.rafaga(_v.copy(m.pos).setY(m.pos.y + 1.2), 50, PALETA.cristal_runa, 4);
-          c.audio.efecto('portal', 0.7);
-          // Da un par de pasos fuera del portal, hacia ella, y se detiene
-          _w.subVectors(s.pos, m.pos).setY(0).normalize();
-          c.mateo.caminarHasta(_v.copy(m.pos).addScaledVector(_w, 0.5), 0.8);
+        if (e.accion === 'llegar') c.jugador.autopiloto = ruta;
+        if (e.accion === 'frente_sol') c.jugador.mirarHacia(s.rumbo, 2.0);
+        if (e.accion === 'girar') {
+          // Oye pasos a su espalda y se gira hacia el puente
+          c.jugador.mirarHacia(Math.atan2(paradaMateo.x - s.pos.x, paradaMateo.z - s.pos.z), 2.5);
+          c.cara.ponerEmocion('sorpresa');
         }
-        // El gesto de siempre: vuelve a ser él
-        if (e.accion === 'gafas') c.mateo.animador.gesto('ajustar_gafas');
+        if (e.accion === 'mateo') {
+          c.mateo.colocar(desdePuente, Math.atan2(paradaMateo.x - desdePuente.x, paradaMateo.z - desdePuente.z));
+          c.mateo.raiz.visible = true;
+          c.mateo.caminarHasta(paradaMateo, 1.4, true);
+        }
+        // Recupera el aliento y el gesto de siempre: vuelve a ser él
+        if (e.accion === 'gafas') {
+          c.mateo.animador.gesto('ajustar_gafas');
+          c.cara.ponerEmocion('alegria');
+        }
         if (e.accion === 'acercarse') {
           // A su lado, a la derecha de Victoria (los dos frente al sol)
-          const f = new THREE.Vector3(Math.sin(s.rumbo), 0, Math.cos(s.rumbo));
-          _w.set(-f.z, 0, f.x);
-          c.mateo.caminarHasta(_v.copy(s.pos).addScaledVector(_w, 1.15).addScaledVector(f, -0.1), 1.6);
+          c.mateo.caminarHasta(enPunto(-0.1, 1.15), 1.6, true);
         }
         if (e.accion === 'mirar_sol') {
           c.jugador.mirarHacia(s.rumbo, 3);
           c.mateo.mirar(s.rumbo);
+          c.cara.ponerEmocion('ternura');
         }
       },
       alTerminar: () => this._epilogo(),
     });
+  }
+
+  /** El cielo de amanecer (se llama al salir del templo durante el escape, bajo el fundido a negro). */
+  _amanecer() {
+    const s = this.c.nivel.spawns.final;
+    this.c.ambiente.ponerAmanecer(new THREE.Vector3(Math.sin(s.rumbo), 0, Math.cos(s.rumbo)));
+    this.amanecido = true;
   }
 
   /**

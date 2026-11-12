@@ -404,6 +404,8 @@ body.en-cine #cartografa, body.en-cine #poderes, body.en-cine #vida { opacity: 0
 }
 #subtitulo[data-estilo='calido'] #subtitulo-dicho { color: var(--calido); }
 #subtitulo[data-estilo='gema'] #subtitulo-dicho { color: var(--oro-claro); text-shadow: 0 0 10px rgba(221, 170, 54, 0.8); }
+/* La leyenda del mural: narración, en cursiva y color de estuco */
+#subtitulo[data-estilo='leyenda'] #subtitulo-dicho { color: #f1dfb6; font-style: italic; }
 #subtitulo-resto { color: rgba(255, 244, 226, 0.35); }
 
 /* Pantallas */
@@ -422,6 +424,27 @@ body.en-cine #cartografa, body.en-cine #poderes, body.en-cine #vida { opacity: 0
   padding: 16px;
 }
 #pantalla-carga { cursor: default; }
+/* Portada de la carga: un fotograma del propio juego (calidad alta) con el título sobre el cielo */
+.portada {
+  justify-content: space-between;
+  padding: clamp(28px, 7vh, 72px) 16px clamp(28px, 6vh, 56px);
+  background:
+    linear-gradient(180deg, rgba(12, 9, 6, 0.55) 0%, rgba(12, 9, 6, 0.05) 38%, rgba(12, 9, 6, 0.1) 62%, rgba(12, 9, 6, 0.88) 100%),
+    url('/portada.jpg') center 62% / cover no-repeat,
+    #0c0906;
+}
+.portada-texto { display: grid; gap: 10px; justify-items: center; animation: portada-entra 1.6s ease-out both; }
+.portada-antetitulo { margin: 0; font: italic 600 clamp(13px, 1.6vw, 17px) Georgia, serif; letter-spacing: 0.32em; text-transform: uppercase;
+  color: #f6e7c4; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75); }
+.titulo-portada { font-size: clamp(40px, 8.5vw, 104px); line-height: 1.02; letter-spacing: 0.03em; text-wrap: balance;
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 28px rgba(255, 196, 80, 0.35)); }
+.portada-lema { margin: 0; font: italic clamp(15px, 1.9vw, 21px) Georgia, serif; color: #f3e6cc; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); }
+.portada-carga { display: grid; gap: 8px; justify-items: end; align-self: flex-end; text-align: right; }
+.portada .barra { width: min(320px, 70vw); }
+.portada #texto-carga { opacity: 0.9; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
+.portada .barra { background: rgba(255, 255, 255, 0.22); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+@keyframes portada-entra { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .portada-texto { animation: none; } }
 #pausa { background: rgba(10, 8, 6, 0.55); }
 .titulo-oro {
   margin: 0;

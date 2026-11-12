@@ -1,13 +1,27 @@
 // @ts-check
 import * as THREE from 'three';
 
-/** El mural vivo: dónde está y cómo suena (sala de los espejos, muro norte, entre el paso y la antorcha). */
+/**
+ * El mural vivo: dónde está y cómo suena. Sala de los espejos, centrado en el muro este, entre la ventana
+ * del rayo y la esquina del fondo: grande, como un fresco que ocupa media pared.
+ */
 export const MURAL = Object.freeze({
-  centro: [-3.85, 2.2, 636.14],   // Three.js
-  ancho: 3.0,
-  alto: 1.69,                     // 16:9
+  centro: [9.9, 2.95, 649.5],     // Three.js: a 10 cm del muro este (x = 10)
+  giro: -Math.PI / 2,             // mira hacia el oeste, al centro de la sala
+  ancho: 7.2,
+  alto: 4.05,                     // 16:9
   video: '/videos/leyenda.mp4',
   canto: { referencia: 2.0, maximo: 14, volumen: 0.8 },
+  /** Subtítulos de la leyenda: una línea por escena del video (tools/video/video_leyenda.py, 3,5 s cada una). */
+  escena: 3.5,
+  leyenda: Object.freeze([
+    'Hace mucho, el pueblo del sol vivía de su luz.',
+    'Un sacerdote quiso la gema solo para él… y se volvió piedra.',
+    'Solo un brazalete de oro pudo sellarla.',
+    'Y el sol volvió a nacer por el este.',
+  ]),
+  /** Hasta esta distancia (m) se leen los subtítulos. */
+  lectura: 13,
 });
 
 /**
@@ -34,11 +48,12 @@ export class MuralVivo {
     this.textura.colorSpace = THREE.SRGBColorSpace;
     // Emisivo: la pintura brilla un poco, como una visión; así también resalta cuando es el objetivo
     const material = new THREE.MeshStandardMaterial({
-      map: this.textura, emissive: new THREE.Color('#FFFFFF'), emissiveMap: this.textura, emissiveIntensity: 0.45, roughness: 0.95,
+      map: this.textura, emissive: new THREE.Color('#FFFFFF'), emissiveMap: this.textura, emissiveIntensity: 0.8, roughness: 0.95,
     });
     this.malla = new THREE.Mesh(new THREE.PlaneGeometry(MURAL.ancho, MURAL.alto), material);
     this.malla.name = 'mural_vivo';
     this.malla.position.set(MURAL.centro[0], MURAL.centro[1], MURAL.centro[2]);
+    this.malla.rotation.y = MURAL.giro;
     this.malla.userData = { interactuable: 'mural', etiqueta: 'Despertar el mural' };
     escena.add(this.malla);
     // Marco dorado
@@ -55,6 +70,16 @@ export class MuralVivo {
     this.canto.setVolume(MURAL.canto.volumen);
     this.malla.add(this.canto);
     this.despierto = false;
+  }
+
+  /**
+   * La línea de la leyenda que corresponde a lo que muestra el video ahora (null si duerme).
+   * @returns {string | null}
+   */
+  subtitulo() {
+    if (!this.despierto) return null;
+    const i = Math.floor((this.video.currentTime % (MURAL.escena * MURAL.leyenda.length)) / MURAL.escena);
+    return MURAL.leyenda[Math.min(MURAL.leyenda.length - 1, i)];
   }
 
   /** Despierta o duerme el mural (tecla E). @returns {boolean} si quedó despierto */
