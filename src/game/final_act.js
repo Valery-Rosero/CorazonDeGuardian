@@ -14,6 +14,15 @@ const _v = new THREE.Vector3();
 const _w = new THREE.Vector3();
 
 /**
+ * ¿Victoria está dentro de la arena, ya pasado el umbral del despertar? El umbral queda a 13–15 m del
+ * centro; la entrada donde reaparece, a 12,5 m.
+ * @param {THREE.Vector3} pies @param {THREE.Vector3} centro
+ */
+export function enArena(pies, centro) {
+  return Math.abs(pies.y - centro.y) < 5 && Math.hypot(pies.x - centro.x, pies.z - centro.z) < 12.9;
+}
+
+/**
  * Acto 3 y desenlace (secciones 3.2, 7, 8.3 y 9.4): el despertar del Guardián, el combate con sus
  * tres fases, la derrota y Mateo liberado, el escape de 75 s y el final al amanecer.
  * Recibe del juego lo que necesita (jugador, cámara, audio, interfaz…) y avisa al terminar.
@@ -441,6 +450,10 @@ export class ActoFinal {
     const voz = this.combate.actor.voz;
     voz.mateo = c.dialogos.voz.mateo;
     voz.gema = c.dialogos.voz.gema;
+    // Reaparecer tras morir (o «Continuar» una partida) deja a Victoria en la entrada de la arena, ya
+    // pasado el umbral: su trigger no se vuelve a cruzar y el Guardián se quedaba dormido (los pilares,
+    // fríos; el núcleo, cerrado). Si está dentro y aún no despertó, despierta: la cinemática ya vista se salta.
+    if (this.etapa === 'antes' && !enCine && enArena(pies, this.centro)) this.trigger('despertar');
     if (this.levantando >= 0) {
       this.levantando += dt;
       this.combate.levantar(Math.min(1, this.levantando / 2.4));

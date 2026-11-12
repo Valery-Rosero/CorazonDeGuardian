@@ -7,9 +7,9 @@ export const GUARDIAN = Object.freeze({
   nucleo_abierto: { 2: 6, 3: 4 },   // s que el núcleo queda expuesto
   recarga_pilares: { 2: 4, 3: 3 },  // s hasta que los pilares se pueden volver a encender
   furia: 1.4,                   // fase 3: ataques un 40 % más rápidos
-  pausa_ataques: { 1: 2.2, 2: 1.8, 3: 1.8 },   // s entre ataques (en la fase 3 se divide por 'furia')
-  velocidad: 2.6,               // m/s al acercarse
-  giro: 2.0,                    // rad/s
+  pausa_ataques: { 1: 1.8, 2: 1.5, 3: 1.5 },   // s entre ataques (en la fase 3 se divide por 'furia')
+  velocidad: 3.8,               // m/s al acercarse (Victoria camina a 4,5 y corre a 7,5)
+  giro: 2.8,                    // rad/s
   distancia_comoda: 8,          // m: más lejos, camina hacia Victoria
   radio_movimiento: 10,         // m desde el centro de la arena
   alto_pecho: 3.6,              // m: donde apuntan los rayos de los pilares

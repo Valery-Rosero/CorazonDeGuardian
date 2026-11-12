@@ -193,6 +193,36 @@ def orilla(k, alturas_selva):
     return _alturas_y_colores(k, alturas, celdas, _color_orilla(rnd))
 
 
+def valle(k):
+    """La selva es un valle cerrado: detrás del claro de entrada (norte) se levantan riscos de capas, como los
+    del desfiladero, y alrededor una corona de montes cercanos. Desde el inicio ya no se ve el borde del mapa
+    ni el lago abierto; el lago queda fuera, y se ve desde lo alto (la cornisa y las ruinas).
+    Árboles jóvenes (instancias) en lo alto de los riscos y en los bordes. Con su propio azar."""
+    rnd = random.Random(4242)
+    # Riscos del norte, detrás de la fila de ceibas (y 24-34); se solapan medio metro: sin caras pegadas
+    for (xa, xb, ya, yb, alto, ras) in ((-34, -9.5, 35.0, 43.0, 15.5, ('x1',)), (-10, 10.5, 36.0, 44.0, 21.0, ('x0', 'x1')),
+                                        (10, 34, 35.0, 43.5, 17.0, ('x0',))):
+        rock_builder.estratos(k, (xa, ya, LAGO[4] - 2.5), (xb, yb, alto), rnd, 0.9, repisas=REPISAS, a_ras=ras)
+        for _ in range(5):
+            ARBOLES_JOVENES.append((rnd.uniform(xa + 2, xb - 2), rnd.uniform(ya + 2.5, yb - 1.5), alto, rnd.uniform(0, math.tau),
+                                    rnd.uniform(1.0, 1.4)))
+    # Corona de montes cercanos: al norte detrás de los riscos, en las esquinas y a los lados del valle
+    # (solo al norte de y = -40: al este de la cornisa está el monte del epílogo y no se toca)
+    montes = [(-45, 62, 30, 40), (-15, 66, 32, 46), (15, 64, 30, 42), (45, 60, 30, 38),
+              (-60, 42, 26, 34), (60, 44, 26, 36),
+              (-64, 14, 26, 30), (64, 10, 26, 32), (-66, -14, 26, 26), (66, -18, 26, 28), (-64, -38, 24, 24), (64, -40, 24, 26)]
+    for (x, y, ancho, alto) in montes:
+        rock_builder.montana(k, (x + rnd.uniform(-3, 3), y + rnd.uniform(-3, 3)), ancho, alto * rnd.uniform(0.9, 1.1), rnd,
+                             color=rnd.choice(('montana', 'montana', 'montana_lejana')), z0=LAGO[4] - 4)
+    # Borde de selva más tupido (instancias): entre las ceibas del borde y hacia los riscos
+    for _ in range(46):
+        if rnd.random() < 0.55:
+            x, y = rnd.choice((-1, 1)) * rnd.uniform(30, 40), rnd.uniform(-50, 34)
+        else:
+            x, y = rnd.uniform(-34, 34), rnd.uniform(21, 34)
+        ARBOLES_JOVENES.append((x, y, 1.2 if abs(x) > 26 and y > -52 else 0.3, rnd.uniform(0, math.tau), rnd.uniform(1.0, 1.5)))
+
+
 def isla(k):
     """La pirámide se levanta en una isla: tierra llana alrededor de su base (con las cabezas del pie de la
     escalinata) que baja al lago. No se camina: solo se ve desde las ruinas y el puente."""
@@ -704,6 +734,7 @@ def main():
     ruinas(k, m, rnd)
     paisaje(k, m, rnd)
     orilla(k, alturas)
+    valle(k)
     isla(k)
     lago(m)
     checkpoints_y_flores(m)

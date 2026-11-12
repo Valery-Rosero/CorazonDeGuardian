@@ -135,7 +135,7 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 |---|---|
 | La pirámide se diseñó primero en su tablero (`docs/previews/piramide_tablero.png`, dibujado por `tools/disenos/tablero_piramide.py`) y se construye con las mismas medidas (`tools/blender/diseno_piramide.py`). Comparación: `docs/previews/piramide_vs_tablero.png`. | Antes eran cinco cajas lisas; pediste más diseño. Misma regla de coherencia: primero el dibujo. |
 | Siete cuerpos de talud, tablero con friso de soles y cornisa; escalinata única de 118 peldaños entre alfardas, con dos cabezas solares al pie; templo de tres puertas con crestería y sol dorado; musgo, lianas, árboles jóvenes y bloques caídos. Misma huella (96 m) y altura (84 m). | Sigue guiando desde toda la selva y no toca la meseta ni los planos de las cinemáticas. |
-| Presupuesto de la selva: de 50.000 a 70.000 triángulos (usa 67.768; la pirámide suma unos 12.600 y el pórtico, la orilla y la isla unos 5.800). | La computadora de prueba tiene tarjeta dedicada. |
+| Presupuesto de la selva: de 50.000 a 70.000 triángulos (usa 69.124; la pirámide suma unos 12.600; el pórtico, la orilla y la isla unos 5.800; el valle cerrado unos 1.350). | La computadora de prueba tiene tarjeta dedicada. |
 | El cielo acompaña a Victoria. | Es una caja de 400 m: una cámara lejos del centro del mundo quedaba fuera y veía negro. |
 
 ## El pórtico del santuario, el atrio y el lago
@@ -148,6 +148,7 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 | Al recuperar una partida guardada en el santuario o la arena, y al salir del santuario en el escape, la losa y la puerta quedan abiertas. | Con el atrio cerrado, Victoria quedaría encerrada en el escape. |
 | Un lago llena el valle entre los montes (nivel −1 m): la selva baja a su orilla, la pirámide está en una isla, el abismo bajo el puente es agua con rocas que asoman y hay montes también al norte. | El suelo terminaba en un vacío blanco. |
 | El lago es un *shader* opaco (Fresnel hacia el color de la niebla, olas lentas y destellos del sol) que acompaña a la cámara y se oculta dentro del templo. Caer al agua es como caer al abismo: Victoria vuelve al último punto. | Una lámina transparente de cientos de metros cuesta más y se ordena mal; su borde nunca se ve. |
+| La selva es un valle cerrado: detrás del claro de entrada hay tres riscos de capas (15 a 21 m, como los del desfiladero) y alrededor una corona de montes cercanos; el borde es más tupido (árboles jóvenes, instancias). | Desde el inicio se veía el final del mapa y el lago abierto detrás de unos pocos árboles. Los montes nuevos quedan al norte de y = −40: el monte del epílogo no cambia. |
 | La orilla, la isla y el lago tienen su propio azar. | Así no movieron nada de la selva ya aprobada. |
 | Los anillos del tronco de las palmas van girados medio lado uno respecto al otro. | Dos anillos seguidos quedaban casi en el mismo plano en un lado del tronco y podían parpadear (lo encontró `npm run zfighting`). |
 
@@ -157,7 +158,8 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 |---|---|
 | Centinela: 6 m/s (antes 4), reacciona en 0,3 s, aviso de 0,45 s, golpe de 25, ve a 15 m y tarda 6 s en olvidarte. | Iba más lento que Victoria caminando (4,5 m/s); ahora hay que correr (7,5 m/s) para escapar. Pediste más dificultad. |
 | Espectro: 4 m/s, detecta a 22 m, carga 0,6 s, dispara cada 1,6 s, orbes a 13 m/s y daño 20. | Más presión a distancia; el escudo y la esquiva siguen alcanzando. |
-| Guardián: 2,6 m/s, gira más rápido, pausas entre ataques de 2,2 / 1,8 s, avisos un poco más cortos y furia del 40 % en la fase 3. | El combate era muy pausado. |
+| Guardián: 3,8 m/s, gira a 2,8 rad/s, pausas entre ataques de 1,8 / 1,5 s, avisos un poco más cortos y furia del 40 % en la fase 3. | El combate era muy pausado; pediste un jefe más rápido. |
+| Al reaparecer en la arena (o continuar allí una partida) el Guardián despierta solo; la cinemática ya vista se salta. | Victoria reaparece pasado el umbral del despertar: el trigger no se volvía a cruzar, el Guardián seguía dormido y los pilares no le hacían nada. |
 | Las pruebas de los enemigos leen los valores de la configuración. | Así se puede ajustar la dificultad sin reescribirlas. |
 
 ## Pendiente

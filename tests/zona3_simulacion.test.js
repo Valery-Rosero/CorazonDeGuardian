@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { GUARDIAN, ROCAS } from '../src/config/boss.js';
 import { PoolRocas } from '../src/enemies/boss_attacks.js';
 import { CombateGuardian } from '../src/enemies/boss_fight.js';
+import { enArena } from '../src/game/final_act.js';
 import { cargarGlb, crearSimulacion, DT } from './simulacion.js';
 
 /** @type {Awaited<ReturnType<typeof crearSimulacion>>} */
@@ -102,4 +103,20 @@ test('Guardián: despierto baja del trono y camina hacia Victoria; en el golpe s
   assert.ok(combate.actor.raiz.position.z < inicio.z, 'hacia la entrada');
   assert.ok(sismicos > 0, 'hubo al menos un golpe sísmico');
   assert.ok(maxAlto > 1, `salto del golpe sísmico: ${maxAlto.toFixed(2)} m`);
+});
+
+test('reaparecer en la arena despierta al Guardián: el punto de reaparición ya pasó el umbral', () => {
+  // Al morir, Victoria vuelve a la entrada de la arena, más allá del trigger del despertar (que no se
+  // vuelve a cruzar): el acto final lo detecta con enArena y lo despierta (antes se quedaba dormido)
+  const centro = sim.nivel.raiz.getObjectByName('centro_arena').getWorldPosition(new THREE.Vector3());
+  assert.ok(enArena(sim.nivel.spawns.arena.pos, centro), 'la entrada cuenta como dentro de la arena');
+  sim.jugador.colocar(sim.nivel.spawns.arena.pos.clone(), sim.nivel.spawns.arena.rumbo);
+  const eventos = [];
+  const anterior = sim.triggers.alCambiar;
+  sim.triggers.alCambiar = (t, entra) => { if (entra && t.datos.evento) eventos.push(t.datos.evento); };
+  sim.correr(0.5);
+  sim.triggers.alCambiar = anterior;
+  assert.ok(!eventos.includes('despertar'), 'el trigger no se dispara desde la entrada (por eso hacía falta)');
+  // Antes del umbral, en el pasillo, todavía no
+  assert.equal(enArena(new THREE.Vector3(0, -3, 678), centro), false);
 });
