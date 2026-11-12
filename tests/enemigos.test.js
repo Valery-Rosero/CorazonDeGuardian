@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { CENTINELA, ESPECTRO, ESPEJOS } from '../src/config/enemies.js';
+import { PLAYER as JUGADOR } from '../src/config/player.js';
 import { LogicaCentinela } from '../src/enemies/sentinel_logic.js';
 import { LogicaEspectro } from '../src/enemies/specter_logic.js';
 import { MaquinaEstados } from '../src/enemies/state_machine.js';
@@ -37,25 +38,28 @@ test('centinela: de guardia no ve lo que está a su espalda ni detrás de un mur
   // Delante pero tapada
   correr(c, 1, { x: 0, z: 6 }, { visible: false });
   assert.equal(c.estado, 'guardia');
-  // Delante a 14 m: fuera de los 12 m de visión
-  correr(c, 1, { x: 0, z: 14 });
+  // Delante, 2 m más allá de su visión
+  correr(c, 1, { x: 0, z: CENTINELA.vision + 2 });
   assert.equal(c.estado, 'guardia');
 });
 
-test('centinela: la ve, espera 0,5 s con el ojo dorado, la persigue a 4 m/s y golpea tras el aviso', () => {
+test('centinela: la ve, espera con el ojo dorado, la persigue más rápido de lo que ella camina y golpea tras el aviso', () => {
   const c = new LogicaCentinela(CENTINELA, { x: 0, z: 0 }, 0);
   correr(c, DT * 2, { x: 1, z: 8 });
   assert.equal(c.estado, 'alerta');
-  correr(c, 0.4, { x: 1, z: 8 });
+  correr(c, CENTINELA.espera_alerta - 0.1, { x: 1, z: 8 });
   assert.equal(c.estado, 'alerta', 'todavía avisa');
   correr(c, 0.2, { x: 1, z: 8 });
   assert.equal(c.estado, 'persecucion');
   assert.equal(c.orden.velocidad, CENTINELA.velocidad);
+  assert.ok(CENTINELA.velocidad > JUGADOR.velocidad_caminar && CENTINELA.velocidad < JUGADOR.velocidad_correr,
+    'caminando no se le escapa; corriendo sí');
   assert.ok(c.orden.z > 0.9, 'va hacia Victoria');
-  // Ya cerca: levanta los brazos 0,6 s y golpea una sola vez
+  // Ya cerca: levanta los brazos (el aviso) y golpea una sola vez
   let golpes = 0;
   let enAviso = 0;
-  for (let t = 0; t < 1.2; t += DT) {
+  // Un solo ataque: el aviso y casi toda la recuperación (después vuelve a atacar)
+  for (let t = 0; t < CENTINELA.aviso_ataque + CENTINELA.recuperacion * 0.8; t += DT) {
     c.actualizar(DT, { yo: { x: 0, z: 0 }, jugador: { x: 0, z: 1.5 }, visible: true, jugadorVivo: true });
     if (c.golpe) golpes++;
     if (c.estado === 'ataque') enAviso += DT;
@@ -65,11 +69,11 @@ test('centinela: la ve, espera 0,5 s con el ojo dorado, la persigue a 4 m/s y go
   assert.equal(c.estado, 'recuperacion', 'queda vulnerable después del golpe');
 });
 
-test('centinela: si la pierde 4 s vuelve a su puesto y retoma la guardia', () => {
+test('centinela: si la pierde de vista un rato vuelve a su puesto y retoma la guardia', () => {
   const c = new LogicaCentinela(CENTINELA, { x: 0, z: 0 }, 0);
-  correr(c, 0.7, { x: 0, z: 8 });
+  correr(c, CENTINELA.espera_alerta + 0.2, { x: 0, z: 8 });
   assert.equal(c.estado, 'persecucion');
-  correr(c, 3.9, { x: 0, z: 8 }, { visible: false, yo: { x: 0, z: 5 } });
+  correr(c, CENTINELA.olvido - 0.1, { x: 0, z: 8 }, { visible: false, yo: { x: 0, z: 5 } });
   assert.equal(c.estado, 'persecucion');
   correr(c, 0.2, { x: 0, z: 8 }, { visible: false, yo: { x: 0, z: 5 } });
   assert.equal(c.estado, 'regreso');
@@ -94,9 +98,9 @@ test('centinela: 3 pulsos lo derriban; cada golpe lo aturde 0,3 s; dormido no ve
   assert.equal(c.danar(25), false, 'no muere dos veces');
 });
 
-test('espectro: detecta a 18 m, guarda entre 8 y 12 m, carga 0,8 s y dispara cada 2,5 s', () => {
+test('espectro: detecta de lejos, guarda entre 8 y 12 m, carga antes de cada disparo y dispara a su ritmo', () => {
   const e = new LogicaEspectro(ESPECTRO, { x: 0, z: 0 });
-  correr(e, 0.5, { x: 0, z: 25 });
+  correr(e, 0.5, { x: 0, z: ESPECTRO.deteccion + 3 });
   assert.equal(e.estado, 'flotar');
   // Demasiado cerca: se aleja
   e.actualizar(DT, { yo: { x: 0, z: 0 }, jugador: { x: 0, z: 5 }, visible: true, jugadorVivo: true });
@@ -114,8 +118,9 @@ test('espectro: detecta a 18 m, guarda entre 8 y 12 m, carga 0,8 s y dispara cad
     if (e.disparo) disparos++;
     if (e.estado === 'cargar') cargando += DT;
   }
-  assert.ok(disparos >= 3 && disparos <= 4, `${disparos} disparos`);
-  assert.ok(cargando / disparos > 0.75, 'cada disparo se avisa con la carga');
+  const ciclo = ESPECTRO.carga + ESPECTRO.recarga;
+  assert.ok(disparos >= Math.floor(10 / ciclo) - 1 && disparos <= Math.ceil(10 / ciclo) + 1, `${disparos} disparos`);
+  assert.ok(cargando / disparos > ESPECTRO.carga * 0.9, 'cada disparo se avisa con la carga');
   assert.equal(e.danar(25), false);
   assert.equal(e.danar(25), true, '2 pulsos');
 });

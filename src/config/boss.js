@@ -6,10 +6,10 @@ export const GUARDIAN = Object.freeze({
   umbral_fase3: 0.35,           // fracción de vida
   nucleo_abierto: { 2: 6, 3: 4 },   // s que el núcleo queda expuesto
   recarga_pilares: { 2: 4, 3: 3 },  // s hasta que los pilares se pueden volver a encender
-  furia: 1.3,                   // fase 3: ataques un 30 % más rápidos
-  pausa_ataques: { 1: 3.0, 2: 2.4, 3: 2.4 },   // s entre ataques (en la fase 3 se divide por 'furia')
-  velocidad: 1.6,               // m/s al acercarse
-  giro: 1.4,                    // rad/s
+  furia: 1.4,                   // fase 3: ataques un 40 % más rápidos
+  pausa_ataques: { 1: 2.2, 2: 1.8, 3: 1.8 },   // s entre ataques (en la fase 3 se divide por 'furia')
+  velocidad: 2.6,               // m/s al acercarse
+  giro: 2.0,                    // rad/s
   distancia_comoda: 8,          // m: más lejos, camina hacia Victoria
   radio_movimiento: 10,         // m desde el centro de la arena
   alto_pecho: 3.6,              // m: donde apuntan los rayos de los pilares
@@ -17,9 +17,9 @@ export const GUARDIAN = Object.freeze({
 
 /** Ataques (tabla de la sección 7.1). aviso: s de aviso visual y sonoro antes del golpe. */
 export const ATAQUES = Object.freeze({
-  sismico: { aviso: 1.0, dano: 20, fases: [1, 2, 3], velocidad_anillo: 9, ancho_anillo: 0.9, radio_max: 17 },
-  barrido: { aviso: 0.8, dano: 25, fases: [1, 2, 3], alcance: 8.5, angulo: 200, cerca: 9 },
-  rayo: { aviso: 1.5, dano: 30, fases: [2, 3], disparo: 0.5, ancho: 0.9, fijar: 0.25 },
+  sismico: { aviso: 0.8, dano: 20, fases: [1, 2, 3], velocidad_anillo: 11, ancho_anillo: 0.9, radio_max: 17 },
+  barrido: { aviso: 0.65, dano: 25, fases: [1, 2, 3], alcance: 8.5, angulo: 200, cerca: 9 },
+  rayo: { aviso: 1.2, dano: 30, fases: [2, 3], disparo: 0.5, ancho: 0.9, fijar: 0.25 },
   rocas: { aviso: 1.0, dano: 15, fases: [3], cantidad: 7, radio: 1.4, dispersion: 6 },
   invocacion: { aviso: 1.6, dano: 0, fases: [3], espectros: 2 },
 });

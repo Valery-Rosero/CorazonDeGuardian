@@ -1,20 +1,20 @@
 // @ts-check
-/** Enemigos (sección 6) y acertijo de los espejos (sección 8.2). */
+/** Enemigos (sección 6) y acertijo de los espejos (sección 8.2). Dificultad subida el 11/11: más rápidos y agresivos. */
 
 export const CENTINELA = Object.freeze({
   vida: 75,                // 3 pulsos
-  dano: 20,
-  vision: 12,              // m
+  dano: 25,
+  vision: 15,              // m
   angulo_vision: 110,      // grados (cono completo)
-  espera_alerta: 0.5,      // s con el ojo dorado antes de perseguir
-  velocidad: 4,            // m/s
-  velocidad_regreso: 2.2,  // m/s al volver a su puesto
+  espera_alerta: 0.3,      // s con el ojo dorado antes de perseguir
+  velocidad: 6,            // m/s: más que Victoria caminando (4,5); para escapar hay que correr (7,5)
+  velocidad_regreso: 3.2,  // m/s al volver a su puesto
   alcance_ataque: 2.2,     // m
-  aviso_ataque: 0.6,       // s con los brazos en alto
+  aviso_ataque: 0.45,      // s con los brazos en alto
   radio_golpe: 2.6,        // m: el golpe al suelo alcanza hasta aquí
-  recuperacion: 0.8,       // s vulnerable tras el golpe
+  recuperacion: 0.55,      // s vulnerable tras el golpe
   aturdido: 0.3,           // s
-  olvido: 4,               // s sin verte antes de volver
+  olvido: 6,               // s sin verte antes de volver
   radio: 0.75,             // m (cápsula física)
   alto: 2.3,               // m
   masa: 220,               // kg
@@ -24,13 +24,13 @@ export const CENTINELA = Object.freeze({
 
 export const ESPECTRO = Object.freeze({
   vida: 50,                // 2 pulsos
-  dano: 15,
-  deteccion: 18,           // m
+  dano: 20,
+  deteccion: 22,           // m
   distancia_min: 8,        // m
   distancia_max: 12,       // m
-  velocidad: 2.6,          // m/s
-  carga: 0.8,              // s brillando antes de disparar
-  recarga: 2.5,            // s entre disparos
+  velocidad: 4,            // m/s
+  carga: 0.6,              // s brillando antes de disparar
+  recarga: 1.6,            // s entre disparos
   altura: 0.5,             // m sobre el suelo
   ondulacion: 0.18,        // m de subida y bajada
   radio: 0.45,             // m (esfera de impacto: la máscara)
@@ -38,7 +38,7 @@ export const ESPECTRO = Object.freeze({
 });
 
 export const ORBE = Object.freeze({
-  velocidad: 9,            // m/s
+  velocidad: 13,           // m/s
   radio: 0.28,             // m
   vida: 4,                 // s
   pool: 12,

@@ -81,12 +81,12 @@ test('Guardián: bajo el 35 % entra en furia (núcleo 4 s, pilares 3 s, invocaci
   assert.equal(g.danar(25), false);
 });
 
-test('Guardián: la furia acelera los avisos un 30 %', () => {
+test('Guardián: en la fase 3 la furia acelera los avisos', () => {
   const g = new LogicaGuardian(GUARDIAN, ATAQUES);
   g.fase = 2;
   const normal = g.aviso('sismico');
   g.fase = 3;
-  assert.ok(Math.abs(g.aviso('sismico') - normal / 1.3) < 1e-9);
+  assert.ok(Math.abs(g.aviso('sismico') - normal / GUARDIAN.furia) < 1e-9);
 });
 
 test('escape: 75 s, avisa una sola vez al agotarse y muestra m:ss', () => {
