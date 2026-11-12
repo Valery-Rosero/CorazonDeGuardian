@@ -1,6 +1,4 @@
 // @ts-check
-import { LINEAS } from './dialogues.js';
-
 /**
  * Sonidos generados por tools/audio/audio_synth.py en public/sounds/.
  * Los bucles van en .wav (sin silencio al repetir); los efectos cortos, en .mp3.
@@ -51,7 +49,7 @@ export const SONIDOS = Object.freeze({
   dano: '/sounds/dano.mp3',
   espejo_girar: '/sounds/espejo_girar.mp3',
   acertijo_resuelto: '/sounds/acertijo_resuelto.mp3',
-  // Día 5: el Guardián, el escape y las voces (murmullo sintetizado por línea del guion)
+  // Día 5: el Guardián y el escape. Los personajes no tienen voz: los diálogos van con subtítulos
   nucleo_latido: '/sounds/nucleo_latido.wav',
   derrumbe: '/sounds/derrumbe.wav',
   guardian_rugido: '/sounds/guardian_rugido.mp3',
@@ -62,8 +60,6 @@ export const SONIDOS = Object.freeze({
   roca_cae: '/sounds/roca_cae.mp3',
   pilar_enciende: '/sounds/pilar_enciende.mp3',
   victoria: '/sounds/victoria.mp3',
-  ...Object.fromEntries(Object.keys(LINEAS).map((c) => [`voz/${c}`, `/sounds/voz/${c}.mp3`])),
-  'voz/gem_susurro_puerta': '/sounds/voz/gem_susurro_puerta.mp3',
 });
 
 /** Volúmenes por categoría (se podrán cambiar en Opciones). */
@@ -72,7 +68,6 @@ export const VOLUMEN = Object.freeze({
   musica: 0.7,
   efectos: 0.9,
   ambiente: 0.8,
-  voces: 1.0,
 });
 
 /** Audio posicional (requisito 3). Con el modelo lineal el volumen llega a 0 en 'maximo'. */

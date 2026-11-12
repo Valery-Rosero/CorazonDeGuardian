@@ -17,7 +17,7 @@ Victoria Solano, una joven cartógrafa, sigue el mapa de su padre desaparecido h
 
 ## Lo que lo hace distinto
 
-- **Todo se genera con código:** personajes y escenarios con Python en Blender; música, voces y efectos sintetizados con numpy; luz, materiales y partículas en Three.js. No hay imágenes ni sonidos descargados.
+- **Todo se genera con código:** personajes y escenarios con Python en Blender; música y efectos sintetizados con numpy (los personajes no tienen voz: los diálogos se leen); luz, materiales y partículas en Three.js. No hay imágenes ni sonidos descargados.
 - **Una historia contada con la cámara:** diez cinemáticas diseñadas plano a plano. Cuando habla el padre, late el pecho del Guardián; cuando habla la gema, brilla la máscara. Termina con un final abierto: un ejército marcha hacia ellos.
 - **Los 8 requisitos del curso**, demostrables en vivo desde un modo demostración integrado.
 

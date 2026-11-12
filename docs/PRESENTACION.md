@@ -30,7 +30,7 @@ El checklist completo, tema por tema de las semanas 1 a 10, está en [CHECKLIST_
 | cannon-es | 0.20 | Física: gravedad, cuerpos rígidos, colisiones, materiales de contacto |
 | Vite | 8 | Servidor de desarrollo y empaquetado (`npm run dev`, `npm run build`), como desde la semana 6 |
 | Blender | 5.2 con Python (`bpy`) | Todos los modelos: escenarios, personajes y enemigos, **generados con scripts**, no a mano |
-| Python + numpy / Pillow / ffmpeg | 3.12 | Sonidos, voces y música sintetizados; el video del mural dibujado cuadro a cuadro |
+| Python + numpy / Pillow / ffmpeg | 3.12 | Sonidos y música sintetizados; el video del mural dibujado cuadro a cuadro |
 | node:test | Node 24 | 103 pruebas automáticas |
 
 **Mensaje:** no hay ni un modelo, ni una imagen ni un sonido descargado. Todo sale de código.
@@ -53,7 +53,7 @@ src/
   game/        historia, acto final, modo demostración, partida guardada
   config/      todos los números del juego (velocidades, daños, paleta, calidad)
 tools/blender/ los scripts que construyen los modelos
-tools/audio/   síntesis de sonidos, voces y música
+tools/audio/   síntesis de sonidos y música
 tests/         pruebas (lógica y simulaciones con los escenarios reales)
 ```
 
@@ -247,12 +247,12 @@ this.malla.add(this.canto);
 - **Posicionales** (`PositionalAudio`, modelo lineal con distancia de referencia y máxima):
   - la cascada (3 a 25 m), las antorchas, el latido del Guardián y el mural;
   - un grupo de 8 para efectos en el mundo.
-- **Globales** (`THREE.Audio`): portal, checkpoints, poderes, voces y música.
-- **Desbloqueo del audio:** el sonido empieza con el clic de «Jugar». En la pausa se suspende el `AudioContext`, así las voces no siguen sonando.
+- **Globales** (`THREE.Audio`): portal, checkpoints, poderes y música.
+- **Desbloqueo del audio:** el sonido empieza con el clic de «Jugar». En la pausa se suspende el `AudioContext`, así nada sigue sonando.
 - **Síntesis con numpy** (`tools/audio/`):
   - **efectos:** ondas y ruido filtrado;
-  - **música:** un leitmotiv que cambia por zona;
-  - **voces:** un «murmullo» con los formantes de cada vocal del texto.
+  - **música:** un leitmotiv que cambia por zona.
+- **Los personajes no tienen voz:** los diálogos se leen en subtítulos y la boca de quien habla se mueve con el texto.
 
 ```js
 // src/core/audio_manager.js
@@ -394,7 +394,7 @@ malla.quaternion.set(cuerpo.quaternion.x, cuerpo.quaternion.y, cuerpo.quaternion
   - un **suceso** es algo como «decir», «rugido» o «Mateo llega».
 - **La lente en milímetros** fija el ancho de la imagen, así el encuadre es igual en cualquier pantalla (`fovDeLente`).
 - **Al terminar,** la cámara de la cinemática se mezcla con la de juego, sin saltos.
-- **El reloj de las cinemáticas es el real** (el de las voces), así un fotograma lento no las desincroniza.
+- **El reloj de las cinemáticas es el real** (el de la música y los subtítulos), así un fotograma lento no las desincroniza.
 - **Son 10:** introducción, brazalete, puente, puerta de los espejos, despertar, fases 2 y 3, derrota, final y el epílogo con un ejército de 256 criaturas dibujadas con `InstancedMesh` en 6 llamadas.
 
 ---
@@ -459,6 +459,6 @@ malla.quaternion.set(cuerpo.quaternion.x, cuerpo.quaternion.y, cuerpo.quaternion
 - **Problemas que encontramos al revisar,** y su solución:
   - **El bloom velaba el cielo:** se excluye el cielo del brillo.
   - **Un píxel inválido dejaba un cuadro negro:** se limpian los valores antes del desenfoque.
-  - **Las cinemáticas se desfasaban de las voces:** van con el reloj real.
+  - **Las cinemáticas se desfasaban de los diálogos:** van con el reloj real.
   - **Superficies superpuestas en el santuario:** se corrigieron con la herramienta `zfighting`.
   - **La losa del pórtico se podía rodear:** el atrio ahora es un patio cerrado y una prueba intenta rodearla y saltarla desde nueve sitios.

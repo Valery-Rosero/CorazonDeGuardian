@@ -4,8 +4,8 @@ import { ColaDialogo } from '../cinematics/timeline.js';
 
 /**
  * Sistema de diálogos (guion con códigos, docs/GUION_DIALOGOS.md): cada línea muestra su subtítulo
- * (Mateo y Victoria en blanco cálido, la Gema en dorado), suena su voz (voz/<código>, murmullo
- * sintetizado o grabación si existe) y mueve la boca de quien habla.
+ * (Mateo y Victoria en blanco cálido, la Gema en dorado) y mueve la boca de quien habla. Los personajes
+ * no tienen voz: los diálogos se leen (decisión del 11/11).
  */
 export class Dialogos {
   /**
@@ -108,7 +108,6 @@ export class Dialogos {
     if (empieza) {
       const l = LINEAS[empieza];
       this.subtitulos.mostrar(l.texto, l.quien === 'gema' ? 'gema' : 'calido');
-      this.audio.efecto(`voz/${empieza}`, l.quien === 'gema' ? 0.85 : 1);
       const cara = l.quien === 'victoria' ? this.caras.victoria : l.quien === 'mateo' && !l.dentro ? this.caras.mateo : null;
       if (cara) {
         cara.ponerEmocion(CARA_POR_EMOCION[l.emocion] ?? 'neutral');

@@ -709,8 +709,8 @@ def main():
     if not ffmpeg:
         print('[audio] AVISO: ffmpeg no está instalado; los efectos quedan en .wav', file=sys.stderr)
     # El orden importa: primero lo de los días 1 a 3 (los mismos sonidos de siempre), después lo nuevo
-    os.makedirs(os.path.join(SALIDA, 'voz'), exist_ok=True)
-    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, {**EFECTOS_DIA5, **VOCES_DIA5}), ({}, VOCES_DIA6), ({}, VOCES_EPILOGO)):
+    # Los personajes no tienen voz (decisión del 11/11): el murmullo sigue aquí, pero no se genera
+    for bucles, efectos in ((BUCLES, EFECTOS), (BUCLES_DIA4, EFECTOS_DIA4), (BUCLES_DIA5, EFECTOS_DIA5)):
         generar(bucles, efectos, ffmpeg)
     # Música: los bucles en .wav (un .mp3 añade silencio al empezar y el bucle se oiría cortado)
     for nombre, fn in music_synth.PIEZAS.items():

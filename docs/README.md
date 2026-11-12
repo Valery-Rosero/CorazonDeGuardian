@@ -4,7 +4,7 @@ Aventura 3D para navegador hecha con **Three.js 0.160.0** y **cannon-es 0.20.0**
 
 Victoria sigue el mapa de su padre desaparecido hasta un templo perdido en la selva y descubre que el Guardián del Sol que lo protege es su propio padre, atrapado por la gema que vino a buscar.
 
-Todo se genera con código: los personajes y escenarios con scripts de Python en Blender, la música, las voces y los efectos de sonido con numpy, y los materiales, la luz y las partículas en Three.js.
+Todo se genera con código: los personajes y escenarios con scripts de Python en Blender, la música y los efectos de sonido con numpy (los personajes no tienen voz), y los materiales, la luz y las partículas en Three.js.
 
 ## Requisitos
 
@@ -61,7 +61,7 @@ Pulsa **Jugar** en el menú. **Demostración técnica** recorre los 8 requisitos
 Sigue la sección 13 del documento maestro (`TEMPLO_DEL_SOL_INSTRUCCIONES.md`):
 
 - `src/`: el código del juego (núcleo, cámara, jugador, enemigos, mundo, interfaz, cinemáticas, efectos).
-- `tools/blender/`: la generación de modelos; `tools/audio/`: la síntesis de sonidos, voces y música.
+- `tools/blender/`: la generación de modelos; `tools/audio/`: la síntesis de sonidos y música.
 - `public/models/` y `public/sounds/`: los recursos generados.
 - `tests/`: las pruebas.
 - `docs/`: la documentación y los renders de revisión (`docs/previews/`).

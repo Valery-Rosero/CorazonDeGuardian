@@ -19,7 +19,7 @@
 
 const DT_MAXIMO = 0.1; // al volver de otra pestaña la física no se descontrola
 /**
- * Las cinemáticas y los diálogos van con el reloj de verdad (el de las voces): un fotograma lento no
+ * Las cinemáticas y los diálogos van con el reloj de verdad (el de la música): un fotograma lento no
  * debe atrasar la cámara ni los subtítulos respecto a lo que ya sonó. Solo se corta si la pestaña
  * estuvo oculta.
  */

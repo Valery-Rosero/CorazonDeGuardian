@@ -82,7 +82,7 @@
 | Escape: 75 s y faltan las tablas 3 y 4 del puente. La salida del vestíbulo lleva con fundido al pasadizo del pórtico. | La ruta limpia ronda 23 s (`tests/escape_simulacion.test.js`): queda margen para las rocas, los tropiezos y un checkpoint. |
 | El final ocurre en la cornisa al amanecer: Victoria mira al este, hacia el sol, y Mateo sale del portal de runas detrás de ella. | Lo dice el tablero de la cámara; mirando al este el sol queda de frente, en silueta. |
 | El menú principal es básico: jugar y opciones de volumen, sensibilidad del ratón y sacudida de cámara, guardadas en `localStorage`. | Lo mínimo para jugar de principio a fin; el resto de opciones queda para el día 6. |
-| Las voces de los diálogos son el murmullo sintetizado (`public/sounds/voz/*.mp3`, generado por `tools/audio/audio_synth.py`). | Opción A aprobada. Una grabación con el mismo nombre la reemplaza. |
+| Los personajes no tienen voz: los diálogos van solo con subtítulos y la boca de quien habla. Se quitaron el murmullo sintetizado (`public/sounds/voz/`) y la opción «Voces». | Lo pediste el 11/11; los demás sonidos se quedan. |
 | Parámetros de depuración: `&final=derrota`, `&final=amanecer` o `&final=epilogo` saltan al final del combate, al amanecer o al epílogo; `&tcine=N` adelanta N segundos la siguiente cinemática y `&pasofijo=N` avanza 1/N s por fotograma (capturas en tiempos exactos sin GPU). | Chrome sin ventana dibuja pocos fotogramas: sin ellos no se pueden revisar los planos. |
 
 ## Rendimiento (tras medir ~30 FPS en el equipo de referencia)
@@ -154,7 +154,7 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 ## Pendiente
 
 - Medir los FPS en una computadora con tarjeta gráfica dedicada (calidad media y alta).
-- Escuchar la música y las voces en el juego y ajustar volúmenes.
+- Escuchar la música y los efectos en el juego y ajustar volúmenes.
 - Grabar el video (`docs/GUION_VIDEO.md`) y completar la ficha (`docs/FICHA_CONCEPTO.md`) con los nombres del equipo.
 - Publicar `dist/` en la raíz de un dominio (Netlify o Vercel) si se quiere un enlace directo.
 

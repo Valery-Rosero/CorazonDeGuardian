@@ -111,7 +111,6 @@ export class Historia {
       alSuceso: (/** @type {any} */ e) => {
         if (e.accion === 'runas') acciones.runas();
         if (e.accion === 'abrir') acciones.abrir();
-        if (e.accion === 'susurro') c.audio.efecto('voz/gem_susurro_puerta', 0.7);
         if (e.accion === 'decir') c.dialogos.decir(...e.datos);
       },
       alTerminar: () => {

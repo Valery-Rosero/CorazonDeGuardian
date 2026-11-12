@@ -2,16 +2,15 @@
 
 Este guion reúne todo lo que se dice o se lee en el juego. Cada línea tiene un **código**: el juego lo usa para mostrar el subtítulo, mover la cara del personaje y, si existe, reproducir el audio con ese nombre.
 
-- **Sin grabación:** el juego funciona igual, con subtítulos y la boca siguiendo el texto.
-- **Con grabación:** basta con poner el archivo en `public/sounds/voz/` con el nombre indicado y sonará en lugar de la voz sintetizada.
+- **Los personajes no tienen voz** (decisión del 11/11): cada línea se lee en subtítulos y la boca de quien habla sigue el texto.
 
-*Estado: el sistema de diálogos (`src/ui/dialogue_player.js`) ya lee estos códigos desde `src/config/dialogues.js`, reproduce las voces sintetizadas de `public/sounds/voz/` y mueve la boca y la expresión de quien habla. Las cuatro líneas que eran propuesta se aprobaron el 11/11 y ya están en el juego (brazalete, cascada, puente y voz tras la puerta).*
+*Estado: el sistema de diálogos (`src/ui/dialogue_player.js`) lee estos códigos desde `src/config/dialogues.js`, muestra el subtítulo y mueve la boca y la expresión de quien habla. Sin sonido de voz. Las cuatro líneas que eran propuesta se aprobaron el 11/11 y ya están en el juego (brazalete, cascada, puente y voz tras la puerta).*
 
-La duración estimada es la que el juego le da a la línea para mover la boca. Una toma grabada puede durar un poco más o menos; el juego se ajusta a la duración real del audio.
+La duración es la que el juego le da a la línea para el subtítulo y para mover la boca.
 
 ---
 
-## Personajes y voces
+## Personajes
 
 | Personaje | Cómo suena | Subtítulo |
 |---|---|---|
@@ -91,10 +90,6 @@ El documento maestro solo fija los diálogos del combate y las páginas del diar
 
 ---
 
-## Si se graban las voces
+## Voces
 
-- **Formato:** WAV o MP3, mono, 44,1 o 48 kHz. Sirve un celular en un cuarto silencioso, a un palmo de la boca.
-- **Una toma limpia por archivo**, con medio segundo de silencio antes y después. Graben 2 o 3 tomas y elijan la mejor.
-- **Sin efectos:** el eco de Mateo dentro del Guardián y el coro de la Gema los añade el juego.
-- **Nombre del archivo** = código de la línea: `mat_despertar_01.mp3`. Van en `public/sounds/voz/`.
-- **Importante para la entrega:** el documento del curso dice que todo el sonido se genera por código. Las voces grabadas por el equipo son originales, pero conviene **confirmarlo con el docente** antes de grabar.
+Los personajes no tienen voz: lo pediste el 11/11. El murmullo sintetizado (`murmullo` en `tools/audio/audio_synth.py`) sigue en el código por si algún día se quiere volver a usar, pero no se genera ni se carga.

@@ -50,7 +50,7 @@ export const REQUISITOS = [
         metodo: 'AudioListener', que: 'es el «micrófono» de la escena: todo sonido se calcula respecto a su posición y orientación.' },
       { texto: 'La cascada, las antorchas, el núcleo del Guardián y el mural suenan más fuerte al acercarse y del lado donde están.',
         metodo: 'PositionalAudio', que: 'sonido colocado en un punto; baja el volumen con la distancia y lo reparte entre el oído izquierdo y el derecho.' },
-      { texto: 'La música, las voces y los avisos se oyen igual en cualquier lugar.',
+      { texto: 'La música y los avisos se oyen igual en cualquier lugar.',
         metodo: 'Audio', que: 'sonido sin posición, el mismo en los dos oídos.' },
       { texto: 'Ningún sonido es descargado: todos se fabrican con código, sumando ondas y ruido.',
         metodo: 'numpy (Python)', que: 'calcula muestra por muestra la forma de la onda y la guarda como archivo de sonido.' },

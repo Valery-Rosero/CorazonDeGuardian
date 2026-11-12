@@ -1262,7 +1262,6 @@ async function iniciar() {
       audio.ponerVolumen('musica', o.musica);
       audio.ponerVolumen('efectos', o.efectos);
       audio.ponerVolumen('ambiente', o.efectos * 0.9);
-      audio.ponerVolumen('voces', o.voces);
       document.body.classList.toggle('sin-subtitulos', !o.subtitulos);
       rig.recentrarAuto = o.recentrar;
       sensibilidad = o.sensibilidad;
@@ -1303,7 +1302,7 @@ async function iniciar() {
     bucle.pausado = true;
     if (panelDiario.abierto) panelDiario.cerrar();
     if (!muerta) pantallas.pausa(true);
-    // En la pausa todo el sonido se detiene (voces incluidas): al volver, la cinemática y su voz siguen juntas
+    // En la pausa todo el sonido se detiene: al volver, la cinemática y su música siguen juntas
     oyente.context.suspend();
   });
 }

@@ -24,7 +24,7 @@ Los poderes se desbloquean en orden. El Pulso solar y la Manipulación se obtien
 
 ## Opciones (menú principal)
 
-Volumen general, de música, de efectos y de voces; sensibilidad del ratón; sacudida de cámara; subtítulos; que la cámara vuelva sola detrás de Victoria (apagado por defecto); calidad gráfica (automática, baja, media o alta). La calidad se aplica al volver a cargar la página.
+Volumen general, de música y de efectos; sensibilidad del ratón; sacudida de cámara; subtítulos; que la cámara vuelva sola detrás de Victoria (apagado por defecto); calidad gráfica (automática, baja, media o alta). La calidad se aplica al volver a cargar la página.
 
 ## Depuración (en `npm run dev` o con `?debug` en la dirección)
 

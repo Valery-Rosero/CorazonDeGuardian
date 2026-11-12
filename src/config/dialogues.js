@@ -1,7 +1,7 @@
 // @ts-check
 /**
  * Líneas de diálogo del guion (docs/GUION_DIALOGOS.md, sección 3.4 del documento maestro).
- * El código es el nombre del audio en public/sounds/voz/ (voz sintetizada: murmullo, opción A).
+ * Los personajes no tienen voz (11/11): cada línea es un subtítulo con su duración y la boca de quien habla.
  * Las cuatro líneas que eran *propuesta* (brazalete, cascada, puente y voz) se aprobaron el 11/11.
  *
  * quien: 'victoria' | 'mateo' | 'gema'. estilo del subtítulo: Mateo y Victoria en blanco cálido,
