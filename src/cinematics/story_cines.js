@@ -8,7 +8,8 @@
 import { hacia, mas, rel } from './guardian_cines.js';
 
 /**
- * Introducción (15 s): el mundo antes que ella; después Victoria sola con el mapa de su padre.
+ * Introducción (15 s): el mundo antes que ella; después Victoria sola con el mapa de su padre. Dos líneas
+ * narradas dan el contexto: Mateo entró en la selva hace siete años y no volvió.
  * @param {V3} victoria  pies de Victoria sobre la roca del mirador
  * @param {V3} cima  cima dorada de la pirámide
  * @returns {Cinematica}
@@ -32,6 +33,9 @@ export function intro(victoria, cima) {
     sucesos: [
       { t: 0.0, accion: 'mapa' },
       { t: 0.0, accion: 'niebla', datos: 2.2 },
+      { t: 0.5, accion: 'narrar', datos: 'Hace siete años, el cartógrafo Mateo Solano entró en esta selva buscando el Templo del Sol.' },
+      { t: 5.6, accion: 'narrar', datos: 'Nunca volvió. Su hija tardó siete años en terminar el mapa que él dejó a medias.' },
+      { t: 10.9, accion: 'narrar', datos: null },
       { t: 4.0, accion: 'niebla', datos: 1.5 },
       { t: 4.4, accion: 'acorde' },
       { t: 7.0, accion: 'niebla', datos: 1 },

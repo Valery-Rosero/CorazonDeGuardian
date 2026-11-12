@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { fovDeLente, LineaTiempo, suave } from './timeline.js';
 
 /** Sucesos que solo tienen sentido dentro de la cinemática: al saltarla no se entregan. */
-const SOLO_EN_CINE = new Set(['decir', 'susurro', 'rugido', 'acorde']);
+const SOLO_EN_CINE = new Set(['decir', 'susurro', 'rugido', 'acorde', 'narrar']);
 
 const _p = new THREE.Vector3();
 const _m = new THREE.Vector3();

@@ -179,6 +179,14 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 | No se partió la malla de la selva en trozos. | En una tarjeta dedicada sobran triángulos; partirla añade llamadas de dibujo, que cuestan procesador. Se decide con la prueba de rendimiento en la PC de prueba. |
 | Prueba de rendimiento (`npm run banco` o `/?banco`): seis lugares, la cámara da una vuelta en cada uno, y muestra FPS, el 1 % más lento, el tiempo del procesador y el de la tarjeta (consulta de tiempo de WebGL 2), con un botón para copiar los resultados. | Aquí no hay tarjeta dedicada: la cifra real sale de la PC de prueba y dice quién limita. |
 
+## Guion reescrito (12/11)
+
+| Decisión | Motivo |
+|---|---|
+| Mateo desapareció **hace siete años**; Victoria tenía 17 y ahora tiene 24. Lo dicen dos líneas narradas en la introducción, la página 1 del diario, la portada de carga y el reencuentro. | Pediste el contexto de cuánto hace que desapareció. |
+| Victoria le dice «Mateo» y solo lo llama «papá» una vez, al descubrirlo dentro del Guardián; sus líneas son de cartógrafa adulta («Lo anoto en el mapa: entrada oculta»). | Sonaba a niña con daddy issues. Las líneas nuevas caben en la misma duración y en el mismo plano. |
+| En las cinemáticas el subtítulo va encima de la franja negra de abajo; la leyenda del mural no pisa la narración de una cinemática. | La franja tapaba la última línea de los subtítulos largos. |
+
 ## Pendiente
 
 - Medir los FPS en una computadora con tarjeta gráfica dedicada con `npm run banco` (calidad media y alta) y mandar los resultados copiados.

@@ -6,7 +6,7 @@
 
 ## La idea
 
-Victoria Solano, una joven cartógrafa, sigue el mapa de su padre desaparecido hasta un templo perdido en la selva. Allí descubre que el temible Guardián del Sol que lo protege es su propio padre, atrapado por la gema que vino a buscar. Para salvarlo tiene que romper el núcleo del Guardián y sellar la gema en el brazalete que él nunca encontró.
+Hace siete años, el cartógrafo Mateo Solano entró en la selva buscando el Templo del Sol y nunca volvió. Su hija Victoria, ahora cartógrafa ella también, termina el mapa que él dejó a medias y lo sigue hasta el templo. Allí descubre que el temible Guardián del Sol que lo protege es su propio padre, atrapado por la gema que vino a buscar. Para salvarlo tiene que romper el núcleo del Guardián y sellar la gema en el brazalete que él nunca encontró.
 
 ## El juego
 

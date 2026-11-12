@@ -984,9 +984,10 @@ async function iniciar() {
         ui.textosDerrota('El templo se derrumbó', 'Reintenta desde el inicio del escape.');
         morir();
       }
-      // La leyenda del mural se lee en subtítulos mientras está despierto y Victoria está cerca
+      // La leyenda del mural se lee en subtítulos mientras está despierto y Victoria está cerca (en las
+      // cinemáticas no: la narración de la introducción usa el mismo subtítulo)
       const leyenda = mural.subtitulo();
-      dialogos.narrar(leyenda && jugador.posicion.distanceTo(mural.malla.position) < MURAL.lectura ? leyenda : null);
+      if (!cine.activo) dialogos.narrar(leyenda && jugador.posicion.distanceTo(mural.malla.position) < MURAL.lectura ? leyenda : null);
       dialogos.actualizar(bucle.dtCine);
       ejercito.actualizar(bucle.dtCine);
       santuario.actualizar(dt, t);
@@ -1243,7 +1244,7 @@ async function iniciar() {
     pantallas.ocultarInicio();
     document.getElementById('pantalla-carga').classList.add('oculto');
     if (params.has('intro')) setTimeout(() => { historia.introduccion(); musica.tema(); }, 300);
-    if (params.has('hablar')) setTimeout(() => decir('Te dije que llegaría antes que tú.', 'ternura'), 400);
+    if (params.has('hablar')) setTimeout(() => decir('Siete años. Pero te encontré.', 'ternura'), 400);
     // &final=derrota o &final=amanecer salta al final del combate o al amanecer (para revisar las cinemáticas)
     if (params.get('final') === 'derrota') {
       teletransportar('debug_6');

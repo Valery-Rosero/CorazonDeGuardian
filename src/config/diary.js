@@ -5,7 +5,7 @@
  */
 export const PAGINAS = Object.freeze([
   { n: 1, codigo: 'mat_diario_01', lugar: 'Entrada', estilo: 'tinta',
-    texto: 'Día 1. El mapa no mentía. Hay escalones de piedra bajo el musgo. Victoria, si algún día lees esto, perdóname por no esperarte.' },
+    texto: 'Día 1. El mapa no mentía: hay escalones bajo el musgo. Le prometí a Victoria traerla en la próxima expedición. No pude esperar. Perdóname, hija.' },
   { n: 2, codigo: 'mat_diario_02', lugar: 'Cascada', estilo: 'tinta',
     texto: 'Detrás del agua hay un camino. Los constructores amaban el sol: cada piedra mira hacia el este.' },
   { n: 3, codigo: 'mat_diario_03', lugar: 'Puente', estilo: 'tinta',

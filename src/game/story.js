@@ -51,8 +51,11 @@ export class Historia {
         if (e.accion === 'niebla') c.niebla(e.datos);
         if (e.accion === 'titulo') c.ui.titulo(e.datos);
         if (e.accion === 'guardar_mapa') this._guardarMapa();
+        // El contexto narrado (hace siete años): subtítulo sin personaje, como la leyenda del mural
+        if (e.accion === 'narrar') c.dialogos.narrar(e.datos);
       },
       alTerminar: () => {
+        c.dialogos.narrar(null);
         this._guardarMapa();
         c.niebla(1);
         c.jugador.bloqueado = false;

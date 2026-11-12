@@ -179,6 +179,8 @@ html, body {
 #cine-franjas .abajo { bottom: 0; }
 #cine-franjas.activas .franja { height: calc((100vh - 100vw / 2.35) / 2); min-height: 9vh; }
 body.en-cine #hud > *:not(#subtitulo) { opacity: 0; transition: opacity 0.4s; }
+/* En las cinemáticas el subtítulo va justo encima de la franja negra de abajo (antes la franja tapaba su última línea) */
+body.en-cine #subtitulo { bottom: calc(max(9vh, (100vh - 100vw / 2.35) / 2) + 12px); }
 body.en-menu #hud { opacity: 0; }
 body.en-cine #cartografa, body.en-cine #poderes, body.en-cine #vida { opacity: 0 !important; }
 #cine-saltar { position: fixed; right: 24px; bottom: 22px; z-index: 16; display: flex; align-items: center; gap: 10px;
