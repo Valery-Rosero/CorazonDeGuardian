@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala todo lo necesario para El Templo del Sol Perdido en macOS o Linux, con un solo comando.
+# Instala todo lo necesario para El Corazón del Guardián en macOS o Linux, con un solo comando.
 #
 #   Dentro de la carpeta del proyecto:   bash scripts/instalar.sh
 #   Con las herramientas para regenerar modelos, sonidos y video:   bash scripts/instalar.sh --completo

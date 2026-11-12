@@ -1,4 +1,4 @@
-# El Templo del Sol Perdido — ficha del concepto
+# El Corazón del Guardián — ficha del concepto
 
 *Borrador para que el equipo lo revise, añada sus nombres y lo exporte a PDF (una página).*
 

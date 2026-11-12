@@ -2,7 +2,7 @@
   "name": "templo-del-sol",
   "private": true,
   "version": "0.1.0",
-  "description": "El Templo del Sol Perdido: aventura 3D para navegador con Three.js y cannon-es",
+  "description": "El Corazón del Guardián: aventura 3D para navegador con Three.js y cannon-es",
   "type": "module",
   "scripts": {
     "jugar": "vite --open",

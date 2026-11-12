@@ -1,4 +1,4 @@
-# El Templo del Sol Perdido
+# El Corazón del Guardián
 
 Aventura 3D para navegador hecha con **Three.js 0.160.0** y **cannon-es 0.20.0**: proyecto integrador de *Programación de Entornos Multimedia*.
 

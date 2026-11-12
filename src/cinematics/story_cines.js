@@ -35,7 +35,7 @@ export function intro(victoria, cima) {
       { t: 4.0, accion: 'niebla', datos: 1.5 },
       { t: 4.4, accion: 'acorde' },
       { t: 7.0, accion: 'niebla', datos: 1 },
-      { t: 11.8, accion: 'titulo', datos: 'El Templo del Sol Perdido' },
+      { t: 11.8, accion: 'titulo', datos: 'El Corazón del Guardián' },
       { t: 14.8, accion: 'guardar_mapa' },
     ],
   };

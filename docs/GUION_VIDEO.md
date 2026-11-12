@@ -11,7 +11,7 @@ Video corto que muestra los 8 requisitos del curso **con el audio activado**. Lo
 
 | Tiempo | En pantalla | Qué hacer | Voz en off (opcional) |
 |---|---|---|---|
-| 0–6 s | La introducción: vuelo sobre la selva, la cima dorada en la niebla, Victoria con el mapa, el título | Pulsar **Jugar** y dejar correr la introducción | «El Templo del Sol Perdido: una aventura 3D en el navegador, hecha toda con código.» |
+| 0–6 s | La introducción: vuelo sobre la selva, la cima dorada en la niebla, Victoria con el mapa, el título | Pulsar **Jugar** y dejar correr la introducción | «El Corazón del Guardián: una aventura 3D en el navegador, hecha toda con código.» |
 | 6–12 s | **1 · Escenario y sombras.** Las ruinas del pórtico con sombras de sol | Demostración → requisito 1; mover un poco la cámara | «Escenarios generados en Blender con Python, con luz y sombras.» |
 | 12–18 s | **2 · Navegación.** Girar la cámara; después la cámara libre | Mover el ratón; marcar «Cámara libre» y orbitar | «Cámara en tercera persona y cámara libre con OrbitControls.» |
 | 18–25 s | **3 · Audio 3D y 5 · Partículas.** Caminar hacia la cascada | Demostración → requisito 3; caminar hacia el agua y alejarse | «El sonido de la cascada sube al acercarse; el agua son partículas con gravedad.» |

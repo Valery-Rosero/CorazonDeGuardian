@@ -1,6 +1,6 @@
 # Checklist del curso: todo lo visto en clase y cómo está en el juego
 
-Fuente: las diapositivas y talleres de las semanas 1 a 10 de *Programación de Entornos Multimedia* (Mg. Gabriel Guerrero Arellano). Para cada tema dice cómo se aplicó en **El Templo del Sol Perdido**, dónde está y cómo mostrarlo.
+Fuente: las diapositivas y talleres de las semanas 1 a 10 de *Programación de Entornos Multimedia* (Mg. Gabriel Guerrero Arellano). Para cada tema dice cómo se aplicó en **El Corazón del Guardián**, dónde está y cómo mostrarlo.
 
 **Estado:** **Hecho** = está en el juego tal como se vio en clase · **Equivalente** = se cumple el mismo objetivo por otra vía, explicada en la fila · **No se usa** = no está, con el motivo.
 

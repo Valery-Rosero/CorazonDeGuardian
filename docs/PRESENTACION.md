@@ -1,4 +1,4 @@
-# El Templo del Sol Perdido — contenido de las diapositivas (revisión técnica)
+# El Corazón del Guardián — contenido de las diapositivas (revisión técnica)
 
 Cada sección es una diapositiva. Todas siguen el mismo orden:
 - **Tema del curso:** lo que se vio en clase.
@@ -16,7 +16,7 @@ El checklist completo, tema por tema de las semanas 1 a 10, está en [CHECKLIST_
 
 ## 1. Portada
 
-- **El Templo del Sol Perdido.** Aventura 3D en tercera persona para el navegador.
+- **El Corazón del Guardián.** Aventura 3D en tercera persona para el navegador.
 - **Curso:** Programación de Entornos Multimedia. Equipo: *(nombres)*.
 - **Imagen:** la portada del juego (`public/portada.jpg`, un fotograma del propio juego).
 

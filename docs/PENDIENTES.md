@@ -162,6 +162,12 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 | Al reaparecer en la arena (o continuar allí una partida) el Guardián despierta solo; la cinemática ya vista se salta. | Victoria reaparece pasado el umbral del despertar: el trigger no se volvía a cruzar, el Guardián seguía dormido y los pilares no le hacían nada. |
 | Las pruebas de los enemigos leen los valores de la configuración. | Así se puede ajustar la dificultad sin reescribirlas. |
 
+## Nombre del juego (11/11)
+
+| Decisión | Motivo |
+|---|---|
+| El juego se llama **El Corazón del Guardián** (antes «El Templo del Sol Perdido»): título de la página, portada de carga, menú, título de la introducción, documentos y diapositivas. La propuesta y el documento maestro conservan el nombre original; el repositorio y el paquete siguen llamándose `ElTemploDelSol` / `templo-del-sol`. | Lo pediste: pone en el centro la historia (Mateo atrapado dentro del Guardián). Cambiar el nombre del repositorio rompería el enlace de GitHub y el instalador. |
+
 ## Pendiente
 
 - Medir los FPS en una computadora con tarjeta gráfica dedicada (calidad media y alta).

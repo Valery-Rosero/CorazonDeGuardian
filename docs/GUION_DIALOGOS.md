@@ -1,4 +1,4 @@
-# El Templo del Sol Perdido — Guion de diálogos
+# El Corazón del Guardián — Guion de diálogos
 
 Este guion reúne todo lo que se dice o se lee en el juego. Cada línea tiene un **código**: el juego lo usa para mostrar el subtítulo, mover la cara del personaje y, si existe, reproducir el audio con ese nombre.
 

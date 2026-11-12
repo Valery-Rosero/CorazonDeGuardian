@@ -1,6 +1,6 @@
 # Instrucciones para agentes
 
-El Templo del Sol Perdido: aventura 3D para el navegador hecha con Three.js 0.160, cannon-es 0.20 y Vite.
+El Corazón del Guardián: aventura 3D para el navegador hecha con Three.js 0.160, cannon-es 0.20 y Vite.
 
 ## Instalar todo (un comando)
 

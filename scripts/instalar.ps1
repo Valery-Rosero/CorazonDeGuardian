@@ -1,5 +1,5 @@
 ﻿<#
-  Instala todo lo necesario para El Templo del Sol Perdido en Windows, con un solo comando.
+  Instala todo lo necesario para El Corazón del Guardián en Windows, con un solo comando.
 
   Dentro de la carpeta del proyecto:
       powershell -ExecutionPolicy Bypass -File scripts\instalar.ps1
