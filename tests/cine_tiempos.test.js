@@ -57,7 +57,7 @@ test('cinemáticas: cada línea de diálogo termina dentro de su cinemática, co
 
 test('cinemáticas: la última línea de un plano de diálogo no se corta con el cambio de plano', () => {
   // Las líneas que el guion gráfico quiere en cuadro: quien habla se ve mientras dice su frase
-  const enCuadro = { fase2: { vic_fase2_01: 1 }, fase3: { mat_fase3_01: 1 }, derrota: { mat_derrota_01: 3, vic_derrota_01: 4 }, brazalete: { vic_brazalete_01: 2 }, despertar: { gem_despertar_01: 5 }, epilogo: { mat_epilogo_01: 3, vic_epilogo_01: 4 } };
+  const enCuadro = { fase2: { vic_fase2_01: 1 }, fase3: { mat_fase3_01: 1 }, derrota: { mat_derrota_01: 3, vic_derrota_01: 4, mat_derrota_02: 5 }, brazalete: { vic_brazalete_01: 2 }, despertar: { gem_despertar_01: 5 }, epilogo: { mat_epilogo_01: 3, vic_epilogo_01: 4 } };
   for (const cine of CINES) {
     const esperado = enCuadro[cine.nombre];
     if (!esperado) continue;

@@ -185,6 +185,7 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 |---|---|
 | Mateo desapareció **hace siete años**; Victoria tenía 17 y ahora tiene 24. Lo dicen dos líneas narradas en la introducción, la página 1 del diario, la portada de carga y el reencuentro. | Pediste el contexto de cuánto hace que desapareció. |
 | Victoria le dice «Mateo» y solo lo llama «papá» una vez, al descubrirlo dentro del Guardián; sus líneas son de cartógrafa adulta («Lo anoto en el mapa: entrada oculta»). | Sonaba a niña con daddy issues. Las líneas nuevas caben en la misma duración y en el mismo plano. |
+| Queda dicho qué protege el Guardián: la gema vuelve su guardián a quien la toma sin el brazalete. Mateo lo dice en la derrota (plano nuevo de 3,2 s, contraplano sobre el hombro de Victoria, antes de que la gema vuele al brazalete; la derrota pasa de 18 a 21,2 s) y la leyenda del mural lo dice del sacerdote. | Solo se insinuaba: había que juntar el mural, la gema y la última página del diario. |
 | En las cinemáticas el subtítulo va encima de la franja negra de abajo; la leyenda del mural no pisa la narración de una cinemática. | La franja tapaba la última línea de los subtítulos largos. |
 
 ## Pendiente

@@ -16,7 +16,7 @@ export const MURAL = Object.freeze({
   escena: 3.5,
   leyenda: Object.freeze([
     'Hace mucho, el pueblo del sol vivía de su luz.',
-    'Un sacerdote quiso la gema solo para él… y se volvió piedra.',
+    'Un sacerdote la tomó sin el brazalete y la gema lo volvió su guardián de piedra.',
     'Solo un brazalete de oro pudo sellarla.',
     'Y el sol volvió a nacer por el este.',
   ]),

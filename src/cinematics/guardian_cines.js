@@ -100,7 +100,7 @@ export function fase3(pecho, rumbo) {
 }
 
 /**
- * Derrota del Guardián (18 s). Plano y contraplano sin cruzar el eje: Mateo, de rodillas, la mira desde
+ * Derrota del Guardián (21,2 s). Plano y contraplano sin cruzar el eje: Mateo, de rodillas, la mira desde
  * abajo (picado sobre él); el contraplano se toma desde su altura (contrapicado sobre ella).
  * @param {V3} pie  donde cae el Guardián (y donde queda Mateo de rodillas)
  * @param {number} rumbo
@@ -130,6 +130,8 @@ export function derrota(pie, rumbo, victoria, cerca) {
       { duracion: 2.5, lente: 50, camara: [rel(cerca, hv, -0.85, 0.42, 1.45), rel(cerca, hv, -0.8, 0.42, 1.45)], mira: [caraM, caraM] },
       // 5. Contraplano desde la altura de Mateo, del mismo lado del eje: la cara de Victoria
       { duracion: 3, lente: 50, camara: [rel(pie, hv, 1.35, 0.55, 1.05), rel(pie, hv, 1.3, 0.55, 1.05)], mira: [caraV, caraV] },
+      // Contraplano a Mateo, un poco más cerca que el anterior: explica qué le pasó (la gema se quedó con él)
+      { duracion: 3.2, lente: 55, camara: [rel(cerca, hv, -0.72, 0.4, 1.42), rel(cerca, hv, -0.62, 0.4, 1.4)], mira: [caraM, caraM] },
       // 6. La gema vuela al brazalete: Victoria levanta la muñeca derecha (como al recibirlo)
       { duracion: 2, lente: 85, camara: [rel(cerca, hv, 1.45, 0.62, 1.2), rel(cerca, hv, 1.4, 0.6, 1.18)], mira: [rel(cerca, hv, 0.32, 0.16, 1.15), rel(cerca, hv, 0.3, 0.15, 1.15)] },
       // 7. El techo se agrieta
@@ -144,8 +146,9 @@ export function derrota(pie, rumbo, victoria, cerca) {
       { t: 9.0, accion: 'acercarse' },
       { t: 9.2, accion: 'decir', datos: ['mat_derrota_01'] },
       { t: 11.7, accion: 'decir', datos: ['vic_derrota_01'] },
-      { t: 14.6, accion: 'gema' },
-      { t: 16.6, accion: 'temblor' },
+      { t: 14.6, accion: 'decir', datos: ['mat_derrota_02'] },
+      { t: 17.8, accion: 'gema' },
+      { t: 19.8, accion: 'temblor' },
     ],
   };
 }

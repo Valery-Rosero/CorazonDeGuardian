@@ -16,6 +16,8 @@ export const LINEAS = Object.freeze({
   mat_fase3_01: { quien: 'mateo', texto: 'Victoria… el núcleo… rómpelo. No dudes.', emocion: 'dolor', duracion: 5.1, dentro: true },
   mat_derrota_01: { quien: 'mateo', texto: '¿Victoria…? ¿Cuánto tiempo…?', emocion: 'alivio', duracion: 2.1 },
   vic_derrota_01: { quien: 'victoria', texto: 'Siete años. Pero te encontré.', emocion: 'ternura', duracion: 2.7 },
+  // Qué protege el Guardián: la gema se queda con quien la toma sin el brazalete y lo vuelve su guardián
+  mat_derrota_02: { quien: 'mateo', texto: 'La toqué sin el brazalete… y se quedó conmigo.', emocion: 'dolor', duracion: 2.8 },
   mat_escape_01: { quien: 'mateo', texto: '¡Corre! Estoy justo detrás de ti.', emocion: 'urgencia', duracion: 2.9 },
   vic_brazalete_01: { quien: 'victoria', texto: 'Siete años detrás de esto, Mateo.', emocion: 'ternura', duracion: 2.4 },
   vic_cascada_01: { quien: 'victoria', texto: '«Detrás del agua hay un camino». Lo anoto en el mapa: entrada oculta.', emocion: 'determinacion', duracion: 5.2 },

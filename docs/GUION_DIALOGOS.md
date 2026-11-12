@@ -15,6 +15,7 @@ La duración es la que el juego le da a la línea para el subtítulo y para move
 - **Hace siete años**, Mateo Solano, cartógrafo, entró en la selva siguiendo un mapa antiguo del Templo del Sol. Le había prometido a Victoria, que entonces tenía 17 años, llevarla en la próxima expedición. No esperó, y nunca volvió.
 - **Victoria Solano**, ahora de 24 y cartógrafa ella también, tardó esos siete años en terminar el mapa que él dejó a medias. Entra al templo como profesional, no como niña que busca a su papá.
 - **Cómo le habla:** le dice «Mateo», con la distancia de siete años de ausencia. Solo lo llama **«papá» una vez**, cuando lo descubre dentro del Guardián («¡Aguanta, papá!»): ese es el golpe emocional.
+- **Qué protege el Guardián:** la Gema del Sol, pero no por lealtad. La gema es posesiva y quiere quedarse en el templo: a quien la toma sin el brazalete lo absorbe y lo vuelve su guardián de piedra, el cuerpo que la defiende para que nadie la saque. Le pasó antes a un sacerdote (la leyenda del mural, los guardianes de rodillas del santuario) y hace siete años a Mateo. El brazalete es lo único que la canaliza sin consumir a quien lo lleva: por eso Victoria puede hacer lo que su padre no pudo.
 - **Dónde lo sabe el jugador:** dos líneas narradas en la introducción, la página 1 del diario, la frase de la portada de carga y el reencuentro («¿Cuánto tiempo…?» / «Siete años. Pero te encontré.»).
 
 | Momento | Narración (subtítulo sin personaje) |
@@ -64,6 +65,7 @@ La duración es la que el juego le da a la línea para el subtítulo y para move
 |---|---|---|---|---|---|
 | `mat_derrota_01` | Mateo de rodillas entre los restos del caparazón | Mateo | «¿Victoria…? ¿Cuánto tiempo…?» | alivio, confuso | 2,1 s |
 | `vic_derrota_01` | Plano y contraplano | Victoria | «Siete años. Pero te encontré.» | ternura contenida | 2,7 s |
+| `mat_derrota_02` | Contraplano a Mateo, más cerca; después la gema vuela al brazalete | Mateo | «La toqué sin el brazalete… y se quedó conmigo.» | dolor, culpa | 2,8 s |
 | `mat_escape_01` | El templo empieza a derrumbarse | Mateo | «¡Corre! Estoy justo detrás de ti.» | urgencia | 2,9 s |
 
 **Final (amanecer):** sin diálogo. Victoria se gira, Mateo sale del portal de runas y los dos miran el sol.
