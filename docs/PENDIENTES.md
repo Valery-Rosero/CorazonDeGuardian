@@ -129,6 +129,15 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 | Tecla 8: el Guardián en fase 3. | Sección 19: la ruta de la sustentación. |
 | No se recorta calidad para la Iris Xe: el rendimiento se medirá en una computadora con tarjeta dedicada. | Lo pediste así. |
 
+## La gran pirámide (rediseño)
+
+| Decisión | Motivo |
+|---|---|
+| La pirámide se diseñó primero en su tablero (`docs/previews/piramide_tablero.png`, dibujado por `tools/disenos/tablero_piramide.py`) y se construye con las mismas medidas (`tools/blender/diseno_piramide.py`). Comparación: `docs/previews/piramide_vs_tablero.png`. | Antes eran cinco cajas lisas; pediste más diseño. Misma regla de coherencia: primero el dibujo. |
+| Siete cuerpos de talud, tablero con friso de soles y cornisa; escalinata única de 118 peldaños entre alfardas, con dos cabezas solares al pie; templo de tres puertas con crestería y sol dorado; musgo, lianas, árboles jóvenes y bloques caídos. Misma huella (96 m) y altura (84 m). | Sigue guiando desde toda la selva y no toca la meseta ni los planos de las cinemáticas. |
+| Presupuesto de la selva: de 50.000 a 70.000 triángulos (usa 61.994; la pirámide suma unos 12.600). | La computadora de prueba tiene tarjeta dedicada. |
+| El cielo acompaña a Victoria. | Es una caja de 400 m: una cámara lejos del centro del mundo quedaba fuera y veía negro. |
+
 ## Pendiente
 
 - Medir los FPS en una computadora con tarjeta gráfica dedicada (calidad media y alta).

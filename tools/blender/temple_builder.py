@@ -5,7 +5,7 @@
                   y un tambor caído al lado
   cabeza_gigante  rostro de guardián medio enterrado, ojos cerrados y banda con el sol; mira a la pirámide
   escalinata      peldaños de 40 cm entre dos alfardas
-  piramide        cinco cuerpos escalonados, musgo en las repisas, escalinata central y santuario dorado
+  piramide        siete cuerpos de talud y tablero, escalinata unica, templo con cresteria (tablero propio)
 """
 import math
 
@@ -193,73 +193,157 @@ def escalinata(k, x0, x1, y_inicio, z_base, escalones, huella, contrahuella, sen
     return cajas
 
 
-def piramide(k, centro, base, alto, material_oro, rnd, cuerpos=5):
-    """Pirámide de la hoja: cinco cuerpos con labio claro y musgo en las repisas, escalinata central entre
-    alfardas y santuario con puerta y sol dorados (material sin niebla: se ve desde toda la selva)."""
+def piramide(k, centro, base, alto, material_oro, rnd, cuerpos=None):
+    """La gran pirámide, construida con las medidas del tablero (diseno_piramide.py y
+    docs/previews/piramide_tablero.png): siete cuerpos de talud, tablero con friso de soles y cornisa;
+    escalinata única del suelo al templo entre alfardas, con dos cabezas solares al pie; templo de tres
+    puertas con crestería y el sol dorado (material sin niebla: guía desde toda la selva); musgo, lianas,
+    árboles jóvenes en las terrazas y bloques caídos. Devuelve la altura del sol (el punto que miran
+    la cámara y las cinemáticas). 'base' y 'alto' deben coincidir con el diseño."""
+    import diseno_piramide as D
+    assert abs(base - D.BASE) < 1e-6 and abs(alto - D.ALTO) < 1e-6, 'la pirámide se construye con las medidas del tablero'
     cx, cy, cz = centro
-    alto_templo = alto * 0.17
-    h = (alto - alto_templo) / cuerpos
-    ancho_esc = base * 0.14
-    frente = []
-    for i in range(cuerpos):
-        lado = base * (1 - i * 0.16)
-        z0 = cz + h * i
-        k.agregar(caja_biselada(lado, lado, h * 0.94, 0.4), tono_piedra, 'escenario', colocar((cx, cy, z0 + h * 0.47)))
-        k.agregar(caja_biselada(lado * 0.985, lado * 0.985, h * 0.08, 0.15), 'piedra_luz', 'escenario',
-                  colocar((cx, cy, z0 + h * 0.96)))
-        frente.append((lado, z0))
-        # Musgo que gotea de la repisa, en el frente y los lados
-        for _ in range(4):
-            cara = rnd.choice(((0, 1), (1, 0), (-1, 0)))
-            t = rnd.uniform(-0.42, 0.42) * lado
-            if cara == (0, 1) and abs(t) < ancho_esc * 0.75:
-                t = math.copysign(ancho_esc * 0.75 + abs(t) * 0.3, t if t else 1)
-            ex = cx + (cara[0] * lado / 2 if cara[0] else t)
-            ey = cy + (cara[1] * lado / 2 if cara[1] else t)
-            ez = z0 + h
-            tx, ty = (0, 1) if cara[0] else (1, 0)
-            largo, caida = rnd.uniform(3, 7), rnd.uniform(2, 4.5)
-            ox, oy = cara[0] * 0.25, cara[1] * 0.25
-            pts = [(ex + tx * largo + ox, ey + ty * largo + oy, ez + 0.1), (ex - tx * largo + ox, ey - ty * largo + oy, ez + 0.1),
-                   (ex - cara[0] * 2, ey - cara[1] * 2, ez + 0.1), (ex + tx * largo * 0.4 + ox, ey + ty * largo * 0.4 + oy, ez - caida),
-                   (ex - tx * largo * 0.5 + ox, ey - ty * largo * 0.5 + oy, ez - caida * 0.6)]
+    we = D.ESCALERA_ANCHO / 2
+    libre_escalera = we + D.ALFARDA + 0.6
+    # Giro de cada cara para que el frente local (-Y) mire hacia afuera: frente (+Y), derecha (+X), atrás, izquierda
+    caras = ((0, 1, 180), (1, 0, 90), (0, -1, 0), (-1, 0, -90))
+
+    def en_cara(nx, ny, dist, u):
+        """Punto sobre la cara (nx, ny) a 'dist' del centro, desplazado 'u' a lo largo de ella."""
+        return cx + nx * dist + (u if ny else 0), cy + ny * dist + (u if nx else 0)
+
+    for i, lado, z0, ht, hb, hc in D.cuerpos():
+        z0 += cz
+        r = lado / 2
+        lt = r - D.RETRANQUEO
+        lc = lt + D.VUELO
+        # Talud (se mete hacia arriba), tablero vertical y cornisa clara que vuela
+        k.agregar(caja_biselada(lado, lado, ht, 0.25, conico=(lt * 2) / lado), tono_piedra, 'escenario', colocar((cx, cy, z0 + ht / 2)))
+        k.agregar(caja_biselada(lt * 2, lt * 2, hb, 0.15), tono_piedra, 'escenario', colocar((cx, cy, z0 + ht + hb / 2)))
+        k.agregar(caja_biselada(lc * 2, lc * 2, hc, 0.08), 'piedra_luz', 'escenario', colocar((cx, cy, z0 + ht + hb + hc / 2)))
+        zf = z0 + ht + hb / 2              # centro del friso
+        alto_friso = hb * 0.56
+        for nx, ny, giro in caras:
+            # Friso oscuro con soles tallados cada 7 m (en el frente, a los lados de la escalinata)
+            tramos = [(-lt * 0.93, lt * 0.93)]
+            if ny == 1:
+                tramos = [(-lt * 0.93, -libre_escalera), (libre_escalera, lt * 0.93)]
+            for u0, u1 in tramos:
+                largo = u1 - u0
+                if largo < 2.0:
+                    continue
+                px, py = en_cara(nx, ny, lt, (u0 + u1) / 2)
+                k.agregar(caja_biselada(largo, 0.12, alto_friso, 0.03), 'piedra_sombra', 'escenario', colocar((px, py, zf), (0, 0, giro)))
+                n_soles = max(1, int(largo // D.SOL_CADA))
+                for j in range(n_soles):
+                    gx, gy = en_cara(nx, ny, lt + 0.072, u0 + (j + 0.5) * largo / n_soles)
+                    glifo_sol(k, colocar((gx, gy, zf), (0, 0, giro)), alto_friso * 0.3, 'piedra_luz')
+            # Lianas que cuelgan de la cornisa (no delante de la escalinata)
+            for _ in range(3 if i < D.CUERPOS - 1 else 1):
+                u = rnd.uniform(-lc * 0.9, lc * 0.9)
+                if ny == 1 and abs(u) < libre_escalera + 1:
+                    continue
+                largo_l = rnd.uniform(0.35, 0.8) * (hb + hc)
+                lx, ly = en_cara(nx, ny, lc + 0.12, u)
+                k.agregar(prisma(4, 0.09, largo_l, giro=45), 'selva_liana', 'escenario', colocar((lx, ly, z0 + D.ALTO_CUERPO - largo_l / 2)))
+        # Remates de las esquinas sobre la cornisa
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                if sy == 1 and i == D.CUERPOS - 1:
+                    continue
+                k.agregar(caja_biselada(1.6, 1.6, 0.9, 0.1), tono_piedra, 'escenario',
+                          colocar((cx + sx * (lc - 0.8), cy + sy * (lc - 0.8), z0 + D.ALTO_CUERPO + 0.45)))
+        # Musgo en la terraza (sobre la cornisa)
+        zt = z0 + D.ALTO_CUERPO
+        for _ in range(3):
+            nx, ny, _g = caras[rnd.randrange(4)]
+            u = rnd.uniform(-lc * 0.8, lc * 0.8)
+            if ny == 1 and abs(u) < libre_escalera + 2:
+                u = math.copysign(libre_escalera + 2 + rnd.uniform(0, 4), u if u else 1)
+            mx, my = en_cara(nx, ny, lc - 1.4, u)
+            pts = [(mx + rnd.uniform(-2.2, 2.2), my + rnd.uniform(-1.2, 1.2), zt + 0.02) for _ in range(7)]
+            pts += [(mx + rnd.uniform(-1.2, 1.2), my + rnd.uniform(-0.6, 0.6), zt + rnd.uniform(0.15, 0.4)) for _ in range(4)]
             k.agregar(casco(pts), tono_musgo, 'escenario')
-    # Escalinata central hacia +Y (mira al jugador): cada cuerpo se sube por una rampa de peldaños
-    # apoyada en su cara frontal, entre dos alfardas
-    corrida = base * 0.08
-    n = 8
-    for (lado, z0) in frente:
-        y_cara = cy + lado / 2
-        y_pie = y_cara + corrida
-        for j in range(n):
-            f1 = (j + 1) / n
-            y_frente = y_pie - corrida * j / n
-            k.agregar(prisma(4, 1, 1, giro=45), 'piedra_luz' if j % 2 == 0 else 'piedra', 'escenario',
-                      colocar((cx, y_frente - corrida / n / 2, z0 + h * f1 / 2),
-                              escala=(ancho_esc / 1.414, corrida / n / 1.414, h * f1)))
-        for sg in (1, -1):
-            xa, xb = cx + sg * ancho_esc / 2, cx + sg * (ancho_esc / 2 + 1.6)
-            pts = [(x, y, z) for x in (xa, xb) for (y, z) in ((y_pie + 0.4, z0), (y_pie + 0.4, z0 + 1.2),
-                                                           (y_cara, z0 + h + 1.2), (y_cara, z0))]
-            k.agregar(casco(pts), tono_piedra, 'escenario')
-    # Santuario de la cima
-    lado = base * (1 - (cuerpos - 1) * 0.16)
-    z = cz + h * cuerpos
-    w = lado * 0.62
-    hb = alto_templo * 0.62
-    k.agregar(caja_biselada(w, w * 0.8, hb, 0.3), tono_piedra, 'escenario', colocar((cx, cy, z + hb / 2)))
-    k.agregar(caja_biselada(w * 1.12, w * 0.92, alto_templo * 0.16, 0.25, conico=0.9), 'piedra_luz', 'escenario',
-              colocar((cx, cy, z + hb + alto_templo * 0.08)))
-    puerta_w, puerta_h = w * 0.3, hb * 0.78
-    k.agregar(caja_biselada(puerta_w, 0.6, puerta_h, 0.1), 'oro_brillante', 'escenario',
-              colocar((cx, cy + w * 0.4 + 0.05, z + puerta_h / 2)), material=material_oro)
-    # Sol de la crestería: disco dorado que brilla a través de la niebla
-    zr = z + hb + alto_templo * 0.16
-    k.agregar(caja_biselada(w * 0.5, w * 0.25, alto_templo * 0.2, 0.2), tono_piedra, 'escenario',
-              colocar((cx, cy, zr + alto_templo * 0.1)))
-    k.agregar(prisma(12, alto_templo * 0.2, 0.5), 'oro_brillante', 'escenario',
-              colocar((cx, cy + w * 0.13 + 0.3, zr + alto_templo * 0.32), (90, 0, 0)), material=material_oro)
-    return zr + alto_templo * 0.52
+
+    # Árboles jóvenes que crecen en algunas terrazas, a los lados
+    for i in (1, 2, 4):
+        _i, lado, z0, ht, hb, hc = D.cuerpos()[i]
+        lc = lado / 2 - D.RETRANQUEO + D.VUELO
+        for nx in (1, -1):
+            tx, ty, tz = cx + nx * (lc - 1.6), cy + rnd.uniform(-lc * 0.5, lc * 0.5), cz + z0 + D.ALTO_CUERPO
+            alto_t = rnd.uniform(3.5, 5.5)
+            k.agregar(prisma(6, 0.22, alto_t, radio_sup=0.14), 'selva_tronco', 'escenario', colocar((tx, ty, tz + alto_t / 2)))
+            copa = [(tx + rnd.uniform(-1.8, 1.8), ty + rnd.uniform(-1.8, 1.8), tz + alto_t + rnd.uniform(-0.6, 1.4)) for _ in range(12)]
+            k.agregar(casco(copa), 'selva_copa_luz', 'escenario')
+
+    # Escalinata: macizo inclinado, peldaños y alfardas; dos cabezas solares al pie
+    (y_pie, _z), (y_cima, z_cima), n, huella, contra = D.escalera()
+    yp, yc_ = cy + y_pie, cy + y_cima
+    k.agregar(casco([p for x in (cx - we, cx + we) for p in ((x, yp, cz), (x, yc_, cz + z_cima), (x, yc_, cz))]), tono_piedra, 'escenario')
+    for j in range(n):
+        y_frente = yp - j * huella
+        z_top = cz + (j + 1) * contra
+        k.agregar(prisma(4, 1, 1, giro=45), 'piedra_luz' if j % 2 == 0 else 'piedra', 'escenario',
+                  colocar((cx, y_frente - huella / 2, z_top - contra * 0.8), escala=((we * 2 - 0.02) / 1.414, huella / 1.414, contra * 1.6)))
+    for sg in (1, -1):
+        xa, xb = cx + sg * we, cx + sg * (we + D.ALFARDA)
+        pts = [(x, y, z) for x in (xa, xb) for (y, z) in ((yp + 0.5, cz), (yp + 0.5, cz + 1.4), (yc_, cz + z_cima + 1.2), (yc_, cz + z_cima - 3))]
+        k.agregar(casco(pts), tono_piedra, 'escenario')
+        cabeza_gigante(k, (cx + sg * (we + D.ALFARDA / 2), yp + 2.2, cz), 3.4, 180, rnd)
+
+    # Bloques caídos al pie
+    for _ in range(14):
+        a = rnd.uniform(0, math.tau)
+        rr = D.BASE / 2 + rnd.uniform(1, 7)
+        bx, by = cx + math.cos(a) * rr, cy + math.sin(a) * rr
+        if by > cy + D.BASE / 2 - 2 and abs(bx - cx) < libre_escalera + 3:
+            continue
+        tam = (rnd.uniform(1.2, 2.6), rnd.uniform(1.0, 2.0), rnd.uniform(0.8, 1.6))
+        bloque(k, (bx, by, cz + tam[2] * 0.35), tam, rnd, rot=(rnd.uniform(-12, 12), rnd.uniform(-12, 12), rnd.uniform(0, 90)))
+
+    # Templo de la cima
+    T = D.TEMPLO
+    z = cz + z_cima
+    ty = cy - T['atras']
+    aw, af = T['ancho'] / 2, T['fondo'] / 2
+    k.agregar(caja_biselada(T['ancho'] + 1, T['fondo'] + 1, T['zocalo'], 0.1), 'piedra_luz', 'escenario', colocar((cx, ty, z + T['zocalo'] / 2)))
+    z1 = z + T['zocalo']
+    k.agregar(caja_biselada(T['ancho'], T['fondo'], T['muro'], 0.12), tono_piedra, 'escenario', colocar((cx, ty, z1 + T['muro'] / 2)))
+    yf = ty + af                        # cara frontal del templo
+    alto_c, alto_l = T['muro'] * 0.78, T['muro'] * 0.66
+    k.agregar(caja_biselada(T['puerta_central'], 0.3, alto_c, 0.04), 'oro_brillante', 'escenario',
+              colocar((cx, yf + 0.1, z1 + alto_c / 2)), material=material_oro)
+    for sg in (1, -1):
+        k.agregar(caja_biselada(T['puerta_lateral'], 0.3, alto_l, 0.04), 'piedra_oscura', 'escenario',
+                  colocar((cx + sg * 5.5, yf + 0.1, z1 + alto_l / 2)))
+        for x in (sg * 3.0, sg * (aw - 0.45)):
+            k.agregar(caja_biselada(0.8, 0.5, T['muro'], 0.06), 'piedra_luz', 'escenario', colocar((cx + x, yf, z1 + T['muro'] / 2)))
+    for x, w, h in ((0, T['puerta_central'], alto_c), (5.5, T['puerta_lateral'], alto_l), (-5.5, T['puerta_lateral'], alto_l)):
+        k.agregar(caja_biselada(w + 0.7, 0.4, 0.35, 0.04), 'piedra_luz', 'escenario', colocar((cx + x, yf, z1 + h + 0.18)))
+    z2 = z1 + T['muro']
+    k.agregar(caja_biselada(T['ancho'] + 0.6, T['fondo'] + 0.6, T['friso'], 0.08), 'piedra_luz', 'escenario',
+              colocar((cx, ty, z2 + T['friso'] / 2)))
+    for x in (-6.8, -3.4, 0, 3.4, 6.8):
+        glifo_sol(k, colocar((cx + x, yf + 0.3 + 0.012, z2 + T['friso'] / 2), (0, 0, 180)), T['friso'] * 0.32)
+    z3 = z2 + T['friso']
+    h1, h2 = T['techo']
+    k.agregar(caja_biselada(T['ancho'] - 1, T['fondo'] - 1, h1, 0.08), tono_piedra, 'escenario', colocar((cx, ty, z3 + h1 / 2)))
+    k.agregar(caja_biselada(T['ancho'] - 3, T['fondo'] - 3, h2, 0.08), tono_piedra, 'escenario', colocar((cx, ty, z3 + h1 + h2 / 2)))
+    z4 = z3 + h1 + h2
+    # Crestería: muro calado (huecos oscuros) y el sol dorado
+    k.agregar(caja_biselada(10, 1.2, T['cresta'], 0.1), tono_piedra, 'escenario', colocar((cx, ty, z4 + T['cresta'] / 2)))
+    for x in (-3, 0, 3):
+        k.agregar(caja_biselada(1.6, 0.1, 1.2, 0.02), 'piedra_oscura', 'escenario', colocar((cx + x, ty + 0.6, z4 + 1.2)))
+    rs = T['radio_sol']
+    zs = z4 + T['cresta'] - rs * 0.6
+    ys = ty + 0.6 + 0.3
+    k.agregar(prisma(16, rs, 0.4), 'oro_brillante', 'escenario', colocar((cx, ys, zs), (90, 0, 0)), material=material_oro)
+    for a in range(12):
+        ang = math.tau * a / 12
+        k.agregar(prisma(3, 0.22, rs * 0.75, radio_sup=0.02), 'oro_brillante', 'escenario',
+                  colocar((cx + math.cos(ang) * rs * 1.38, ys, zs + math.sin(ang) * rs * 1.38), (0, 90 - math.degrees(ang), 0)),
+                  material=material_oro)
+    return zs
 
 
 def fachada_santuario(k, centro_y, z_base, ancho, alto, rnd, material_runa):

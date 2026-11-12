@@ -38,7 +38,7 @@ MAT_COPA = 8    # índice del material de las copas (borde de sol) en la malla p
 
 RAIZ = os.path.abspath(os.path.join(DIR, '..', '..'))
 SALIDA = os.path.join(RAIZ, 'public', 'models', 'zona_1_selva.glb')
-PRESUPUESTO = 50000   # sin contar las instancias de vegetación
+PRESUPUESTO = 70000   # sin contar las instancias de vegetación (subió con la pirámide nueva: la máquina de prueba tiene tarjeta dedicada)
 
 # Recorrido del sendero (x, y): guía colores del suelo, vegetación y árboles
 SENDERO = [(0, 18), (0, 4), (-5, -10), (-11, -24), (-9, -36), (0, -47), (6, -57), (7.5, -67), (7.5, -77),

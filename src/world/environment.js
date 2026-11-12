@@ -229,6 +229,9 @@ export function crearAmbienteSelva(escena, renderer, calidad) {
     seguir(pos) {
       sol.position.copy(pos).add(desplazamiento);
       sol.target.position.copy(pos);
+      // El cielo (una caja de 400 m) acompaña a Victoria: ninguna cámara queda fuera de él (las de la cima
+      // de la pirámide o de las cinemáticas lejanas veían negro)
+      cielo.position.set(pos.x, 0, pos.z);
     },
   };
 }
