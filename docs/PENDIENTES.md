@@ -135,8 +135,21 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 |---|---|
 | La pirámide se diseñó primero en su tablero (`docs/previews/piramide_tablero.png`, dibujado por `tools/disenos/tablero_piramide.py`) y se construye con las mismas medidas (`tools/blender/diseno_piramide.py`). Comparación: `docs/previews/piramide_vs_tablero.png`. | Antes eran cinco cajas lisas; pediste más diseño. Misma regla de coherencia: primero el dibujo. |
 | Siete cuerpos de talud, tablero con friso de soles y cornisa; escalinata única de 118 peldaños entre alfardas, con dos cabezas solares al pie; templo de tres puertas con crestería y sol dorado; musgo, lianas, árboles jóvenes y bloques caídos. Misma huella (96 m) y altura (84 m). | Sigue guiando desde toda la selva y no toca la meseta ni los planos de las cinemáticas. |
-| Presupuesto de la selva: de 50.000 a 70.000 triángulos (usa 61.994; la pirámide suma unos 12.600). | La computadora de prueba tiene tarjeta dedicada. |
+| Presupuesto de la selva: de 50.000 a 70.000 triángulos (usa 67.768; la pirámide suma unos 12.600 y el pórtico, la orilla y la isla unos 5.800). | La computadora de prueba tiene tarjeta dedicada. |
 | El cielo acompaña a Victoria. | Es una caja de 400 m: una cámara lejos del centro del mundo quedaba fuera y veía negro. |
+
+## El pórtico del santuario, el atrio y el lago
+
+| Decisión | Motivo |
+|---|---|
+| El pórtico se diseñó en su tablero (`docs/previews/fachada_tablero.png`, de `tools/disenos/tablero_fachada.py`) con las medidas de `tools/blender/diseno_fachada.py`, las mismas que usa el constructor. Comparación: `docs/previews/fachada_vs_tablero.png`. | La fachada era una caja lisa (y sus soles y columnas habían quedado detrás del muro). Mismo lenguaje que la pirámide. |
+| Talud, friso oscuro con cuatro soles, jambas claras, dintel escalonado, cornisa con almenas, crestería con el sol de oro, pórtico de dos columnas con viga y dos sacerdotes del sol de piedra (los del santuario, en gris). La puerta sigue igual: 4,4 × 6,4 m. | La puerta, el pasadizo y la transición al santuario no cambian. |
+| El atrio es un patio cerrado: muro de 2,4 m al frente (de la losa a dos pilares en las esquinas) y a los costados hasta la fachada. Sus colisionadores suben 4 m sobre la terraza. | La losa se rodeaba por un lado. Ahora es la única entrada; una prueba intenta rodearla y saltarla desde nueve sitios (fallaba con la versión anterior). |
+| Al recuperar una partida guardada en el santuario o la arena, y al salir del santuario en el escape, la losa y la puerta quedan abiertas. | Con el atrio cerrado, Victoria quedaría encerrada en el escape. |
+| Un lago llena el valle entre los montes (nivel −1 m): la selva baja a su orilla, la pirámide está en una isla, el abismo bajo el puente es agua con rocas que asoman y hay montes también al norte. | El suelo terminaba en un vacío blanco. |
+| El lago es un *shader* opaco (Fresnel hacia el color de la niebla, olas lentas y destellos del sol) que acompaña a la cámara y se oculta dentro del templo. Caer al agua es como caer al abismo: Victoria vuelve al último punto. | Una lámina transparente de cientos de metros cuesta más y se ordena mal; su borde nunca se ve. |
+| La orilla, la isla y el lago tienen su propio azar. | Así no movieron nada de la selva ya aprobada. |
+| Los anillos del tronco de las palmas van girados medio lado uno respecto al otro. | Dos anillos seguidos quedaban casi en el mismo plano en un lado del tronco y podían parpadear (lo encontró `npm run zfighting`). |
 
 ## Pendiente
 

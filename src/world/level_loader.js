@@ -5,7 +5,7 @@ import { GRUPOS } from '../core/physics_world.js';
 import { clasificarNombre, esColisionador } from './level_naming.js';
 import { PALETA } from '../config/palette.js';
 import { direccionSol } from './environment.js';
-import { agregarBordeSol, agregarCieloSH, agregarViento, clonarMaterial, materialCascada, materialPoza, materialRayo } from './shaders.js';
+import { agregarBordeSol, agregarCieloSH, agregarViento, clonarMaterial, materialCascada, materialLago, materialPoza, materialRayo } from './shaders.js';
 
 /** Brillo del borde de sol en las copas (hoja de escenarios): color y fuerza. */
 const BORDE_SOL = { color: PALETA.dorado_solar, fuerza: 0.55 };
@@ -146,6 +146,7 @@ function ajustarMaterial(m, res) {
   const nombre = m.name || '';
   if (nombre === 'agua_cascada') return materialCascada();
   if (nombre === 'agua_poza') return materialPoza();
+  if (nombre === 'agua_lago') return materialLago(direccionSol());
   if (nombre === 'rayo_luz') return materialRayo();
   if (!m.isMeshStandardMaterial) return m;
   m.vertexColors = true;

@@ -21,6 +21,7 @@ from mathutils import Vector  # noqa: E402
 
 import bridge_builder  # noqa: E402
 import common  # noqa: E402
+import diseno_fachada  # noqa: E402
 import foliage_builder  # noqa: E402
 import props_builder  # noqa: E402
 import rock_builder  # noqa: E402
@@ -52,6 +53,9 @@ CORNISA = ((-6, -107), (6, -100), 12.0)
 PUENTE = (-107, -127, 12.0)   # y_inicio, y_fin, z del tablero
 MESETA = ((-16, -160), (16, -127), 12.0)
 PIRAMIDE = (0, -225, 0)
+LAGO = (-460, -440, 460, 150, -1.0)   # x0, y0, x1, y1 (el valle: trigger de caída) y nivel del agua
+LAGO_LADO = 1700                      # la lámina visible: acompaña a la cámara en el juego (su borde queda en la niebla)
+ISLA = ((-54, -279), (54, -160))      # meseta de tierra de la pirámide (la base más 6 m)
 # Cabeza de guardián en el cruce del sendero (mira hacia quien llega por el camino)
 CABEZA_CRUCE = (-17.0, -27.0)
 
@@ -77,6 +81,7 @@ def materiales():
         'cima': common.material_emisivo('cima_piramide_emisivo', PALETA['oro_brillante'], 3.0),
         'hojas': common.material_toon('selva_hojas_doble'),
         'copa': common.material_toon('selva_copa'),
+        'lago': common.material_toon('agua_lago'),
     }
 
 
@@ -119,6 +124,110 @@ def suelo(k, rnd):
     from common import orientar_hacia
     k.agregar((verts, orientar_hacia(verts, caras, (0, 0, 1))), colores, 'escenario')
     caja_invisible('col_box_suelo_selva', (-30, -96, -1), (30, 20, 0))
+    return alturas
+
+
+def _alturas_y_colores(k, alturas, celdas, color_de):
+    """Malla de cuadrícula a partir de un diccionario de alturas por vértice y una lista de celdas."""
+    from common import orientar_hacia
+    verts, caras, colores = [], [], []
+    for (xa, ya, xb, yb) in celdas:
+        esquinas = [(xa, ya), (xb, ya), (xb, yb), (xa, yb)]
+        base = len(verts)
+        verts += [Vector((x, y, alturas[(x, y)])) for x, y in esquinas]
+        for tri in ((0, 1, 2), (0, 2, 3)):
+            zm = sum(alturas[esquinas[t]] for t in tri) / 3
+            caras.append(tuple(base + t for t in tri))
+            colores.append(color_de(zm))
+    k.agregar((verts, orientar_hacia(verts, caras, (0, 0, 1))), colores, 'escenario')
+    return len(caras)
+
+
+def _color_orilla(rnd):
+    def color(zm):
+        if zm < LAGO[4] - 0.5:
+            return 'selva_tierra_oscura'
+        if zm < LAGO[4] + 0.45:
+            return rnd.choice(['selva_tierra', 'selva_tierra', 'selva_tierra_oscura'])
+        if rnd.random() < 0.08:
+            return rnd.choice(['selva_tierra', 'musgo_oscuro'])
+        return rnd.choice(['selva_pasto_1', 'selva_pasto_2', 'selva_pasto_3'])
+    return color
+
+
+def orilla(k, alturas_selva):
+    """La selva sigue más allá de lo caminable y baja al lago: un anillo de terreno alrededor de la
+    cuadrícula del claro (mismo paso y mismos vértices en el borde: sin grietas). Las lomas de los lados
+    siguen un trecho, se aplanan donde crecen las ceibas del borde y bajan a la orilla; al sur, junto a los
+    riscos, la tierra se hunde enseguida bajo el agua. Con su propio azar: no mueve nada de la selva."""
+    rnd = random.Random(1717)
+    paso = 3.0
+    xs = [-66 + paso * i for i in range(45)]
+    ys = [-96 + paso * j for j in range(51)]
+    alturas = {}
+    for x in xs:
+        for y in ys:
+            if (x, y) in alturas_selva:
+                alturas[(x, y)] = alturas_selva[(x, y)]
+                continue
+            cx, cy = max(-30, min(30, x)), max(-96, min(18, y))
+            d = math.hypot(x - cx, y - cy)
+            loma = (max(0.0, min(1.0, (abs(cx) - 23) / 7)) ** 2 * 1.8) if cy > -52 else 0.0
+            if d <= 16:
+                h = loma + 0.5 * d / 16 + rnd.uniform(-0.12, 0.12)
+            else:
+                h = loma + 0.5 - (d - 16) * 0.42 + rnd.uniform(-0.15, 0.15)
+            if y < -84:
+                f = max(0.0, min(1.0, (y + 96) / 12))
+                h = h * f - 2.6 * (1 - f)
+            alturas[(x, y)] = max(h, -3.2)
+    celdas = []
+    for i in range(len(xs) - 1):
+        for j in range(len(ys) - 1):
+            xa, xb, ya, yb = xs[i], xs[i + 1], ys[j], ys[j + 1]
+            if xa >= -30 and xb <= 30 and ya >= -96 and yb <= 18:
+                continue                      # la cuadrícula del claro ya está ahí
+            if max(alturas[p] for p in ((xa, ya), (xb, ya), (xa, yb), (xb, yb))) < LAGO[4] - 1.2:
+                continue                      # del todo bajo el agua: no se ve
+            celdas.append((xa, ya, xb, yb))
+    return _alturas_y_colores(k, alturas, celdas, _color_orilla(rnd))
+
+
+def isla(k):
+    """La pirámide se levanta en una isla: tierra llana alrededor de su base (con las cabezas del pie de la
+    escalinata) que baja al lago. No se camina: solo se ve desde las ruinas y el puente."""
+    rnd = random.Random(2525)
+    (x0, y0), (x1, y1) = ISLA
+    paso = 6.0
+    xs = [-78 + paso * i for i in range(27)]
+    ys = [-300 + paso * j for j in range(25)]
+    alturas = {}
+    for x in xs:
+        for y in ys:
+            d = math.hypot(x - max(x0, min(x1, x)), y - max(y0, min(y1, y)))
+            h = rnd.uniform(-0.04, 0.1) if d <= 0 else -3.2 * min(1.0, d / 14) ** 1.3 + rnd.uniform(-0.1, 0.1)
+            alturas[(x, y)] = h
+    b = 96 / 2 - 2      # bajo la pirámide no hace falta suelo
+    celdas = []
+    for i in range(len(xs) - 1):
+        for j in range(len(ys) - 1):
+            xa, xb, ya, yb = xs[i], xs[i + 1], ys[j], ys[j + 1]
+            if xa >= PIRAMIDE[0] - b and xb <= PIRAMIDE[0] + b and ya >= PIRAMIDE[1] - b and yb <= PIRAMIDE[1] + b:
+                continue
+            if max(alturas[p] for p in ((xa, ya), (xb, ya), (xa, yb), (xb, yb))) < LAGO[4] - 1.2:
+                continue
+            celdas.append((xa, ya, xb, yb))
+    return _alturas_y_colores(k, alturas, celdas, _color_orilla(rnd))
+
+
+def lago(m):
+    """El lago entre los montes: objeto propio con su material (agua_lago: ShaderMaterial en Three.js) que
+    el juego mueve con la cámara, como el cielo, y oculta dentro del templo. Al caer en él, Victoria vuelve al último punto (trigger de muerte en todo el valle, bajo la orilla)."""
+    x0, y0, x1, y1, z = LAGO
+    a = Constructor(PALETA, semilla=5, variacion=0)
+    water_builder.lago(a, -LAGO_LADO / 2, -LAGO_LADO / 2, LAGO_LADO / 2, LAGO_LADO / 2, 0.0, 16, 0)
+    objeto_suelto('agua_lago', a, [m['lago']], (0, 0, z))
+    caja_invisible('trg_box_lago', (x0, y0, z - 60), (x1, y1, z + 0.4), props={'evento': 'muerte'})
 
 
 def claro(k, m, rnd):
@@ -315,10 +424,11 @@ def cornisa_y_puente(k, m, rnd):
         vacio(f'emit_fuego_{n}', (s * 1.1, ya + 0.3, zp + 1.45), props={'tipo': 'fuego'})
     vacio('luz_cornisa', (0, ya + 1.0, zp + 2.0), props={'color': PALETA['fuego'], 'intensidad': 5.0, 'distancia': 11.0, 'parpadeo': 1})
     bridge_builder.tablas(PALETA, m['toon'], ya, yb, zp, 1.7, rnd)
-    # Fondo del abismo
+    # Bajo el puente corre el lago: unas rocas asoman del agua (la caída sigue siendo mortal)
     caja_invisible('col_box_abismo_fondo', (-60, -175, -24), (60, -100.5, -22))
-    for _ in range(16):
-        rock_builder.canto(k, (rnd.uniform(-30, 30), rnd.uniform(-170, -101), -22), rnd.uniform(2, 5), rnd)
+    for _ in range(9):
+        x = rnd.choice((-1, 1)) * rnd.uniform(5, 14)
+        rock_builder.canto(k, (x, rnd.uniform(-170, -103), LAGO[4] - 0.9), rnd.uniform(1.6, 3.2), rnd)
     # Paredes del abismo bajo la cornisa y la meseta
     for x in (-24, 24):
         rock_builder.estratos(k, (x - 8, -175, -22), (x + 8, -100, rnd.uniform(4, 10)), rnd, 1.2, repisas=REPISAS)
@@ -340,21 +450,28 @@ def ruinas(k, m, rnd):
     caja_invisible('col_box_rampa_escalinata', (-6.9, cy - diagonal / 2, cz - grosor / 2), (6.9, cy + diagonal / 2, cz + grosor / 2),
                    rot=(-inclinacion, 0, 0))
     z_terraza = zt + 2.4
-    temple_builder.bloque(k, (0, -151.9, zt + 1.2), (24, 16.6, 2.4), rnd, bisel=0.2)
+    # La terraza llega hasta la losa (4 mm antes del último peldaño: sin caras pegadas)
+    k.agregar(caja_biselada(24, 160.2 - 142.61, 2.4, 0.2), tono_piedra, 'escenario', colocar((0, -(160.2 + 142.61) / 2, zt + 1.2)))
     caja_invisible('col_box_terraza', (-12, -160.2, zt), (12, -142.6, z_terraza))
-    for n, (a, b) in enumerate(temple_builder.fachada_santuario(k, -156.0, z_terraza, 24, 10, rnd, 2), start=1):
+    # Pórtico y atrio del tablero (docs/previews/fachada_tablero.png), con su propio azar
+    r_portico = random.Random(1560)
+    for n, (a, b) in enumerate(temple_builder.fachada_santuario(k, -156.0, z_terraza, r_portico, 1), start=1):
         caja_invisible(f'col_box_fachada_{n}', a, b)
+    for n, (a, b) in enumerate(temple_builder.atrio(k, -156.0, zt, z_terraza, r_portico), start=1):
+        caja_invisible(f'col_box_atrio_{n}', a, b)
     # Límite sur con el hueco de la puerta: detrás hay un pasadizo oscuro que lleva al santuario
     caja_invisible('col_box_limite_sur_o', (-16, -161, zt), (-2.2, -157.5, zt + 20))
     caja_invisible('col_box_limite_sur_e', (2.2, -161, zt), (16, -157.5, zt + 20))
     pasadizo(k, z_terraza)
     # Centinela que vigila la escalinata: el primer enemigo, de día y con el Pulso
     vacio('spawn_centinela_1', (5.0, -137.0, zt), rot_z=mira_a(5.0, -137.0, 0, PUENTE[1]), props={'enemigo': 'centinela'})
-    # Antorchas del pórtico
+    # Antorchas del pórtico, delante del friso
+    xa = diseno_fachada.ANTORCHAS_X
     for s, n in ((1, 5), (-1, 6)):
-        k.agregar(prisma(6, 0.12, 2.0, radio_sup=0.09), 'piedra_sombra', 'escenario', colocar((s * 4.0, -152.5, z_terraza + 1.0)))
-        k.agregar(prisma(8, 0.28, 0.25, radio_sup=0.36), 'piedra_sombra', 'escenario', colocar((s * 4.0, -152.5, z_terraza + 2.1)))
-        vacio(f'emit_fuego_{n}', (s * 4.0, -152.5, z_terraza + 2.3), props={'tipo': 'fuego'})
+        k.agregar(prisma(6, 0.12, 2.0, radio_sup=0.09), 'piedra_sombra', 'escenario', colocar((s * xa, -152.0, z_terraza + 1.0)))
+        k.agregar(prisma(8, 0.28, 0.25, radio_sup=0.36), 'piedra_sombra', 'escenario', colocar((s * xa, -152.0, z_terraza + 2.1)))
+        vacio(f'emit_fuego_{n}', (s * xa, -152.0, z_terraza + 2.3), props={'tipo': 'fuego'})
+        caja_invisible(f'col_cyl_antorcha_{n}', (s * xa - 0.3, -152.3, z_terraza), (s * xa + 0.3, -151.7, z_terraza + 2.3))
     vacio('luz_ruinas', (0, -151.5, z_terraza + 3.0), props={'color': PALETA['fuego'], 'intensidad': 6.0, 'distancia': 14.0, 'parpadeo': 1})
     # Columnas rotas, cabezas gigantes y bloques caídos
     columnas = ((-10, -131, True, 135), (-10, -137, False, 0), (10, -131, False, 0), (10, -137, True, 0),
@@ -381,9 +498,13 @@ def ruinas(k, m, rnd):
         temple_builder.bloque_tallado(k, (x, y, zt + 0.4), (lado, lado * rnd.uniform(0.85, 1.1), 0.8), rnd,
                                       giro=180 + rnd.uniform(-35, 35), glifo=rnd.random() < 0.6)
         caja_invisible(f'col_box_bloque_{bloques}', (x - lado * 0.6, y - lado * 0.6, zt), (x + lado * 0.6, y + lado * 0.6, zt + 0.8))
-    for _ in range(4):
-        tree_builder.palma(k, (rnd.choice((-1, 1)) * rnd.uniform(13.5, 15), rnd.uniform(-158, -128), zt), rnd,
-                           escala=0.9, mat_hojas=MAT_HOJAS)
+    palmas = []
+    while len(palmas) < 4:
+        x, y = rnd.choice((-1, 1)) * rnd.uniform(13.5, 15), rnd.uniform(-158, -128)
+        if any(math.hypot(x - px, y - py) < 4 for px, py in palmas):
+            continue                  # dos palmas casi en el mismo sitio cruzan los troncos
+        palmas.append((x, y))
+        tree_builder.palma(k, (x, y, zt), rnd, escala=0.9, mat_hojas=MAT_HOJAS)
     for _ in range(5):
         ARBOLES_JOVENES.append((rnd.choice((-1, 1)) * rnd.uniform(13.5, 15.3), rnd.uniform(-159, -128), zt,
                                 rnd.uniform(0, math.tau), rnd.uniform(0.8, 1.1)))
@@ -405,6 +526,7 @@ def pasadizo(k, z):
 
 
 def paisaje(k, m, rnd):
+    rnd = random.Random(3030)
     cima = temple_builder.piramide(k, PIRAMIDE, 96, 84, 6, rnd)
     vacio('hint_piramide', (PIRAMIDE[0], PIRAMIDE[1], cima))
     # Cabeza de guardián en el cruce del sendero: recibe a Victoria mirando el tramo por el que llega
@@ -418,10 +540,17 @@ def paisaje(k, m, rnd):
         a = rnd.uniform(math.radians(200), math.radians(340))
         r = rnd.uniform(210, 320)
         rock_builder.montana(k, (math.cos(a) * r, math.sin(a) * r * 0.9 - 60), rnd.uniform(40, 80), rnd.uniform(35, 90), rnd,
-                             color=rnd.choice(('montana', 'montana_lejana')))
+                             color=rnd.choice(('montana', 'montana_lejana')), z0=LAGO[4] - 4)
     for _ in range(12):
         lado = rnd.choice((1, -1))
-        rock_builder.montana(k, (lado * rnd.uniform(70, 140), rnd.uniform(-150, 60)), rnd.uniform(30, 60), rnd.uniform(18, 45), rnd)
+        rock_builder.montana(k, (lado * rnd.uniform(70, 140), rnd.uniform(-150, 60)), rnd.uniform(30, 60), rnd.uniform(18, 45), rnd,
+                             z0=LAGO[4] - 4)
+    # Montes al norte, detrás del claro: el lago queda cerrado entre montañas por todos lados
+    for _ in range(14):
+        a = rnd.uniform(math.radians(22), math.radians(158))
+        r = rnd.uniform(190, 310)
+        rock_builder.montana(k, (math.cos(a) * r, math.sin(a) * r * 0.9 - 60), rnd.uniform(45, 85), rnd.uniform(30, 75), rnd,
+                             color=rnd.choice(('montana', 'montana_lejana')), z0=LAGO[4] - 4)
 
 
 def checkpoints_y_flores(m):
@@ -519,7 +648,7 @@ def triggers_y_puntos():
     vacio('emit_luciernagas_1', (-7, -28, 1.6), props={'tipo': 'luciernagas', 'radio': 11.0})
     vacio('emit_luciernagas_2', (3, -54, 1.6), props={'tipo': 'luciernagas', 'radio': 9.0})
     vacio('emit_polen', (0, 2, 2.2), props={'tipo': 'polen', 'radio': 15.0})
-    vacio('emit_niebla_abismo', (0, -117, -14), props={'tipo': 'niebla', 'radio': 26.0})
+    vacio('emit_niebla_abismo', (0, -117, LAGO[4] + 1.2), props={'tipo': 'niebla', 'radio': 26.0})
 
 
 def vegetacion(m, rnd):
@@ -565,7 +694,7 @@ def main():
     rnd = random.Random(2026)
     m = materiales()
     k = Constructor(PALETA, semilla=9, variacion=0.05)
-    suelo(k, rnd)
+    alturas = suelo(k, rnd)
     claro(k, m, rnd)
     n_arboles = bosque(k, m, rnd)
     cascada(k, m, rnd)
@@ -574,6 +703,9 @@ def main():
     cornisa_y_puente(k, m, rnd)
     ruinas(k, m, rnd)
     paisaje(k, m, rnd)
+    orilla(k, alturas)
+    isla(k)
+    lago(m)
     checkpoints_y_flores(m)
     interactuables(m, rnd)
     triggers_y_puntos()

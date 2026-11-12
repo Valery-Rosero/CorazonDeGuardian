@@ -178,9 +178,10 @@ def estratos(k, minimo, maximo, rnd, irregular=0.6, tope_exacto=False, repisas=N
                 k.agregar(casco(grieta), 'piedra_oscura', hueso)
 
 
-def montana(k, centro, ancho, alto, rnd, color='montana', hueso='escenario'):
+def montana(k, centro, ancho, alto, rnd, color='montana', hueso='escenario', z0=0.0):
+    """Monte facetado (casco convexo). z0: altura de la base (bajo el lago, para que salga del agua)."""
     cx, cy = centro
-    pts = [(cx + math.cos(a) * ancho * rnd.uniform(0.8, 1.0), cy + math.sin(a) * ancho * rnd.uniform(0.6, 0.9), 0)
+    pts = [(cx + math.cos(a) * ancho * rnd.uniform(0.8, 1.0), cy + math.sin(a) * ancho * rnd.uniform(0.6, 0.9), z0)
            for a in (math.tau * i / 9 for i in range(9))]
     for _ in range(8):
         a = rnd.uniform(0, math.tau)

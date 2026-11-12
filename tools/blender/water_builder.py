@@ -1,5 +1,5 @@
 """Superficies de agua. Solo geometría: el aspecto lo da un ShaderMaterial en Three.js
-(se elige por el nombre del material: agua_cascada / agua_poza)."""
+(se elige por el nombre del material: agua_cascada / agua_poza / agua_lago)."""
 import math
 
 from mathutils import Vector
@@ -52,5 +52,20 @@ def franja_agua(k, puntos, ancho, z, material):
     for i in range(len(puntos) - 1):
         a = i * 2
         caras.append((a, a + 2, a + 3, a + 1))
+    from common import orientar_hacia
+    k.agregar((verts, orientar_hacia(verts, caras, (0, 0, 1))), 'agua', 'escenario', material=material)
+
+
+def lago(k, x0, y0, x1, y1, z, celdas, material):
+    """Lámina del lago que llena el valle entre los montes: cuadrícula de celdas x celdas (triángulos
+    no tan grandes, para que la niebla y la precisión se porten bien a cientos de metros)."""
+    verts, caras = [], []
+    for j in range(celdas + 1):
+        for i in range(celdas + 1):
+            verts.append(Vector((x0 + (x1 - x0) * i / celdas, y0 + (y1 - y0) * j / celdas, z)))
+    for j in range(celdas):
+        for i in range(celdas):
+            a = j * (celdas + 1) + i
+            caras.append((a, a + 1, a + celdas + 2, a + celdas + 1))
     from common import orientar_hacia
     k.agregar((verts, orientar_hacia(verts, caras, (0, 0, 1))), 'agua', 'escenario', material=material)

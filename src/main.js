@@ -241,12 +241,16 @@ async function iniciar() {
   const esSantuario = (pos) => zonaDe(pos) > 1;
   /** @type {((zona: number) => void) | null} avisa del cambio de escenario (guardado de la partida) */
   let alCambiarZona = null;
+  // El lago del valle acompaña a la cámara (como el cielo): su borde nunca entra en la niebla visible.
+  // Solo existe afuera: en el santuario y la arena se oculta.
+  const lago = nivel.raiz.getObjectByName('agua_lago');
   /** Luces, atmósfera y ambiente de la zona donde está Victoria. @param {number} zona */
   const aplicarZona = (zona) => {
     if (zona === zonaActual || amanecer) return;
     const antes = zonaActual;
     zonaActual = zona;
     if ((antes > 1) !== (zona > 1)) ambiente.ponerInterior(zona > 1);
+    if (lago) lago.visible = zona === 1;
     alCambiarZona?.(zona);
     luces.encenderGrupo(zona);
     focoAltar.intensity = zona === 2 ? 55 : 0;
@@ -259,6 +263,7 @@ async function iniciar() {
   const teletransportar = (nombreSpawn) => {
     const s = nivel.spawns[nombreSpawn];
     if (!s) return;
+    if (nombreSpawn === 'salida_santuario') abrirPortico();
     jugador.colocar(s.pos, s.rumbo);
     rig.reorientar(s.rumbo);
     aplicarZona(zonaDe(s.pos));
@@ -309,6 +314,14 @@ async function iniciar() {
     });
   }
   const losas = new Losas(nivel.dinamicos);
+  /** La losa del atrio y la puerta del pórtico, abiertas de una vez (partida más allá del pórtico, escape). */
+  const abrirPortico = () => {
+    for (const nombre of ['dyn_losa_1', 'dyn_puerta_santuario']) {
+      const malla = losas.abrirYa(nombre);
+      const o = malla && interactuables.lista.find((x) => x.objeto === malla);
+      if (o && o.activo) interactuables.desactivar(o);
+    }
+  };
   const panelDiario = new PanelDiario();
   /** @type {Set<number>} */
   const paginas = new Set();
@@ -747,6 +760,7 @@ async function iniciar() {
     for (const n of p.pilares) checkpoints.pasar(n);
     checkpoints.registro.actual = p.pilar;
     if (p.punto) checkpoints.fijar(p.punto);
+    if (p.punto === 'santuario' || p.punto === 'arena') abrirPortico();
     for (const n of p.poderes) poderes.desbloquear(n);
     if (poderes.tiene('pulso')) {
       huesoBrazalete.scale.setScalar(1);
@@ -981,6 +995,7 @@ async function iniciar() {
         cine.mezclar(dt);
       }
       ambiente.seguir(jugador.posicion);
+      if (lago) lago.position.set(camara.position.x, lago.position.y, camara.position.z);
       oclusion.actualizar(dt, camara.position, pecho);
     },
     particulas: (dt) => {

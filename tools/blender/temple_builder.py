@@ -6,6 +6,7 @@
   cabeza_gigante  rostro de guardián medio enterrado, ojos cerrados y banda con el sol; mira a la pirámide
   escalinata      peldaños de 40 cm entre dos alfardas
   piramide        siete cuerpos de talud y tablero, escalinata unica, templo con cresteria (tablero propio)
+  fachada_santuario, atrio   el pórtico del santuario y el muro del atrio (tablero propio)
 """
 import math
 
@@ -346,26 +347,158 @@ def piramide(k, centro, base, alto, material_oro, rnd, cuerpos=None):
     return zs
 
 
-def fachada_santuario(k, centro_y, z_base, ancho, alto, rnd, material_runa):
-    """Fachada del santuario con pórtico y puerta cerrada (se abre en la zona 2)."""
+def fachada_santuario(k, centro_y, z_base, rnd, material_oro):
+    """Pórtico del santuario, construido con las medidas del tablero (diseno_fachada.py y
+    docs/previews/fachada_tablero.png), en el lenguaje de la gran pirámide: talud, tablero con friso de
+    soles, cornisa clara, almenas, crestería calada con el sol de oro; jambas y dintel escalonado; un
+    pórtico de dos columnas con viga y dos sacerdotes del sol de piedra. El frente mira a +Y (al puente).
+    La puerta es un objeto aparte (puerta_santuario): se hunde con la Manipulación.
+    Devuelve las cajas (min, max) de colisión."""
+    import diseno_fachada as D
+    import interior_builder as ib
     y = centro_y
-    mitad = ancho / 2
-    hueco = 2.2
-    for sgn in (1, -1):
-        x0, x1 = sgn * hueco, sgn * mitad
-        bloque(k, ((x0 + x1) / 2, y, z_base + alto / 2), (abs(x1 - x0), 3.0, alto), rnd, bisel=0.3)
-    bloque(k, (0, y, z_base + 7.2), (hueco * 2 + 0.6, 3.0, 1.6), rnd, bisel=0.2)
-    for i in range(3):
-        bloque(k, (0, y + 0.2, z_base + alto + 0.5 + i * 0.9), (ancho * (0.8 - i * 0.22), 2.6, 0.9), rnd, bisel=0.15)
-    # Soles tallados a los lados del pórtico y musgo sobre el muro
-    for sgn in (1, -1):
-        glifo_sol(k, colocar((sgn * (hueco + 4.6), y - 1.52, z_base + 6.2)), 0.7)
-    # La puerta es un objeto aparte (puerta_santuario): se hunde en el suelo con la Manipulación
-    for sgn in (1, -1):
-        columna(k, (sgn * (hueco + 0.7), y - 2.2, z_base), 6.4, 0.45, rnd, liana=(sgn > 0))
-    return [((-mitad, y - 1.5, z_base), (-hueco, y + 1.5, z_base + alto)),
-            ((hueco, y - 1.5, z_base), (mitad, y + 1.5, z_base + alto)),
-            ((-hueco, y - 1.5, z_base + 6.4), (hueco, y + 1.5, z_base + 8.0))]   # dintel
+    yf = y + D.FONDO / 2                        # cara delantera del muro
+    m, h, j = D.ANCHO / 2, D.HUECO, D.JAMBA['ancho']
+    z0 = z_base
+    zc = z0 + D.ALTO_MURO                       # pie de la cornisa
+    zcc = zc + D.CORNISA['alto']                # encima de la cornisa
+    interior = m - D.ATRIO['fondo']             # cara interior de los muros del atrio
+    al_frente = (0, 0, 180)                     # los glifos miran a su -Y local: girados miran al puente
+    cajas = []
+    for s in (1, -1):
+        # Muro a cada lado de la puerta y talud al pie (se hunde 5 cm en la terraza: sin caras pegadas)
+        k.agregar(caja_biselada(m - h, D.FONDO, D.ALTO_MURO, 0.12), tono_piedra, 'escenario',
+                  colocar((s * (m + h) / 2, y, z0 + D.ALTO_MURO / 2)))
+        cajas.append(((min(s * h, s * m), y - D.FONDO / 2, z0), (max(s * h, s * m), yf, zc)))
+        xa, xb = sorted((s * (h + j), s * (interior - 0.02)))
+        t = D.TALUD
+        k.agregar(casco([(x, yy, zz) for x in (xa, xb) for (yy, zz) in ((yf - 0.05, z0 - 0.05), (yf + t['salida'], z0 - 0.05),
+                                                                        (yf - 0.05, z0 + t['alto']))]), tono_piedra, 'escenario')
+        cajas.append(((xa, yf, z0), (xb, yf + t['salida'] * 0.5, z0 + t['alto'] * 0.5)))
+        # Friso oscuro con dos soles en relieve
+        f = D.FRISO
+        xa, xb = sorted((s * (h + j + f['margen']), s * (interior - f['margen'])))
+        k.agregar(caja_biselada(xb - xa, 0.2, f['alto'], 0.04), 'piedra_sombra', 'escenario',
+                  colocar(((xa + xb) / 2, yf, z0 + f['z'] + f['alto'] / 2)))
+        for x in D.SOLES_X:
+            glifo_sol(k, colocar((s * x, yf + 0.112, z0 + f['z'] + f['alto'] / 2), al_frente), D.RADIO_SOL, 'piedra_luz')
+        # Jamba clara (2 cm hacia dentro del canto del muro: no comparten cara)
+        xa, xb = sorted((s * (h + 0.02), s * (h + j)))
+        k.agregar(caja_biselada(xb - xa, D.JAMBA['salida'] + 0.05, D.ALTO_PUERTA, 0.05), 'piedra_luz', 'escenario',
+                  colocar(((xa + xb) / 2, yf + (D.JAMBA['salida'] - 0.05) / 2, z0 + D.ALTO_PUERTA / 2)))
+        # Almenas sobre la cornisa, fuera de la crestería
+        a = D.ALMENAS
+        x = D.CRESTA['ancho'] / 2 + 0.8
+        while x + a['ancho'] / 2 <= m:
+            k.agregar(caja_biselada(a['ancho'], a['ancho'], a['alto'], 0.08), tono_piedra, 'escenario',
+                      colocar((s * x, y, zcc + a['alto'] / 2)))
+            x += a['cada']
+        # Columnas del pórtico y sacerdotes del sol (de piedra, como los del santuario pero grises)
+        xc, yc = s * D.COLUMNAS_X, yf + D.COLUMNAS_Y
+        columna(k, (xc, yc, z0), D.VIGA['z'], 0.42, rnd, liana=(s > 0))
+        cajas.append(((xc - 0.55, yc - 0.55, z0), (xc + 0.55, yc + 0.55, z0 + D.VIGA['z'])))
+        e = D.ESTATUAS
+        ib.sacerdote(k, s * e['x'], yf + e['y'], 180, e['alto'], z=z0, piedra=True)
+        lado = 0.8 * e['alto'] / 5
+        cajas.append(((s * e['x'] - lado, yf + e['y'] - lado, z0), (s * e['x'] + lado, yf + e['y'] + lado, z0 + e['alto'] * 0.8)))
+    # Sobre la puerta: el bloque entra 20 cm en cada muro (sin caras coplanares)
+    k.agregar(caja_biselada(2 * h + 0.4, D.FONDO, D.ALTO_MURO - D.ALTO_PUERTA, 0.05), tono_piedra, 'escenario',
+              colocar((0, y, z0 + (D.ALTO_PUERTA + D.ALTO_MURO) / 2)))
+    cajas.append(((-h, y - D.FONDO / 2, z0 + D.ALTO_PUERTA), (h, yf, zc)))
+    # Dintel escalonado
+    z = z0 + D.ALTO_PUERTA
+    for n, (ancho, alto) in enumerate(D.DINTEL):
+        salida = 0.45 + 0.2 * n
+        k.agregar(caja_biselada(ancho, salida + 0.05, alto, 0.05), 'piedra_luz', 'escenario',
+                  colocar((0, yf + (salida - 0.05) / 2, z + alto / 2)))
+        z += alto
+    # Cornisa clara que vuela, musgo encima y lianas que cuelgan
+    c = D.CORNISA
+    k.agregar(caja_biselada(D.ANCHO + 2 * c['vuelo'], D.FONDO + 2 * c['vuelo'], c['alto'], 0.08), 'piedra_luz', 'escenario',
+              colocar((0, y, zc + c['alto'] / 2)))
+    for x0 in (-8.6, 7.4):
+        pts = [(x0 + rnd.uniform(-1.6, 1.6), y + rnd.uniform(-1.4, 1.6), zcc + 0.02) for _ in range(7)]
+        pts += [(x0 + rnd.uniform(-0.9, 0.9), y + rnd.uniform(-0.5, 0.9), zcc + rnd.uniform(0.12, 0.3)) for _ in range(4)]
+        k.agregar(casco(pts), tono_musgo, 'escenario')
+    for x, largo in ((-7.1, 3.2), (8.0, 2.4), (10.6, 3.6), (-10.9, 1.8)):
+        k.agregar(prisma(4, 0.09, largo, giro=45), 'selva_liana', 'escenario',
+                  colocar((x, yf + c['vuelo'] + 0.12, zc + 0.3 - largo / 2)))
+    # Crestería calada con el sol de oro
+    cr = D.CRESTA
+    k.agregar(caja_biselada(cr['ancho'], cr['fondo'], cr['alto'], 0.08), tono_piedra, 'escenario',
+              colocar((0, y, zcc + cr['alto'] / 2)))
+    for x in (-3.4, 3.4):
+        k.agregar(caja_biselada(1.4, 0.1, 1.4, 0.02), 'piedra_oscura', 'escenario',
+                  colocar((x, y + cr['fondo'] / 2 + 0.03, zcc + 1.3)))
+    rs = cr['radio_sol']
+    zs = zcc + cr['alto'] - rs * 1.1
+    ys = y + cr['fondo'] / 2 + 0.15
+    k.agregar(prisma(16, rs, 0.3), 'oro_brillante', 'escenario', colocar((0, ys, zs), (90, 0, 0)), material=material_oro)
+    for a in range(12):
+        ang = math.tau * a / 12
+        k.agregar(prisma(3, 0.2, rs * 0.7, radio_sup=0.02), 'oro_brillante', 'escenario',
+                  colocar((math.cos(ang) * rs * 1.36, ys, zs + math.sin(ang) * rs * 1.36), (0, 90 - math.degrees(ang), 0)),
+                  material=material_oro)
+    # Viga del pórtico sobre las columnas, con tres soles pequeños
+    v = D.VIGA
+    yc = yf + D.COLUMNAS_Y
+    k.agregar(caja_biselada(2 * (D.COLUMNAS_X + 0.8), v['fondo'], v['alto'], 0.06), 'piedra_luz', 'escenario',
+              colocar((0, yc, z0 + v['z'] + v['alto'] / 2)))
+    for x in (-2.2, 0.0, 2.2):
+        glifo_sol(k, colocar((x, yc + v['fondo'] / 2 + 0.012, z0 + v['z'] + v['alto'] / 2), al_frente), 0.22, 'piedra_sombra')
+    # Losas claras del pasillo, de la puerta a la losa del atrio
+    n = 4
+    largo = (D.ATRIO_FONDO - D.ATRIO['fondo']) / n
+    for i in range(n):
+        k.agregar(caja_biselada(D.PASILLO, largo - 0.12, 0.06, 0.02), 'piedra_luz' if i % 2 == 0 else 'piedra', 'escenario',
+                  colocar((0, yf + largo * (i + 0.5), z0 + 0.03)))
+    return cajas
+
+
+def atrio(k, centro_y, z_meseta, z_terraza, rnd):
+    """Muro del atrio (tablero del pórtico): al frente, de la escalinata a las esquinas, con pilares en las
+    esquinas; a los costados, hasta la fachada. La losa de la escalinata es la única entrada: los
+    colisionadores suben a BARRERA_ALTO sobre la terraza (no se saltan ni desde los tambores caídos).
+    Devuelve las cajas (min, max) de colisión."""
+    import diseno_fachada as D
+    A = D.ATRIO
+    yf = centro_y + D.FONDO / 2
+    y1 = yf + D.ATRIO_FONDO                     # borde delantero de la terraza
+    y0 = y1 - A['fondo']
+    m = D.ANCHO / 2
+    tope = z_terraza + A['alto']
+    techo = z_terraza + D.BARRERA_ALTO
+    cajas = []
+    for s in (1, -1):
+        # Tramo delantero: del canto de la losa al pilar de la esquina (entra en el pilar)
+        xa, xb = sorted((s * A['desde_x'], s * (m - 0.5)))
+        k.agregar(caja_biselada(xb - xa, A['fondo'], tope - z_meseta, 0.06), tono_piedra, 'escenario',
+                  colocar(((xa + xb) / 2, (y0 + y1) / 2, (z_meseta + tope) / 2)))
+        k.agregar(caja_biselada(xb - xa - 0.1, A['fondo'] + 0.16, A['remate'], 0.04), 'piedra_luz', 'escenario',
+                  colocar(((xa + xb) / 2 + s * 0.05, (y0 + y1) / 2, tope + A['remate'] / 2)))
+        glifo_sol(k, colocar(((xa + xb) / 2, y1 + 0.012, z_terraza + 0.6), (0, 0, 180)), 0.45, 'piedra_luz')
+        cajas.append(((xa, y0, z_meseta), (xb, y1, techo)))
+        # Pilar de la esquina: de m - 0.8 a m + 0.2, más alto y más grueso que el muro
+        pa, pb = sorted((s * (m - 0.8), s * (m + 0.2)))
+        k.agregar(caja_biselada(1.0, A['fondo'] + 0.2, tope + 0.6 - z_meseta, 0.08), tono_piedra, 'escenario',
+                  colocar(((pa + pb) / 2, (y0 + y1) / 2, (z_meseta + tope + 0.6) / 2)))
+        k.agregar(caja_biselada(1.2, A['fondo'] + 0.4, 0.3, 0.05), 'piedra_luz', 'escenario',
+                  colocar(((pa + pb) / 2, (y0 + y1) / 2, tope + 0.75)))
+        cajas.append(((pa, y0 - 0.1, z_meseta), (pb, y1 + 0.1, techo)))
+        # Costado: de detrás del pilar a la fachada (sobre la terraza; 2 cm dentro del canto: sin caras pegadas)
+        xa, xb = sorted((s * (m - A['fondo']), s * (m - 0.02)))
+        ya, yb = yf - 0.1, y0 + 0.2
+        k.agregar(caja_biselada(xb - xa, yb - ya, A['alto'] + 0.05, 0.06), tono_piedra, 'escenario',
+                  colocar(((xa + xb) / 2, (ya + yb) / 2, z_terraza + (A['alto'] - 0.05) / 2)))
+        k.agregar(caja_biselada(xb - xa + 0.16, yb - ya, A['remate'], 0.04), 'piedra_luz', 'escenario',
+                  colocar(((xa + xb) / 2, (ya + yb) / 2, tope + A['remate'] / 2)))
+        cajas.append(((min(xa, s * m), ya, z_terraza), (max(xb, s * m), yb, techo)))
+        # Musgo sobre el remate
+        mx = s * (m - A['fondo'] / 2)
+        my = rnd.uniform(ya + 2, yb - 2)
+        k.agregar(casco([(mx + rnd.uniform(-0.5, 0.5), my + rnd.uniform(-1.4, 1.4), tope + A['remate'] + 0.01) for _ in range(6)]
+                        + [(mx, my, tope + A['remate'] + 0.18)]), tono_musgo, 'escenario')
+    return cajas
 
 
 def puerta_santuario(k, hueco, alto, material_runa):

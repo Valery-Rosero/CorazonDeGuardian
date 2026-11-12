@@ -185,6 +185,52 @@ test('la losa cierra el paso al pórtico hasta que se usa la Manipulación', () 
   assert.ok(sim.jugador.posicion.z > 146, `ahora pasa (z = ${sim.jugador.posicion.z.toFixed(2)})`);
 });
 
+test('la losa no se rodea ni se salta: el atrio del pórtico está cerrado por los lados', () => {
+  reiniciar();
+  const losa = sim.losas.lista.find((l) => l.malla.name === 'dyn_losa_1');
+  losa.t = -1;
+  losa.cuerpo.position.set(losa.desde.x, losa.desde.y, losa.desde.z);
+  // Junto a las alfardas hacia el borde de la terraza, desde lo alto de la alfarda, y desde los costados
+  // de la meseta (donde están los tambores caídos), corriendo y saltando sin parar
+  const intentos = [
+    [8.5, 12.1, 136, 0], [-8.5, 12.1, 136, 0], [6.45, 14.8, 141.6, 0], [-6.45, 14.8, 141.6, 0],
+    [7.5, 14.8, 141.8, Math.PI / 2], [14.5, 12.1, 148, -Math.PI / 2], [-14.5, 12.1, 148, Math.PI / 2],
+    [13.2, 12.1, 144, -Math.PI / 4], [-13.2, 12.1, 144, Math.PI / 4],
+  ];
+  for (const [x, y, z, rumbo] of intentos) {
+    sim.jugador.colocar(new THREE.Vector3(x, y, z), rumbo);
+    sim.mirar(rumbo);
+    sim.teclas('adelante');
+    let dentro = false;
+    for (let i = 0; i < 24; i++) {
+      sim.entrada.pulsadas.add('saltar');
+      sim.correr(0.25);
+      const p = sim.jugador.posicion;
+      if (p.y > 14.2 && Math.abs(p.x) < 11.2 && p.z > 143.4 && p.z < 154.5) dentro = true;
+    }
+    sim.teclas();
+    assert.ok(!dentro, `desde (${x}, ${y}, ${z}) Victoria entró al atrio sin mover la losa`);
+  }
+});
+
+test('al recuperar una partida más allá del pórtico (o en el escape) la losa y la puerta quedan abiertas', () => {
+  reiniciar();
+  for (const nombre of ['dyn_losa_1', 'dyn_puerta_santuario']) {
+    const l = sim.losas.lista.find((x) => x.malla.name === nombre);
+    l.t = -1;
+    l.cuerpo.position.set(l.desde.x, l.desde.y, l.desde.z);
+    assert.ok(sim.losas.abrirYa(nombre), `${nombre} existe`);
+    assert.ok(l.cuerpo.position.distanceTo(l.hasta) < 1e-6, `${nombre} quedó abierta`);
+    assert.equal(sim.losas.activar(l.malla), false, 'ya no se vuelve a mover');
+  }
+  // Desde el pasadizo, Victoria sale por la puerta y baja por donde estaba la losa
+  sim.ir('salida_santuario');
+  sim.teclas('adelante');
+  sim.correr(4);
+  sim.teclas();
+  assert.ok(sim.jugador.posicion.z < 141, `salió del atrio (z = ${sim.jugador.posicion.z.toFixed(2)})`);
+});
+
 test('el Pulso solar empuja una esfera ritual', () => {
   reiniciar();
   const esfera = sim.nivel.dinamicos.find((d) => d.datos.forma === 'esfera');

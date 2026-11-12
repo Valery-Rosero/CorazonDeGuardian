@@ -36,6 +36,20 @@ export class Losas {
     return true;
   }
 
+  /**
+   * Deja abierta de golpe, sin animación, la losa o puerta 'nombre' (al recuperar una partida más allá
+   * del pórtico y al salir del santuario en el escape: Victoria nunca queda encerrada en el atrio).
+   * @param {string} nombre @returns {THREE.Object3D | null} la malla, si existe
+   */
+  abrirYa(nombre) {
+    const l = this.lista.find((x) => x.malla.name === nombre);
+    if (!l) return null;
+    l.t = l.duracion + 1e-3;
+    l.cuerpo.position.set(l.hasta.x, l.hasta.y, l.hasta.z);
+    l.malla.position.copy(l.hasta);
+    return l.malla;
+  }
+
   /** @param {number} dt */
   actualizar(dt) {
     for (let i = 0; i < this.lista.length; i++) {

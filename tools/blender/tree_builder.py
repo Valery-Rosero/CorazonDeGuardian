@@ -170,12 +170,15 @@ def _tubo_anillado(k, L, anillos, lados, hueso):
     for (v, u, r) in anillos:
         anillos_3d.append((L.p(u, v), L.px(r)))
     giro = L.m.to_3x3()
+    # Cada anillo va girado medio lado respecto al de abajo: dos anillos seguidos nunca tienen caras
+    # paralelas (con la curva del tronco quedaban casi en el mismo plano y parpadeaban)
+    fase = [math.pi / lados * (i % 2) for i in range(len(anillos_3d))]
     for i in range(len(anillos_3d) - 1):
         (c0, r0), (c1, r1) = anillos_3d[i], anillos_3d[i + 1]
         abajo = [c0 + giro @ Vector((math.cos(a) * r0 * 0.86, math.sin(a) * r0 * 0.86, 0)) for a in
-                 (math.tau * j / lados for j in range(lados))]
+                 (math.tau * j / lados + fase[i] for j in range(lados))]
         arriba = [c1 + giro @ Vector((math.cos(a) * r1, math.sin(a) * r1, 0)) for a in
-                  (math.tau * j / lados for j in range(lados))]
+                  (math.tau * j / lados + fase[i] for j in range(lados))]
         claro = i % 2 == 0
         color = tres_tonos('selva_tronco_luz' if claro else 'selva_tronco', 'selva_tronco_luz' if claro else 'selva_tronco',
                            'selva_tronco' if claro else 'selva_tronco_sombra', umbral_luz=0.25, umbral_sombra=-0.25)
@@ -186,7 +189,7 @@ def _tubo_anillado(k, L, anillos, lados, hueso):
             # Escalón entre este anillo y el siguiente (mira hacia abajo: línea oscura)
             r2 = anillos_3d[i + 1][1] * 0.86
             sig = [c1 + giro @ Vector((math.cos(a) * r2, math.sin(a) * r2, 0.02)) for a in
-                   (math.tau * j / lados for j in range(lados))]
+                   (math.tau * j / lados + fase[i + 1] for j in range(lados))]
             verts = arriba + sig
             caras = [(j, (j + 1) % lados, lados + (j + 1) % lados, lados + j) for j in range(lados)]
             k.agregar((verts, orientar_hacia(verts, caras, (0, 0, -1))), 'selva_tronco_sombra', hueso)

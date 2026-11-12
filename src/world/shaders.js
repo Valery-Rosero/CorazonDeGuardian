@@ -89,6 +89,56 @@ export function materialPoza() {
   return m;
 }
 
+/**
+ * Lago del valle: opaco (una lámina de cientos de metros no se ordena con lo transparente). Mezcla el
+ * agua honda con el color del horizonte según el ángulo de la mirada (Fresnel: de lejos y rasante refleja
+ * el cielo, de cerca y desde arriba se ve el fondo). El horizonte es el color de la niebla, así el lago
+ * cambia con el amanecer. Olas lentas en dos escalas inclinan la normal y el sol deja destellos.
+ * @param {THREE.Vector3} dirSol
+ */
+export function materialLago(dirSol) {
+  const u = uniformesConNiebla({
+    uHondo: { value: new THREE.Color(PALETA.agua).multiplyScalar(0.32) },
+    uBrillo: { value: new THREE.Color(PALETA.agua_espuma) },
+    uDirSol: { value: dirSol.clone().normalize() },
+  });
+  const m = new THREE.ShaderMaterial({
+    name: 'agua_lago',
+    uniforms: u,
+    vertexShader: VERTICE_CON_NIEBLA,
+    fragmentShader: /* glsl */ `
+      uniform float uTiempo;
+      uniform vec3 uHondo;
+      uniform vec3 uBrillo;
+      uniform vec3 uDirSol;
+      varying vec3 vPos;
+      ${RUIDO}
+      #include <fog_pars_fragment>
+      void main() {
+        vec2 p = vPos.xz;
+        float a = ruido(p * 0.045 + vec2(uTiempo * 0.035, uTiempo * 0.02));
+        float b = ruido(p * 0.22 - vec2(uTiempo * 0.09, -uTiempo * 0.06));
+        vec3 n = normalize(vec3((a - 0.5) * 0.22 + (b - 0.5) * 0.1, 1.0, (b - 0.5) * 0.22 - (a - 0.5) * 0.1));
+        vec3 v = normalize(cameraPosition - vPos);
+        float fres = pow(1.0 - max(dot(v, n), 0.0), 4.0);
+        #ifdef USE_FOG
+          vec3 cielo = fogColor;
+        #else
+          vec3 cielo = uBrillo;
+        #endif
+        vec3 col = mix(uHondo, cielo * 0.95, clamp(0.12 + fres * 0.88, 0.0, 1.0));
+        vec3 r = reflect(-v, n);
+        col += uBrillo * pow(max(dot(r, uDirSol), 0.0), 180.0) * 0.9;
+        col += uBrillo * smoothstep(0.8, 0.97, b) * 0.05 * (1.0 - fres);
+        gl_FragColor = vec4(col, 1.0);
+        #include <fog_fragment>
+      }`,
+    fog: true,
+  });
+  m.uniforms.uTiempo = uTiempo;
+  return m;
+}
+
 /** Rayo de luz falso: cono aditivo que se desvanece arriba y abajo, con polvo en suspensión. */
 export function materialRayo() {
   const m = new THREE.ShaderMaterial({

@@ -269,6 +269,8 @@ export function crearMapaAlturas(raiz, zona, paso) {
   raiz.traverse((o) => {
     const m = /** @type {THREE.Mesh} */ (o);
     if (!m.isMesh || /^(col_|trg_)/.test(m.name) || /** @type {any} */ (m).isInstancedMesh) return;
+    // El lago no es suelo: la tropa que baja más allá de la orilla se oculta (sin suelo bajo el agua)
+    if (/^agua_/.test(m.name) || /^agua_/.test(/** @type {any} */ (m.material).name ?? '')) return;
     if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
     b.copy(/** @type {THREE.Box3} */ (m.geometry.boundingBox)).applyMatrix4(m.matrixWorld);
     if (b.intersectsBox(caja)) mallas.push(m);

@@ -31,7 +31,7 @@ El checklist completo, tema por tema de las semanas 1 a 10, está en [CHECKLIST_
 | Vite | 8 | Servidor de desarrollo y empaquetado (`npm run dev`, `npm run build`), como desde la semana 6 |
 | Blender | 5.2 con Python (`bpy`) | Todos los modelos: escenarios, personajes y enemigos, **generados con scripts**, no a mano |
 | Python + numpy / Pillow / ffmpeg | 3.12 | Sonidos, voces y música sintetizados; el video del mural dibujado cuadro a cuadro |
-| node:test | Node 24 | 101 pruebas automáticas |
+| node:test | Node 24 | 103 pruebas automáticas |
 
 **Mensaje:** no hay ni un modelo, ni una imagen ni un sonido descargado. Todo sale de código.
 
@@ -136,7 +136,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
    | Pieza | Triángulos (límite) |
    |---|---|
-   | Selva | 61.994 (70.000) |
+   | Selva | 67.768 (70.000) |
    | Santuario | ≈37.000 (50.000) |
    | Arena | ≈22.800 |
    | Victoria | 2.577 (7.500) |
@@ -150,7 +150,7 @@ k.agregar(caja_biselada(lt * 2, lt * 2, hb, 0.15), tono_piedra, 'escenario', col
 k.agregar(caja_biselada(lc * 2, lc * 2, hc, 0.08), 'piedra_luz', 'escenario', colocar((cx, cy, z0 + ht + hb + hc / 2)))           # cornisa
 ```
 
-**Mostrar:** `docs/previews/piramide_tablero.png` junto a `piramide_vs_tablero.png` (el tablero y el juego), y un script abierto.
+**Mostrar:** `docs/previews/piramide_tablero.png` junto a `piramide_vs_tablero.png` (el tablero y el juego), y un script abierto. El pórtico del santuario sigue la misma regla: `fachada_tablero.png` y `fachada_vs_tablero.png`.
 
 ---
 
@@ -416,7 +416,7 @@ malla.quaternion.set(cuerpo.quaternion.x, cuerpo.quaternion.y, cuerpo.quaternion
 
 ## 20. Pruebas y verificación
 
-- **101 pruebas** con `npm test`. Algunas cargan los `.glb` reales y hacen correr la física:
+- **103 pruebas** con `npm test`. Algunas cargan los `.glb` reales y hacen correr la física:
   - recorren la selva entera;
   - resuelven el acertijo de los espejos (las 512 combinaciones);
   - pelean con el Guardián;
@@ -455,8 +455,10 @@ malla.quaternion.set(cuerpo.quaternion.x, cuerpo.quaternion.y, cuerpo.quaternion
   - **Draco:** los modelos pesan de 1,6 a 5 MB, gracias al estilo de pocos polígonos.
   - **HDR:** el entorno se genera del cielo procedural con `PMREMGenerator`.
 - **¿Por qué no *transmission*?** Obliga a dibujar la escena dos veces. El escudo usa un *shader* propio con borde de Fresnel.
+- **¿Cómo se hace el lago sin reflejos reales?** Con un *shader* propio y opaco: según el ángulo de la mirada mezcla el agua honda con el color del horizonte (efecto Fresnel: de lejos refleja el cielo, de cerca se ve el fondo). Ese color es el de la niebla, así que el lago cambia solo con el amanecer. La lámina acompaña a la cámara, como el cielo: su borde nunca se ve.
 - **Problemas que encontramos al revisar,** y su solución:
   - **El bloom velaba el cielo:** se excluye el cielo del brillo.
   - **Un píxel inválido dejaba un cuadro negro:** se limpian los valores antes del desenfoque.
   - **Las cinemáticas se desfasaban de las voces:** van con el reloj real.
   - **Superficies superpuestas en el santuario:** se corrigieron con la herramienta `zfighting`.
+  - **La losa del pórtico se podía rodear:** el atrio ahora es un patio cerrado y una prueba intenta rodearla y saltarla desde nueve sitios.

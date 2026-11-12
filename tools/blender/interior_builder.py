@@ -9,6 +9,7 @@ import math
 from mathutils import Vector
 
 from common import caja_biselada, casco, colocar, elipsoide, prisma
+from rock_builder import tono_piedra
 
 ORO, RUNA = 1, 2
 
@@ -119,11 +120,15 @@ def brasero(k, x, y, z=0.0, alto=1.0):
     return (x, y, z + alto + 0.32)
 
 
-def sacerdote(k, x, y, giro, alto=5.0, z=0.0):
-    """Sacerdote del sol: estatua de bloques con máscara de oro y un disco solar entre las manos."""
+def sacerdote(k, x, y, giro, alto=5.0, z=0.0, piedra=False):
+    """Sacerdote del sol: estatua de bloques con máscara de oro y un disco solar entre las manos.
+    piedra=True la talla en la piedra gris del exterior (los del pórtico) en vez de la arenisca."""
     e = alto / 5.0
     rot = (0, 0, giro)
+    gris = {'arenisca_sombra': 'piedra_sombra', 'arenisca': 'piedra_luz', 'arenisca_oscura': 'piedra_oscura'}
     def pieza(geo, color, dx, dy, dz, material=0, r=(0, 0, 0)):
+        if piedra:
+            color = tono_piedra if color is tono_arenisca else gris.get(color, color)
         c, s = math.cos(math.radians(giro)), math.sin(math.radians(giro))
         k.agregar(geo, color, 'escenario', colocar((x + dx * c - dy * s, y + dx * s + dy * c, z + dz), (r[0], r[1], giro + r[2])), material=material)
     pieza(caja_biselada(1.6 * e, 1.6 * e, 0.6 * e, 0.05), 'arenisca_sombra', 0, 0, 0.3 * e)
