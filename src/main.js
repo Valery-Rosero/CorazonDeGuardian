@@ -9,6 +9,7 @@ import { CENTINELA, ESPECTRO, ORBE } from './config/enemies.js';
 import { EXPRESIONES } from './config/expressions.js';
 import { INPUT_MAP } from './config/input_map.js';
 import { CHECKPOINT, PORTAL, PUENTE } from './config/level.js';
+import { LLAVE, SOLES } from './config/llave.js';
 import { PALETA } from './config/palette.js';
 import { ANIMACION, CARA, PLAYER, VIDA } from './config/player.js';
 import { CamaraTerceraPersona } from './camera/camera_rig.js';
@@ -33,6 +34,7 @@ import { InterfazFinal } from './ui/endgame_ui.js';
 import { chispaEn, crearBrasas, crearEstela, crearParticulasDeEmisor, crearPolvoDerrumbe, crearRafagas, rafagaEn } from './fx/particle_presets.js';
 import { texturaPunto } from './fx/particles.js';
 import { Interactuables } from './interaction/interactables.js';
+import { LlaveDelSol } from './interaction/llave_del_sol.js';
 import { Portales } from './interaction/portal.js';
 import { Losas } from './interaction/slabs.js';
 import { Poderes } from './player/abilities/abilities_logic.js';
@@ -350,8 +352,30 @@ async function iniciar() {
     });
   }
   const losas = new Losas(nivel.dinamicos);
+  // La Llave del Sol: tres cofres en la selva; el portal de la cascada pide la llave completa, la losa
+  // el tercio de jade y la puerta el de oro (tablero docs/previews/llave_tablero.png)
+  const llave = new LlaveDelSol(nivelSelva.raiz, nivel.giratorios, {
+    mano: (v) => manoDer.getWorldPosition(v),
+    chispa: (p, color, n) => chispaEn(estela, p, color, n, 0.5),
+    rafaga: (p, color, n) => rafagaEn(rafagas, p, n, color, 3),
+    sonido: (nombre, p, volumen = 1) => (p ? audio.efectoEn(nombre, p, volumen) : audio.efecto(nombre, volumen)),
+  });
+  /** El mundo y el cuaderno como lo dice el estado de la llave (partida guardada, escape, demostración). */
+  const sincronizarLlave = () => {
+    llave.aplicarEstado();
+    for (const o of interactuables.lista) {
+      if (!o.activo) continue;
+      if ((o.tipo === 'cofre' && llave.estado.recogidos.has(o.datos.sol)) || (o.tipo === 'pedestal' && llave.estado.portalActivo)) {
+        interactuables.desactivar(o);
+      }
+    }
+    hud.soles(llave.estado.recogidos, llave.estado.colocados, poderes.tiene('manipulacion'));
+  };
   /** La losa del atrio y la puerta del pórtico, abiertas de una vez (partida más allá del pórtico, escape). */
   const abrirPortico = () => {
+    // Los tres tercios ya están en sus cerraduras (antes de hundir las piedras: se hunden con ellas)
+    llave.estado.importar({ sellos: [...SOLES] });
+    sincronizarLlave();
     for (const nombre of ['dyn_losa_1', 'dyn_puerta_santuario']) {
       const malla = losas.abrirYa(nombre);
       const o = malla && interactuables.lista.find((x) => x.objeto === malla);
@@ -440,6 +464,9 @@ async function iniciar() {
       cara.ponerEmocion('neutral');
       hud.mensajeTutorial(TUTORIAL.pulso, 8);
       tutorial.pulso = true;
+      // La Llave del Sol: el cuaderno muestra los tres tercios y la pista de los haces de luz
+      hud.soles(llave.estado.recogidos, llave.estado.colocados, true);
+      setTimeout(() => { if (!llave.estado.completa) hud.mensajeTutorial(TUTORIAL.llave, 8); }, 9000);
     });
   };
   /** @type {{value: number} | null} intensidad del haz de luz falso sobre el altar del brazalete */
@@ -528,13 +555,93 @@ async function iniciar() {
     rafagaEn(rafagas, o.pos, 18, PALETA.gema_manipulacion, 2.5);
     if (santuario.usar(o) || actoFinal.usar(o)) return;
     if (o.tipo === 'pagina') leerPagina(o);
-    else if (o.tipo === 'losa' && losas.activar(o.objeto)) {
-      interactuables.desactivar(o);
-      audio.efectoEn('losa_mover', o.pos, 1);
-      rig.sacudida.agregar(0.3);
-      hud.nota(o.objeto.name === 'dyn_puerta_santuario' ? 'La puerta del santuario se hunde en el suelo'
-        : o.objeto.name === 'dyn_puerta_arena' ? 'La puerta de la arena se abre. Se oye un latido.' : 'La losa se hunde en la piedra');
+    else if (o.tipo === 'cofre') abrirCofre(o);
+    else if (o.tipo === 'pedestal') presentarLlave(o);
+    else if (o.tipo === 'losa' && o.datos.sol && !llave.estado.colocados.has(o.datos.sol)) colocarSol(o);
+    else if (o.tipo === 'losa') abrirLosa(o);
+  };
+
+  /** @param {import('./interaction/interactables.js').Interactuable} o */
+  const abrirLosa = (o) => {
+    if (!losas.activar(o.objeto)) return;
+    interactuables.desactivar(o);
+    audio.efectoEn('losa_mover', o.pos, 1);
+    rig.sacudida.agregar(0.3);
+    hud.nota(o.objeto.name === 'dyn_puerta_santuario' ? 'La puerta del santuario se hunde en el suelo'
+      : o.objeto.name === 'dyn_puerta_arena' ? 'La puerta de la arena se abre. Se oye un latido.' : 'La losa se hunde en la piedra');
+  };
+
+  // ---------------- La Llave del Sol
+  /** @typedef {import('./config/llave.js').Sol} Sol */
+  /** @param {Sol} sol */
+  const nombreSol = (sol) => LLAVE.nombre[sol];
+  /** Un cofre de la selva: la tapa se abre y el tercio vuela a la mano. @param {import('./interaction/interactables.js').Interactuable} o */
+  const abrirCofre = (o) => {
+    const sol = /** @type {Sol} */ (o.datos.sol);
+    const abierto = llave.abrirCofre(sol, () => {
+      audio.efecto('brazalete', 0.6);
+      hud.soles(llave.estado.recogidos, llave.estado.colocados);
+      const n = llave.estado.recogidos.size;
+      if (llave.estado.completa) hud.nota('La Llave del Sol está completa. La cascada te espera.', 5);
+      else hud.nota(`${nombreSol(sol)[0].toUpperCase()}${nombreSol(sol).slice(1)}: ${n} de 3`, 3);
+      // El primer cofre: la marca de tiza de Mateo
+      if (n === 1) setTimeout(() => dialogos.decir('vic_cofre_01'), 500);
+      guardar();
+    });
+    if (abierto) interactuables.desactivar(o);
+  };
+  let ultimoAvisoPortal = -Infinity;
+  /** El arco de runas sin la llave completa: no se cruza. */
+  const avisarPortalDormido = () => {
+    if (reloj - ultimoAvisoPortal < LLAVE.avisoPortal) return;
+    ultimoAvisoPortal = reloj;
+    if (!llave.estado.completa) {
+      dialogos.decir('vic_runas_01');
+      hud.nota(`Soles de la llave: ${llave.estado.recogidos.size} de 3. Sigue los haces de luz de la selva.`, 5);
+    } else hud.nota('Presenta la Llave del Sol en el pedestal de la cueva', 4);
+  };
+  /** El pedestal: con la llave completa, la secuencia «La llave» despierta el portal. @param {import('./interaction/interactables.js').Interactuable} o */
+  const presentarLlave = (o) => {
+    if (llave.estado.portalActivo) return;
+    if (!llave.estado.completa) {
+      ultimoAvisoPortal = -Infinity;
+      avisarPortalDormido();
+      return;
     }
+    interactuables.desactivar(o);
+    const pedestal = o.objeto.getWorldPosition(new THREE.Vector3());
+    const arco = llave.centroArco;
+    // Victoria frente al atril (del lado de la cueva) y la llave entre los dos, a la altura de los ojos
+    const frente = new THREE.Vector3(arco.x - pedestal.x, 0, 0).normalize();
+    const marca = pedestal.clone().addScaledVector(frente, 1.25);
+    marca.y = jugador.posicion.y;
+    const centro = pedestal.clone().addScaledVector(frente, 0.3);
+    centro.y += 1.72;
+    historia.llave(marca, centro, arco, {
+      armar: () => llave.armar(centro, arco),
+      runas: () => llave.runas(),
+      asentar: () => llave.asentar(() => hud.soles(llave.estado.recogidos, llave.estado.colocados)),
+      alTerminar: () => {
+        hud.nota('El portal de la cascada despertó', 3);
+        hud.soles(llave.estado.recogidos, llave.estado.colocados);
+        guardar();
+      },
+    });
+  };
+  /** La losa o la puerta: el tercio vuela al hueco, se enciende y la piedra se hunde. @param {import('./interaction/interactables.js').Interactuable} o */
+  const colocarSol = (o) => {
+    const sol = /** @type {Sol} */ (o.datos.sol);
+    if (!llave.estado.tiene(sol)) {
+      hud.nota(`Falta el ${nombreSol(sol)}: está en un cofre de la selva`, 4);
+      return;
+    }
+    interactuables.desactivar(o);
+    llave.colocar(sol, () => {
+      o.activo = true;   // abrirLosa la desactiva de nuevo al hundirla
+      abrirLosa(o);
+      hud.soles(llave.estado.recogidos, llave.estado.colocados);
+      guardar();
+    });
   };
 
   /** Todo el daño pasa por aquí: el escudo lo bloquea y la esquiva lo evita. @param {number} cantidad */
@@ -782,6 +889,7 @@ async function iniciar() {
       escudo: Boolean(altar && !altar.activo),
       espejos: santuario.acertijo.resuelto,
       vistas: [...new Set([...cine.vistas, ...historia.vistas])],
+      llave: llave.estado.exportar(),
       tiempo: estadisticas.tiempo,
       muertes: estadisticas.muertes,
     });
@@ -802,6 +910,10 @@ async function iniciar() {
     for (const n of p.pilares) checkpoints.pasar(n);
     checkpoints.registro.actual = p.pilar;
     if (p.punto) checkpoints.fijar(p.punto);
+    // La Llave del Sol (una partida de antes de la llave que ya pasó la cascada la tiene con el portal despierto)
+    if (p.llave) llave.estado.importar(p.llave);
+    else if (p.pilar >= 2 || p.punto) llave.estado.importar({ soles: [...SOLES], sellos: ['agua'] });
+    sincronizarLlave();
     if (p.punto === 'santuario' || p.punto === 'arena') abrirPortico();
     for (const n of p.poderes) poderes.desbloquear(n);
     if (poderes.tiene('pulso')) {
@@ -883,7 +995,9 @@ async function iniciar() {
     if (muerta) return;
     switch (d.evento) {
       case 'portal':
-        portales.entrar(d);
+        // El arco de la cascada duerme hasta que se le presenta la Llave del Sol completa
+        if (d.destino === 'portal_cornisa' && !llave.estado.portalActivo) avisarPortalDormido();
+        else portales.entrar(d);
         break;
       case 'muerte':
         morir();
@@ -993,6 +1107,7 @@ async function iniciar() {
       santuario.actualizar(dt, t);
       pantallas.fundido(transicion.actualizar(dt));
       avanzarBrazalete(dt);
+      llave.actualizar(dt);
       pecho.copy(jugador.posicion).y += 1.2;
       interactuables.actualizar(dt, pecho, camara, (o) => o.tipo === 'brazalete' || poderes.tiene('manipulacion'));
       burbuja.actualizar(dt, poderes.escudoActivo, pecho);
@@ -1189,6 +1304,9 @@ async function iniciar() {
     document.getElementById('pantalla-carga')?.classList.add('oculto');
     for (const p of ['pulso', 'escudo', 'manipulacion']) poderes.desbloquear(p);
     huesoBrazalete.scale.setScalar(1);
+    // El portal de la cascada ya despierto: la demostración lo cruza (requisito 4)
+    llave.estado.importar({ soles: [...SOLES], sellos: ['agua'] });
+    sincronizarLlave();
     vida.invulnerable = Infinity;   // en la demostración nada interrumpe la explicación
     bucle.pausado = false;
     demo.activar();
@@ -1203,7 +1321,7 @@ async function iniciar() {
 
   // ---------------- Inicio, pausa y derrota
   // Depuración: acceso desde la consola (y desde los scripts de medición y de revisión de cinemáticas)
-  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, dialogos, entrada, mural, jugador, teletransportar, mateo, rig, nivel, bucle, posproceso, checkpoints, poderes } });
+  if (DEPURACION) Object.assign(window, { __templo: { THREE, renderer, escena, camara, cine, actoFinal, historia, santuario, interactuables, portales, tomarBrazalete, llave, presentarLlave, abrirCofre, colocarSol, losas, dialogos, entrada, mural, jugador, teletransportar, mateo, rig, nivel, bucle, posproceso, checkpoints, poderes } });
   // Todos los sombreadores del nivel, en las dos atmósferas (selva e interiores), antes del primer
   // fotograma: así ninguna cinemática se congela la primera vez que ve un material
   const textoCarga = document.getElementById('texto-carga');
@@ -1281,6 +1399,11 @@ async function iniciar() {
     if (params.has('poderes')) {
       for (const p of ['pulso', 'escudo', 'manipulacion']) poderes.desbloquear(p);
       huesoBrazalete.scale.setScalar(1);
+    }
+    // &soles: los tres tercios en la mano (cofres abiertos); &llave: además, el portal de la cascada despierto
+    if (params.has('soles') || params.has('llave')) {
+      llave.estado.importar({ soles: [...SOLES], sellos: params.has('llave') ? ['agua'] : [] });
+      sincronizarLlave();
     }
     if (params.has('disparar')) setInterval(() => { if (poderes.usar('pulso')) dispararPulso(); }, 600);
     // &diario=N abre esa página (para revisar el estilo de la escritura)

@@ -22,7 +22,9 @@ from mathutils import Vector  # noqa: E402
 import bridge_builder  # noqa: E402
 import common  # noqa: E402
 import diseno_fachada  # noqa: E402
+import diseno_llave as DL  # noqa: E402
 import foliage_builder  # noqa: E402
+import llave_builder  # noqa: E402
 import props_builder  # noqa: E402
 import rock_builder  # noqa: E402
 import stats  # noqa: E402
@@ -39,7 +41,7 @@ MAT_COPA = 8    # índice del material de las copas (borde de sol) en la malla p
 
 RAIZ = os.path.abspath(os.path.join(DIR, '..', '..'))
 SALIDA = os.path.join(RAIZ, 'public', 'models', 'zona_1_selva.glb')
-PRESUPUESTO = 70000   # sin contar las instancias de vegetación (subió con la pirámide nueva: la máquina de prueba tiene tarjeta dedicada)
+PRESUPUESTO = 72000   # sin contar las instancias de vegetación (subió con la pirámide y con la Llave del Sol: la máquina de prueba tiene tarjeta dedicada)
 
 # Recorrido del sendero (x, y): guía colores del suelo, vegetación y árboles
 SENDERO = [(0, 18), (0, 4), (-5, -10), (-11, -24), (-9, -36), (0, -47), (6, -57), (7.5, -67), (7.5, -77),
@@ -82,6 +84,8 @@ def materiales():
         'hojas': common.material_toon('selva_hojas_doble'),
         'copa': common.material_toon('selva_copa'),
         'lago': common.material_toon('agua_lago'),
+        # Cristal de cada tercio de la Llave del Sol
+        **{f'sol_{s}': common.material_emisivo(f'sol_{s}_emisivo', DL.COLOR[s], 2.2) for s in DL.SOLES},
     }
 
 
@@ -613,15 +617,37 @@ def interactuables(m, rnd):
     l.agregar(caja_biselada(12.0, 0.8, 2.4, 0.12), tono_piedra, 'escenario')
     for i in range(5):
         l.agregar(caja_biselada(0.5, 0.06, 0.5, 0.05), 'cristal_runa', 'escenario', colocar((-4 + i * 2, -0.42, 0.3), (0, 45, 0)), material=1)
-    objeto_suelto('dyn_losa_1', l, [m['toon'], m['runa']], (0, -143.0, zt + 1.2),
-                  {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa',
-                   'etiqueta': 'Mover la losa', 'mover': [0.0, 0.0, -2.45], 'duracion': 1.6})
+    # Hueco del sol de jade en la cara que mira al puente (la Llave del Sol, diseno_llave.py)
+    sj = DL.SELLOS['jade']['pos']
+    llave_builder.hueco(l, colocar((0, sj[1] + 143.0 - 0.065, sj[2] - (zt + 1.2)), (0, 0, 180)), 2)
+    objeto_suelto('dyn_losa_1', l, [m['toon'], m['runa'], m['oro']], (0, -143.0, zt + 1.2),
+                  {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa', 'sol': 'jade',
+                   'etiqueta': 'Colocar el sol de jade', 'mover': [0.0, 0.0, -2.45], 'duracion': 1.6})
     # Puerta del pórtico: se hunde en el suelo con la Manipulación y deja ver el pasadizo
     pu = Constructor(PALETA, semilla=78, variacion=0.03)
     temple_builder.puerta_santuario(pu, 2.2, 6.4, 1)
-    objeto_suelto('dyn_puerta_santuario', pu, [m['toon'], m['runa']], (0, -156.4, zt + 3.2),
-                  {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa',
-                   'etiqueta': 'Abrir la puerta del santuario', 'mover': [0.0, 0.0, -6.5], 'duracion': 2.4})
+    so = DL.SELLOS['oro']['pos']
+    llave_builder.hueco(pu, colocar((0, so[1] + 156.4 - 0.065, so[2] - (zt + 3.2)), (0, 0, 180)), 2)
+    objeto_suelto('dyn_puerta_santuario', pu, [m['toon'], m['runa'], m['oro']], (0, -156.4, zt + 3.2),
+                  {'tipo': 'cinematico', 'masa': 0.0, 'material': 'mundo', 'interactuable': 'losa', 'sol': 'oro',
+                   'etiqueta': 'Colocar el sol de oro', 'mover': [0.0, 0.0, -6.5], 'duracion': 2.4})
+
+
+def llave_del_sol(k, m):
+    """La Llave del Sol (tablero docs/previews/llave_tablero.png): los tres cofres, la repisa del risco con
+    las dos piedras que llevan a ella, el pedestal de la cueva y dónde queda cada tercio colocado.
+    Usa su propio azar: no mueve nada de lo que ya estaba en la selva."""
+    rnd = random.Random(1717)
+    for n, (x, y, h) in enumerate(DL.PIEDRAS, start=4):
+        rock_builder.piedra_poza(k, (x, y, 0), 1.7, h, rnd)
+        caja_invisible(f'col_box_piedra_poza_{n}', (x - 0.75, y - 0.75, 0), (x + 0.75, y + 0.75, h * 0.97))
+    (a, b) = DL.REPISA
+    rock_builder.estratos(k, a, b, rnd, 0.35, tope_exacto=True, a_ras=('y0',))
+    caja_invisible('col_box_repisa_cofre', a, b)
+    for sol in DL.SOLES:
+        llave_builder.cofre(m, sol)
+    llave_builder.pedestal(k, m)
+    llave_builder.anclas()
 
 
 def triggers_y_puntos():
@@ -704,6 +730,14 @@ def vegetacion(m, rnd):
     # Helechos en las repisas de los riscos y alrededor de las cabezas de piedra
     for (x, y, z) in REPISAS:
         tipos['helecho'].append((x, y, z, rnd.uniform(0, math.tau), rnd.uniform(0.7, 1.1)))
+    # Nada de plantas encima de los cofres ni dentro de la repisa (se filtra al final: el azar no cambia)
+    def libre(p):
+        if any(math.hypot(p[0] - c['pos'][0], p[1] - c['pos'][1]) < 1.6 for c in DL.COFRES.values()):
+            return False
+        (a, b) = DL.REPISA
+        return not (a[0] - 0.4 < p[0] < b[0] + 0.4 and a[1] - 0.4 < p[1] < b[1] + 0.4)
+    for nombre in ('helecho', 'pasto'):
+        tipos[nombre] = [p for p in tipos[nombre] if libre(p)]
     tipos['arbol_joven'] = ARBOLES_JOVENES
     plantillas = {
         'helecho': (foliage_builder.helecho, {'viento': 1.0}),
@@ -739,6 +773,7 @@ def main():
     lago(m)
     checkpoints_y_flores(m)
     interactuables(m, rnd)
+    llave_del_sol(k, m)
     triggers_y_puntos()
     plantas = vegetacion(m, rnd)
 

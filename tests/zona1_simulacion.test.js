@@ -10,6 +10,7 @@ before(async () => {
 });
 
 const reiniciar = () => {
+  sim.llave.importar({});
   sim.eventos.length = 0;
   sim.muerta = false;
   sim.vida.reiniciar();
@@ -101,8 +102,21 @@ test('quedarse quieta en el puente: la tabla cae, Victoria cae al abismo y muere
   assert.ok(sim.vida.muerta);
 });
 
+test('sin la Llave del Sol completa el arco de la cueva no lleva a ninguna parte', () => {
+  reiniciar();
+  sim.llave.recoger('jade');
+  sim.llave.recoger('oro');
+  sim.ir('portal_cascada');
+  sim.teclas('atras');
+  sim.correr(2);
+  assert.ok(sim.eventos.includes('portal_dormido'), `eventos: ${sim.eventos.join(', ')}`);
+  assert.ok(!sim.eventos.some((e) => e.startsWith('portal:')), 'no se teletransporta');
+  assert.ok(sim.jugador.posicion.y < 2, 'sigue en la cueva');
+});
+
 test('el portal de la cueva lleva a la cornisa y no rebota de vuelta', () => {
   reiniciar();
+  sim.despertarPortal();
   sim.ir('portal_cascada');
   sim.teclas('atras'); // el portal está detrás de Victoria
   sim.correr(2);
@@ -148,6 +162,8 @@ test('recorrido completo de la zona 1: del claro al pórtico del santuario', () 
       assert.ok(t < limite, `atascada camino de (${bx}, ${by}); está en ${sim.jugador.posicion.toArray().map((v) => v.toFixed(1))}`);
     }
   };
+  // Con los tres tercios presentados en el pedestal (las pruebas de la llave recorren los cofres)
+  sim.despertarPortal();
   seguir(sendero, 8);
   assert.ok(sim.eventos.includes('portal:portal_cornisa'), 'entra al portal de la cueva');
   sim.eventos.length = 0;
@@ -166,7 +182,7 @@ test('recorrido completo de la zona 1: del claro al pórtico del santuario', () 
   }
 });
 
-test('la losa cierra el paso al pórtico hasta que se usa la Manipulación', () => {
+test('la losa cierra el paso al pórtico hasta que se le pone el sol de jade', () => {
   reiniciar();
   const losa = sim.losas.lista[0];
   losa.t = -1;
@@ -177,6 +193,8 @@ test('la losa cierra el paso al pórtico hasta que se usa la Manipulación', () 
   sim.correr(6);
   assert.ok(sim.jugador.posicion.z < 143, `la losa la detiene antes del pórtico (z = ${sim.jugador.posicion.z.toFixed(2)})`);
   sim.teclas();
+  assert.equal(sim.manipular(), 'falta', 'sin el sol de jade la losa no se mueve');
+  sim.despertarPortal();
   assert.equal(sim.manipular(), 'losa');
   sim.correr(2);
   assert.ok(losa.cuerpo.position.y < losa.desde.y - 2.3, 'la losa se hundió');

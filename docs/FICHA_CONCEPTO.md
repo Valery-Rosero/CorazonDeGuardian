@@ -12,8 +12,8 @@ Hace siete años, el cartógrafo Mateo Solano entró en la selva buscando el Tem
 
 - **Género:** aventura 3D en tercera persona para un jugador, en el navegador (Chrome o Edge).
 - **Duración:** de 15 a 20 minutos.
-- **Recorrido:** la selva olvidada (exploración, cascada, puente que se derrumba) → el santuario (acertijo de los espejos, centinelas y espectros) → la cámara del sol (jefe en tres fases) → escape cronometrado y final al amanecer.
-- **Mecánicas:** tres poderes del brazalete (Pulso solar, Escudo arcano y Manipulación ancestral), esquiva, checkpoints, páginas del diario de Mateo.
+- **Recorrido:** la selva olvidada (exploración, tres cofres con la Llave del Sol, cascada, puente que se derrumba) → el santuario (acertijo de los espejos, centinelas y espectros) → la cámara del sol (jefe en tres fases) → escape cronometrado y final al amanecer.
+- **Mecánicas:** tres poderes del brazalete (Pulso solar, Escudo arcano y Manipulación ancestral), esquiva, checkpoints, páginas del diario de Mateo y la Llave del Sol: tres tercios escondidos en cofres de la selva que abren el portal de la cascada, la losa de las ruinas y la puerta del santuario.
 
 ## Lo que lo hace distinto
 
@@ -23,7 +23,7 @@ Hace siete años, el cartógrafo Mateo Solano entró en la selva buscando el Tem
 
 ## Tecnología
 
-Three.js 0.160 · cannon-es 0.20 · Vite · Blender 5.2 (Python) · numpy · 106 pruebas automáticas con `node --test`.
+Three.js 0.160 · cannon-es 0.20 · Vite · Blender 5.2 (Python) · numpy · 113 pruebas automáticas con `node --test`.
 
 ## Pilares de diseño
 

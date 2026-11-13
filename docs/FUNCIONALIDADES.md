@@ -6,7 +6,7 @@ Lo que tiene el juego y cómo se comprobó. «Prueba» es una prueba automática
 
 | Funcionalidad | Cómo se comprobó |
 |---|---|
-| Diez cinemáticas (introducción, brazalete, llegada al puente, puerta de los espejos, despertar, fases 2 y 3, derrota, final y el epílogo «La marcha»), diseñadas primero en un guion gráfico con lente, ángulo, movimiento e intención de cada plano | Captura del centro de cada plano comparada con su viñeta (`tests/cine.test.js` para el reproductor) |
+| Once cinemáticas (introducción, brazalete, «La llave», llegada al puente, puerta de los espejos, despertar, fases 2 y 3, derrota, final y el epílogo «La marcha»), diseñadas primero en un guion gráfico con lente, ángulo, movimiento e intención de cada plano | Captura del centro de cada plano comparada con su viñeta (`tests/cine.test.js` para el reproductor) |
 | Las cinemáticas van con el reloj real (el de la música y los subtítulos): un fotograma lento no las desfasa; la pausa detiene también el sonido; saltarlas no deja diálogo sonando después | `tests/cine_tiempos.test.js`: cada línea termina dentro de su cinemática y de su plano, el reloj no se atrasa y el salto no entrega el diálogo |
 | Todos los sombreadores se compilan en la pantalla de carga (las dos atmósferas, sombras y profundidad de campo incluidas) | En las 10 cinemáticas, el número de programas antes y después es el mismo: ningún tirón por compilar |
 | Partida guardada en el navegador (pilares, escenario, poderes, páginas, escudo, acertijo, cinemáticas vistas); al caer se reaparece en el escenario actual; «Continuar» en el menú | `tests/guardado.test.js`; captura: «Continuar» deja a Victoria en la sala de los espejos con lo que tenía |
@@ -24,6 +24,7 @@ Lo que tiene el juego y cómo se comprobó. «Prueba» es una prueba automática
 |---|---|
 | Victoria: correr, saltar, esquivar, tres poderes (Pulso solar, Escudo arcano, Manipulación ancestral) | Prueba |
 | Zona 1, la selva: claro, cascada con portal, cornisa, puente que se derrumba, ruinas y pórtico | Prueba del recorrido completo |
+| La Llave del Sol (tablero `docs/previews/llave_tablero.png`): tres cofres en la selva (a la vista al pie de la cabeza de piedra, escondido tras una ceiba y en una repisa junto a la cascada, saltando por las piedras de la poza), cada uno con un haz de luz y la marca de tiza de Mateo. La tapa se abre, el tercio sube, gira y vuela a la mano; el cuaderno lleva la cuenta. El arco de runas duerme hasta que se presenta la llave completa en el pedestal (cinemática «La llave»: los tres tercios se juntan y el de agua se queda); el jade abre la losa de las ruinas y el oro la puerta del santuario, y se hunden con ellas | `tests/llave.test.js`: las reglas, las piezas del nivel, los cofres se alcanzan caminando y la repisa saltando; el portal dormido no teletransporta; capturas de cada cofre, de la cinemática y de las dos cerraduras |
 | Zona 2, el santuario: altar del escudo, centinelas, espectros y el acertijo de los espejos | Prueba del acertijo (las 512 combinaciones) y del recorrido |
 | Zona 3, la cámara del sol: el Guardián en tres fases, pilares solares, ataques anunciados, invocación de espectros | Prueba: camina, salta en el golpe sísmico, solo recibe daño con el núcleo abierto |
 | Escape cronometrado (75 s) con el puente roto y la llegada al amanecer | Prueba: la ruta limpia dura unos 23 s |

@@ -87,6 +87,10 @@ export const PALETA = Object.freeze({
   agua_espuma: '#E6F6FA',
   cristal_runa: '#5CC8FF',
   oro_brillante: '#FFD45E',
+  // Los tres tercios de la Llave del Sol (tools/blender/diseno_llave.py)
+  sol_agua: '#38D0E0',
+  sol_jade: '#3FC07A',
+  sol_oro: '#FFB531',
   madera_tabla: '#8A6A45',
   madera_tabla_oscura: '#6A4F33',
   cuerda: '#B09060',

@@ -47,4 +47,5 @@ export const TUTORIAL = Object.freeze({
   manipulacion: 'E: Manipulación ancestral. Úsala sobre lo que brilla en blanco',
   esquiva: 'C: esquivar',
   escudo: 'Q: Escudo arcano. Bloquea todo el daño unos segundos',
+  llave: 'El mapa de Mateo marca tres cofres con un sol. Sigue los haces de luz de la selva',
 });

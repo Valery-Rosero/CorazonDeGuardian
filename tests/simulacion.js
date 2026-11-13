@@ -7,6 +7,7 @@ import { ESCUDO, ESQUIVA, MANIPULACION, PULSO } from '../src/config/abilities.js
 import { PORTAL, PUENTE } from '../src/config/level.js';
 import { Interactuables } from '../src/interaction/interactables.js';
 import { Losas } from '../src/interaction/slabs.js';
+import { EstadoLlave } from '../src/interaction/llave_logic.js';
 import { Poderes } from '../src/player/abilities/abilities_logic.js';
 import { PoolPulsos } from '../src/player/abilities/solar_pulse.js';
 import { PLAYER, VIDA } from '../src/config/player.js';
@@ -69,19 +70,28 @@ export async function crearSimulacion(ruta = 'public/models/zona_1_selva.glb') {
     },
   });
   const pecho = new THREE.Vector3();
+  const llave = new EstadoLlave();
 
   const sim = {
     nivel, jugador, entrada, vida, checkpoints, puente, eventos, triggers, fisica, escena, camara,
-    poderes, interactuables, losas, pulsos,
+    poderes, interactuables, losas, pulsos, llave,
     muerta: false,
     /** @type {{cuerpo: any, pos: any} | null} */
     ultimoImpacto: null,
-    /** Pulsa E: si hay una losa a la vista, la mueve. Devuelve el tipo del objetivo (o null). */
+    /**
+     * Pulsa E: si hay una losa a la vista, la mueve (la losa y la puerta del pórtico piden su tercio de la
+     * Llave del Sol: sin él devuelve 'falta'). Devuelve el tipo del objetivo (o null).
+     */
     manipular() {
       const o = interactuables.objetivo;
       if (!o) return null;
+      if (o.tipo === 'losa' && o.datos.sol && !llave.colocados.has(o.datos.sol) && !llave.colocar(o.datos.sol)) return 'falta';
       if (o.tipo === 'losa' && losas.activar(o.objeto)) interactuables.desactivar(o);
       return o.tipo;
+    },
+    /** Los tres tercios recogidos y el portal de la cascada despierto (lo que hace el pedestal). */
+    despertarPortal() {
+      llave.importar({ soles: ['agua', 'jade', 'oro'], sellos: ['agua'] });
     },
     /** Coloca a Victoria en un spawn y orienta la "cámara" detrás de ella. */
     ir(nombre) {
@@ -124,7 +134,10 @@ export async function crearSimulacion(ruta = 'public/models/zona_1_selva.glb') {
   triggers.alCambiar = (t, entra) => {
     if (!entra) return;
     const d = t.datos;
-    if (d.evento === 'portal' && enfriamiento.usar()) {
+    // El arco de la cascada duerme hasta que se le presenta la Llave del Sol completa
+    if (d.evento === 'portal' && d.destino === 'portal_cornisa' && !llave.portalActivo) {
+      eventos.push('portal_dormido');
+    } else if (d.evento === 'portal' && enfriamiento.usar()) {
       eventos.push(`portal:${d.destino}`);
       sim.ir(d.destino);
     } else if (d.evento === 'muerte' && !sim.muerta) {

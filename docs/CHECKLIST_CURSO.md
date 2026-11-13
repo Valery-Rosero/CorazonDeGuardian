@@ -146,7 +146,7 @@ Detalle de cada requisito, con archivos y funciones: [REQUISITOS_CURSO.md](REQUI
 | Problema | Cómo se evita en el juego |
 |---|---|
 | No suena nada (autoplay bloqueado) | El audio empieza con el clic de «Jugar» |
-| Variable usada antes de declararla | El código se revisa con `npm run check` (tipos) y 106 pruebas |
+| Variable usada antes de declararla | El código se revisa con `npm run check` (tipos) y 113 pruebas |
 | El portal teletransporta en bucle | Espera de 3 s y punto de llegada fuera de la caja del portal (probado en `tests/zona1_simulacion.test.js`) |
 | La cámara salta al teletransportar | `rig.reorientar` tras cada salto; las cinemáticas se mezclan con la cámara de juego |
 | Errores 404 por nombres | Nombres en minúsculas, sin espacios, rutas absolutas |

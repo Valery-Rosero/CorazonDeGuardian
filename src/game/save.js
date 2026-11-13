@@ -13,6 +13,7 @@
  *   escudo: boolean,         // el escudo ya se tomó del altar del santuario
  *   espejos: boolean,        // el acertijo de los espejos está resuelto (la puerta, abierta)
  *   vistas: string[],        // cinemáticas ya vistas (no se repiten)
+ *   llave?: {soles: string[], sellos: string[]},  // la Llave del Sol: tercios recogidos y colocados
  *   tiempo: number,
  *   muertes: number,
  * }} Partida

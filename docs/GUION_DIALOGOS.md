@@ -14,8 +14,9 @@ La duración es la que el juego le da a la línea para el subtítulo y para move
 
 - **Hace siete años**, Mateo Solano, cartógrafo, entró en la selva siguiendo un mapa antiguo del Templo del Sol. Le había prometido a Victoria, que entonces tenía 17 años, llevarla en la próxima expedición. No esperó, y nunca volvió.
 - **Victoria Solano**, ahora de 24 y cartógrafa ella también, tardó esos siete años en terminar el mapa que él dejó a medias. Entra al templo como profesional, no como niña que busca a su papá.
-- **Cómo le habla:** le dice «Mateo», con la distancia de siete años de ausencia. Solo lo llama **«papá» una vez**, cuando lo descubre dentro del Guardián («¡Aguanta, papá!»): ese es el golpe emocional.
+- **Cómo le habla:** le dice «Mateo», con la distancia de siete años de ausencia. Lo llama «papá» solo cuando nadie la oye: ante su marca de tiza en el primer cofre, al despertar el portal y, en voz alta, cuando lo descubre dentro del Guardián («¡Aguanta, papá!»): ese es el golpe emocional.
 - **Qué protege el Guardián:** la Gema del Sol, pero no por lealtad. La gema es posesiva y quiere quedarse en el templo: a quien la toma sin el brazalete lo absorbe y lo vuelve su guardián de piedra, el cuerpo que la defiende para que nadie la saque. Le pasó antes a un sacerdote (la leyenda del mural, los guardianes de rodillas del santuario) y hace siete años a Mateo. El brazalete es lo único que la canaliza sin consumir a quien lo lleva: por eso Victoria puede hacer lo que su padre no pudo.
+- **La Llave del Sol:** el pueblo del sol partió la llave del templo en tres soles (agua, jade y oro) y escondió cada uno en un cofre de piedra de la selva. El arco de runas de la cascada solo despierta con la llave completa y se queda con el de agua; el jade abre la losa de las ruinas y el oro la puerta del santuario. Hace siete años Mateo abrió los mismos cofres (su marca de tiza, «M. S.», sigue en la piedra); cuando la gema lo tomó, el templo se cerró y los soles volvieron a su sitio. Su mapa los tiene marcados: por eso Victoria sabe dónde buscar.
 - **Dónde lo sabe el jugador:** dos líneas narradas en la introducción, la página 1 del diario, la frase de la portada de carga y el reencuentro («¿Cuánto tiempo…?» / «Siete años. Pero te encontré.»).
 
 | Momento | Narración (subtítulo sin personaje) |
@@ -40,7 +41,10 @@ La duración es la que el juego le da a la línea para el subtítulo y para move
 | Código | Momento | Personaje | Línea | Emoción | Duración |
 |---|---|---|---|---|---|
 | `vic_brazalete_01` | El brazalete flota hacia su muñeca | Victoria | «Siete años detrás de esto, Mateo.» | ternura | 2,4 s |
+| `vic_cofre_01` | Al abrir el primer cofre de la Llave del Sol (tiene la marca de tiza de Mateo) | Victoria | «La marca de papá. Abrió este cofre hace siete años… y el sol volvió a su sitio.» | ternura | 4,6 s |
 | `vic_cascada_01` | Al llegar a la cascada, después de leer la página 2 | Victoria | «"Detrás del agua hay un camino". Lo anoto en el mapa: entrada oculta.» | determinación | 5,2 s |
+| `vic_runas_01` | Al entrar en el arco de runas sin la llave completa | Victoria | «Las runas piden la llave entera. Me faltan soles.» | determinación | 3,0 s |
+| `vic_llave_01` | Cinemática «La llave», plano 3: el arco encendido, el tercio de agua en el atril | Victoria | «Tres soles, una llave. Ya voy, papá.» | determinación | 2,2 s |
 | `vic_puente_01` | Plano general del puente | Victoria | «Si te aguantó a ti hace siete años, me aguanta a mí.» | determinación | 3,7 s |
 
 ## 2. Santuario
@@ -100,7 +104,7 @@ Se leen en un panel de papel. Si se graban, las lee **Mateo en voz en off**, cad
 
 ## Las líneas de Victoria fuera del combate
 
-El documento maestro solo fija los diálogos del combate y las páginas del diario. Las cuatro líneas de Victoria en la exploración (brazalete, cascada, puente y voz) son nuestras: momentos cortos que la muestran como cartógrafa adulta antes del final. Respetan el pilar de «poco texto y mucha intención». Se reescribieron el 12/11 porque sonaban infantiles; cada una conserva su duración y su plano.
+El documento maestro solo fija los diálogos del combate y las páginas del diario. Las líneas de Victoria en la exploración (brazalete, cofre, cascada, runas, llave, puente y voz) son nuestras: momentos cortos que la muestran como cartógrafa adulta antes del final. Respetan el pilar de «poco texto y mucha intención». Se reescribieron el 12/11 porque sonaban infantiles; cada una conserva su duración y su plano.
 
 ---
 

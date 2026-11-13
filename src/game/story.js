@@ -1,6 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
-import { brazalete, intro, puente, puertaEspejos } from '../cinematics/story_cines.js';
+import { brazalete, intro, llave, puente, puertaEspejos } from '../cinematics/story_cines.js';
 
 /**
  * La historia antes del jefe (guion gráfico): la introducción con el mapa del padre, el brazalete,
@@ -83,6 +83,39 @@ export class Historia {
         if (e.accion === 'decir') c.dialogos.decir(...e.datos);
       },
       alTerminar,
+    });
+  }
+
+  /**
+   * La Llave del Sol sobre el pedestal de la cascada: Victoria se pone frente al atril y la cinemática
+   * dirige (armar, encender las runas y asentar el tercio de agua).
+   * @param {THREE.Vector3} marca  donde se para Victoria @param {THREE.Vector3} centro  donde se arma la llave
+   * @param {THREE.Vector3} arco  el arco de runas
+   * @param {{armar: () => void, runas: () => void, asentar: () => void, alTerminar: () => void}} acciones
+   */
+  llave(marca, centro, arco, acciones) {
+    const c = this.c;
+    const rumbo = Math.atan2(centro.x - marca.x, centro.z - marca.z);
+    c.jugador.colocar(marca, rumbo);
+    c.rig.reorientar(rumbo);
+    c.jugador.bloqueado = true;
+    c.cine.reproducir(llave(marca.clone(), centro.clone(), arco.clone()), {
+      alSuceso: (/** @type {any} */ e) => {
+        if (e.accion === 'armar') {
+          c.animador.gesto('manipular');
+          acciones.armar();
+        }
+        if (e.accion === 'runas') {
+          acciones.runas();
+          c.rig.sacudida.agregar(0.12);
+        }
+        if (e.accion === 'asentar') acciones.asentar();
+        if (e.accion === 'decir') c.dialogos.decir(...e.datos);
+      },
+      alTerminar: () => {
+        c.jugador.bloqueado = false;
+        acciones.alTerminar();
+      },
     });
   }
 
@@ -179,6 +212,17 @@ function crearMapa() {
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2;
     g.beginPath(); g.moveTo(410 + Math.cos(a) * 15, 36 + Math.sin(a) * 15); g.lineTo(410 + Math.cos(a) * 21, 36 + Math.sin(a) * 21); g.stroke();
+  }
+  // Los tres cofres de la Llave del Sol, marcados junto a la ruta con un sol de su color
+  for (const [x, y, color] of /** @type {const} */ ([[118, 282, '#3FC07A'], [196, 236, '#FFB531'], [246, 204, '#38D0E0']])) {
+    g.fillStyle = color;
+    g.strokeStyle = '#5A3A22';
+    g.lineWidth = 2;
+    g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fill(); g.stroke();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      g.beginPath(); g.moveTo(x + Math.cos(a) * 10, y + Math.sin(a) * 10); g.lineTo(x + Math.cos(a) * 14, y + Math.sin(a) * 14); g.stroke();
+    }
   }
   g.fillStyle = '#5A3A22';
   g.font = 'italic 22px Georgia, serif';

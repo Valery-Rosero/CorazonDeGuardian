@@ -233,6 +233,24 @@ body.en-cine #cartografa, body.en-cine #poderes, body.en-cine #vida { opacity: 0
   letter-spacing: 0.06em;
   opacity: 0.75;
 }
+/* La Llave del Sol: un círculo por tercio (vacío en el cofre, lleno en la mano, tenue en su cerradura) */
+#cartografa-soles {
+  margin-top: 3px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+#cartografa-soles .sol-llave {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--color);
+  box-sizing: border-box;
+}
+#cartografa-soles .sol-llave.tiene { background: var(--color); box-shadow: 0 0 6px var(--color); }
+#cartografa-soles .sol-llave.colocado { background: var(--color); opacity: 0.4; }
 
 /* Poderes: anillo de recarga con conic-gradient (--p = 0 recién usado, 1 listo) */
 #poderes {

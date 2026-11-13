@@ -1,4 +1,5 @@
 // @ts-check
+import { LLAVE, SOLES } from '../config/llave.js';
 /** HUD de juego: barra de vida, viñeta de daño, mensajes y pantalla de derrota. */
 
 /** @param {string} id */
@@ -20,6 +21,8 @@ export class Hud {
     this.tutorial = $('tutorial');
     this.finTutorial = 0;
     this.diario = $('cartografa-diario');
+    this.soles_ = $('cartografa-soles');
+    this.ultimosSoles = '';
     /** @type {Record<string, {el: HTMLElement, p: number, estado: string}>} */
     this.poderes = {};
     for (const nombre of ['pulso', 'escudo', 'manipulacion']) {
@@ -65,6 +68,27 @@ export class Hud {
   /** @param {number} encontradas @param {number} total */
   paginas(encontradas, total) {
     this.diario.textContent = `Diario: ${encontradas}/${total}`;
+  }
+
+  /**
+   * Los tercios de la Llave del Sol en el cuaderno: vacío en su cofre, lleno en la mano y tenue en su
+   * cerradura. Aparece cuando Victoria tiene el brazalete (o algún tercio).
+   * @param {Set<string>} recogidos @param {Set<string>} colocados @param {boolean} [mostrar]
+   */
+  soles(recogidos, colocados, mostrar = false) {
+    if (!this.soles_) return;
+    const estado = SOLES.map((s) => (colocados.has(s) ? 'colocado' : recogidos.has(s) ? 'tiene' : '')).join(',');
+    const visible = mostrar || recogidos.size > 0;
+    if (estado + visible === this.ultimosSoles) return;
+    this.ultimosSoles = estado + visible;
+    this.soles_.classList.toggle('oculto', !visible);
+    this.soles_.replaceChildren(document.createTextNode('Llave del Sol'), ...SOLES.map((s) => {
+      const el = document.createElement('span');
+      el.className = `sol-llave ${colocados.has(s) ? 'colocado' : recogidos.has(s) ? 'tiene' : ''}`;
+      el.style.setProperty('--color', LLAVE.color[s]);
+      el.title = LLAVE.nombre[s];
+      return el;
+    }));
   }
 
   /** @param {number} actual @param {number} maxima */

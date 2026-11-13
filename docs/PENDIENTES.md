@@ -188,6 +188,18 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 | Queda dicho qué protege el Guardián: la gema vuelve su guardián a quien la toma sin el brazalete. Mateo lo dice en la derrota (plano nuevo de 3,2 s, contraplano sobre el hombro de Victoria, antes de que la gema vuele al brazalete; la derrota pasa de 18 a 21,2 s) y la leyenda del mural lo dice del sacerdote. | Solo se insinuaba: había que juntar el mural, la gema y la última página del diario. |
 | En las cinemáticas el subtítulo va encima de la franja negra de abajo; la leyenda del mural no pisa la narración de una cinemática. | La franja tapaba la última línea de los subtítulos largos. |
 
+## La Llave del Sol (13/11)
+
+| Decisión | Motivo |
+|---|---|
+| Antes de la cascada hay que juntar tres soles en cofres de la selva: el de agua despierta el portal (que pide los tres), el de jade abre la losa de las ruinas y el de oro la puerta del santuario. | Lo pediste: el portal no deja pasar sin los tres objetos, y cada uno sirve para abrir un paso. |
+| Son tercios de un disco solar: juntos forman la Llave del Sol. El portal pide la llave completa porque los tres se juntan sobre el pedestal (cinemática «La llave», 7,2 s, tres planos) y solo el de agua se queda. | Es la razón dentro del mundo para pedir los tres en el portal, y nadie llega a la losa sin el jade. |
+| Los cofres llevan la marca de tiza de Mateo y su mapa los tiene marcados: él los abrió hace siete años; cuando la gema lo tomó, el templo se cerró y los soles volvieron a su sitio. | Coherente con la historia: explica por qué Victoria sabe dónde buscar y por qué los pasos vuelven a estar cerrados. |
+| Uno a la vista (cabeza de piedra del cruce), uno escondido (tras una ceiba del este) y uno con reto (repisa junto a la cascada, saltando por dos piedras nuevas de la poza). Cada cofre cerrado tiene un haz de luz de 9 m que se ve entre los árboles. | Variedad y claridad: el haz guía sin flechas. |
+| El presupuesto de la selva sube a 72.000 triángulos (queda en 70.888). | Los cofres, los tercios, el pedestal y la repisa; la meta es una PC con tarjeta dedicada. |
+| Atajos de depuración: `&soles` (los tres en la mano) y `&llave` (además, el portal despierto). La demostración técnica empieza con el portal despierto. | Para revisar y para cruzar el portal en la demostración del requisito 4. |
+| Una partida guardada de antes de la llave que ya pasó la cascada se carga con la llave completa y el portal despierto. | Nadie se queda atrapado al otro lado de la cascada sin el jade y el oro. |
+
 ## Pendiente
 
 - Medir los FPS en una computadora con tarjeta gráfica dedicada con `npm run banco` (calidad media y alta) y mandar los resultados copiados.

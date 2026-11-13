@@ -23,6 +23,10 @@ export const LINEAS = Object.freeze({
   vic_cascada_01: { quien: 'victoria', texto: '«Detrás del agua hay un camino». Lo anoto en el mapa: entrada oculta.', emocion: 'determinacion', duracion: 5.2 },
   vic_puente_01: { quien: 'victoria', texto: 'Si te aguantó a ti hace siete años, me aguanta a mí.', emocion: 'determinacion', duracion: 3.7 },
   vic_voz_01: { quien: 'victoria', texto: '¿Mateo…?', emocion: 'sorpresa', duracion: 1.8 },
+  // La Llave del Sol (13/11): el primer cofre, el portal dormido y la llave completa sobre el pedestal
+  vic_cofre_01: { quien: 'victoria', texto: 'La marca de papá. Abrió este cofre hace siete años… y el sol volvió a su sitio.', emocion: 'ternura', duracion: 4.6 },
+  vic_runas_01: { quien: 'victoria', texto: 'Las runas piden la llave entera. Me faltan soles.', emocion: 'determinacion', duracion: 3.0 },
+  vic_llave_01: { quien: 'victoria', texto: 'Tres soles, una llave. Ya voy, papá.', emocion: 'determinacion', duracion: 2.2 },
   // Epílogo «La marcha» (11/11)
   mat_epilogo_01: { quien: 'mateo', texto: 'La gema… los está llamando.', emocion: 'miedo', duracion: 2.6 },
   vic_epilogo_01: { quien: 'victoria', texto: '¿Cómo saldremos de aquí?', emocion: 'miedo', duracion: 1.9 },

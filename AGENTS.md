@@ -37,7 +37,7 @@ Abre el juego en el navegador, en http://localhost:5173. Hace falta Chrome o Edg
 
 | Comando | Para qué |
 |---|---|
-| `npm test` | 106 pruebas (lógica y simulaciones con los escenarios reales); tardan unos minutos |
+| `npm test` | 113 pruebas (lógica y simulaciones con los escenarios reales); tardan unos minutos |
 | `npm run check` | Comprobación de tipos |
 | `npm run build` | Compilación de producción en `dist/` |
 | `npm run assets` | Regenera modelos (Blender), sonidos y música (Python) y el video. Solo con la instalación `-Completo` |

@@ -66,8 +66,8 @@ test('zona 1: vegetación instanciada con transformaciones completas', () => {
   }
 });
 
-// 70.000 desde el rediseño de la gran pirámide (docs/PENDIENTES.md): la computadora de prueba tiene tarjeta dedicada
-test('zona 1: presupuesto de 70.000 triángulos sin contar vegetación ni colisionadores', () => {
+// 72.000 desde la Llave del Sol (70.000 con la gran pirámide; docs/PENDIENTES.md): la computadora de prueba tiene tarjeta dedicada
+test('zona 1: presupuesto de 72.000 triángulos sin contar vegetación ni colisionadores', () => {
   const porMalla = new Map(json.meshes.map((m, i) => [i, m]));
   let total = 0;
   for (const n of nodos) {
@@ -76,7 +76,7 @@ test('zona 1: presupuesto de 70.000 triángulos sin contar vegetación ni colisi
     if (tipo.startsWith('col_') || tipo === 'trg_box' || tipo === 'inst') continue;
     total += contar({ meshes: [porMalla.get(n.mesh)], accessors: json.accessors }).triangulos;
   }
-  assert.ok(total <= 70000, `${total} triángulos`);
+  assert.ok(total <= 72000, `${total} triángulos`);
 });
 
 test('zona 1: como máximo 4 luces puntuales (los shaders no se recompilan)', () => {

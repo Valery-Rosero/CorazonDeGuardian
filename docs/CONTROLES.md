@@ -11,7 +11,7 @@
 | Apuntar | Mantener clic derecho: la cámara va sobre el hombro, Victoria mira hacia donde apuntas y camina de lado sin dejar de apuntar; la mira se pone roja sobre un enemigo |
 | Pulso solar | Clic izquierdo (apuntando va justo a la mira; sin apuntar, Victoria se gira y dispara) |
 | Escudo arcano | Q |
-| Manipulación ancestral, leer páginas, usar pilares | E |
+| Manipulación ancestral, leer páginas, abrir cofres, presentar y colocar los soles de la Llave del Sol | E |
 | Mirar | Ratón (la vista queda capturada al hacer clic en el juego). La cámara se queda donde la dejas |
 | Cámara detrás de Victoria | R o botón central del ratón |
 | Pausa | P o Esc |

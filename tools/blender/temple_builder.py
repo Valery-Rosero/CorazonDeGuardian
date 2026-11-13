@@ -28,7 +28,7 @@ def _plano(m, puntos):
     return verts, orientar_hacia(verts, [tuple(range(len(verts)))], normal)
 
 
-def glifo_sol(k, m, radio, color='dorado_solar'):
+def glifo_sol(k, m, radio, color='dorado_solar', material=0):
     """Sol tallado: anillo, punto central y 8 rayos (caras planas sobre la cara frontal, matriz 'm')."""
     verts, caras = [], []
     for i in range(8):
@@ -47,7 +47,7 @@ def glifo_sol(k, m, radio, color='dorado_solar'):
         a = math.tau * i / 6
         verts.append(m @ Vector((math.cos(a) * radio * 0.36, 0, math.sin(a) * radio * 0.36)))
     caras.append(tuple(range(base, base + 6)))
-    k.agregar((verts, orientar_hacia(verts, caras, m.to_3x3() @ Vector((0, -1, 0)))), color, 'escenario')
+    k.agregar((verts, orientar_hacia(verts, caras, m.to_3x3() @ Vector((0, -1, 0)))), color, 'escenario', material=material)
 
 
 def bloque_tallado(k, centro, tam, rnd, giro=0.0, glifo=True, musgo=True):

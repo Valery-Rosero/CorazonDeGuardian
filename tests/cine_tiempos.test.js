@@ -5,7 +5,7 @@ import { ColaDialogo, LineaTiempo } from '../src/cinematics/timeline.js';
 import { ReproductorCine } from '../src/cinematics/cinematic_player.js';
 import { LINEAS, PAUSA_ENTRE_LINEAS } from '../src/config/dialogues.js';
 import { despertar, fase2, fase3, derrota, final } from '../src/cinematics/guardian_cines.js';
-import { intro, brazalete, puente, puertaEspejos } from '../src/cinematics/story_cines.js';
+import { intro, brazalete, llave, puente, puertaEspejos } from '../src/cinematics/story_cines.js';
 import { epilogo, T_EPILOGO } from '../src/cinematics/epilogo.js';
 
 // Posiciones de ejemplo: los tiempos no dependen de dónde esté cada uno
@@ -13,7 +13,7 @@ const A = { x: 0, y: 0, z: 0 };
 const B = { x: 3, y: 0, z: 12 };
 const C = { x: -2, y: 0, z: 6 };
 const CINES = [
-  intro(A, B), brazalete(B, A), puente(A, B), puertaEspejos(B, mas(B, 3), A),
+  intro(A, B), brazalete(B, A), llave(A, mas(C, 1.7), B), puente(A, B), puertaEspejos(B, mas(B, 3), A),
   despertar(A, B), fase2(mas(B, 3), 0, A), fase3(mas(B, 3), 0), derrota(B, 0, A, C), final(A, 0, C, { camara: mas(A, 2), mira: B, mm: 30 }),
   epilogo(A, { x: 1, y: 0, z: 0 }, C, (t) => ({ x: 120 - t, y: 30, z: 0 }), { x: 125, y: 34, z: 0 }, { x: -1, y: 0, z: 0 }, () => NaN),
 ];
@@ -57,7 +57,7 @@ test('cinemáticas: cada línea de diálogo termina dentro de su cinemática, co
 
 test('cinemáticas: la última línea de un plano de diálogo no se corta con el cambio de plano', () => {
   // Las líneas que el guion gráfico quiere en cuadro: quien habla se ve mientras dice su frase
-  const enCuadro = { fase2: { vic_fase2_01: 1 }, fase3: { mat_fase3_01: 1 }, derrota: { mat_derrota_01: 3, vic_derrota_01: 4, mat_derrota_02: 5 }, brazalete: { vic_brazalete_01: 2 }, despertar: { gem_despertar_01: 5 }, epilogo: { mat_epilogo_01: 3, vic_epilogo_01: 4 } };
+  const enCuadro = { fase2: { vic_fase2_01: 1 }, fase3: { mat_fase3_01: 1 }, derrota: { mat_derrota_01: 3, vic_derrota_01: 4, mat_derrota_02: 5 }, brazalete: { vic_brazalete_01: 2 }, llave: { vic_llave_01: 2 }, despertar: { gem_despertar_01: 5 }, epilogo: { mat_epilogo_01: 3, vic_epilogo_01: 4 } };
   for (const cine of CINES) {
     const esperado = enCuadro[cine.nombre];
     if (!esperado) continue;

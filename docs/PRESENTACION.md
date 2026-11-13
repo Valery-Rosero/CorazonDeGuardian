@@ -31,7 +31,7 @@ El checklist completo, tema por tema de las semanas 1 a 10, está en [CHECKLIST_
 | Vite | 8 | Servidor de desarrollo y empaquetado (`npm run dev`, `npm run build`), como desde la semana 6 |
 | Blender | 5.2 con Python (`bpy`) | Todos los modelos: escenarios, personajes y enemigos, **generados con scripts**, no a mano |
 | Python + numpy / Pillow / ffmpeg | 3.12 | Sonidos y música sintetizados; el video del mural dibujado cuadro a cuadro |
-| node:test | Node 24 | 106 pruebas automáticas |
+| node:test | Node 24 | 113 pruebas automáticas |
 
 **Mensaje:** no hay ni un modelo, ni una imagen ni un sonido descargado. Todo sale de código.
 
@@ -420,7 +420,7 @@ malla.quaternion.set(cuerpo.quaternion.x, cuerpo.quaternion.y, cuerpo.quaternion
 
 ## 20. Pruebas y verificación
 
-- **106 pruebas** con `npm test`. Algunas cargan los `.glb` reales y hacen correr la física:
+- **113 pruebas** con `npm test`. Algunas cargan los `.glb` reales y hacen correr la física:
   - recorren la selva entera;
   - resuelven el acertijo de los espejos (las 512 combinaciones);
   - pelean con el Guardián;

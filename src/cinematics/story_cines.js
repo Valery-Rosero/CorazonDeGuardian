@@ -1,7 +1,7 @@
 // @ts-check
 /**
  * Cinemáticas de la historia antes del jefe (guion gráfico y sección 9.4): introducción, el brazalete,
- * la llegada al puente y la puerta de los espejos. Coordenadas de Three.js; lentes en milímetros.
+ * la Llave del Sol en el pedestal de la cascada, la llegada al puente y la puerta de los espejos. Coordenadas de Three.js; lentes en milímetros.
  * @typedef {import('./timeline.js').Cinematica} Cinematica
  * @typedef {{x: number, y: number, z: number}} V3
  */
@@ -72,6 +72,40 @@ export function brazalete(altar, victoria) {
       { t: 2.7, accion: 'mirar' },
       { t: 3.0, accion: 'vuela' },
       { t: 4.7, accion: 'decir', datos: ['vic_brazalete_01'] },
+    ],
+  };
+}
+
+/**
+ * La llave (7,2 s, tablero docs/previews/llave_tablero.png): los tres tercios salen de la mano de Victoria
+ * y se juntan sobre el atril; la llave completa mira al arco de runas, que se enciende; el tercio de agua
+ * baja al atril y los otros dos vuelven a ella.
+ * @param {V3} victoria  frente al atril, mirándolo
+ * @param {V3} llave  donde se arma la llave (sobre el atril)
+ * @param {V3} arco  centro del arco de runas de la cascada
+ * @returns {Cinematica}
+ */
+export function llave(victoria, llave, arco) {
+  const f = hacia(victoria, llave);    // Victoria mira al atril
+  const g = hacia(llave, arco);        // la llave mira al arco
+  const h = hacia(arco, victoria);     // desde el fondo de la cueva hacia ella
+  const pecho = mas(victoria, 0, 1.35, 0);
+  return {
+    nombre: 'llave',
+    planos: [
+      // 1. Plano americano de perfil desde la entrada de la cueva: Victoria y el atril; al fondo, el arco dormido
+      { duracion: 2.4, lente: 35, curva: 'lineal', camara: [rel(victoria, f, 0.7, -4.3, 1.5), rel(victoria, f, 0.75, -3.9, 1.48)], mira: [rel(victoria, f, 0.7, 0, 1.25), rel(victoria, f, 0.75, 0, 1.35)] },
+      // 2. Detalle desde el lado del arco: la llave completa gira y mira al arco; la luz de la entrada detrás
+      { duracion: 1.8, lente: 70, camara: [rel(llave, g, 2.7, 0.25, -0.18), rel(llave, g, 2.5, 0.2, -0.15)], mira: [llave, llave] },
+      // 3. General desde el fondo de la cueva: el arco encendido delante, Victoria y el atril, la salida
+      { duracion: 3.0, lente: 24, curva: 'sale', camara: [rel(arco, h, -2.3, 0.6, 1.6), rel(arco, h, -2.1, 0.55, 1.55)], mira: [mas(pecho, 0, -0.3, 0), mas(pecho, 0, -0.25, 0)] },
+    ],
+    mezclaFinal: 1.2,
+    sucesos: [
+      { t: 0.25, accion: 'armar' },
+      { t: 2.6, accion: 'runas' },
+      { t: 4.4, accion: 'asentar' },
+      { t: 4.65, accion: 'decir', datos: ['vic_llave_01'] },
     ],
   };
 }
