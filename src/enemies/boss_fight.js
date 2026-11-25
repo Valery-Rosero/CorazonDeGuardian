@@ -9,6 +9,8 @@ import { LogicaGuardian } from './boss_logic.js';
 import { ActorGuardian } from './guardian.js';
 
 const _a = new THREE.Vector3();
+/** s entre dos pistas por Pulsos que rebotan en las placas */
+const PISTA_REBOTE = 6;
 const _b = new THREE.Vector3();
 
 /**
@@ -34,6 +36,7 @@ export class CombateGuardian {
    *     derrota: () => void,
    *     barra: (visible: boolean, fraccion: number) => void,
    *     nota: (texto: string, s?: number) => void,
+   *     pista?: (texto: string, s?: number) => void,   // mensaje grande en el centro (si no hay, va a la nota)
    *   },
    * }} d
    */
@@ -69,7 +72,15 @@ export class CombateGuardian {
     /** 'espera' (en el trono), 'despertando', 'combate', 'derrota' */
     this.estado = 'espera';
     this.brilloHaz = 0;
+    this.reloj = 0;
+    /** Cuándo fue la última pista por un Pulso que rebotó (no se repite antes de PISTA_REBOTE s) */
+    this.ultimoRebote = -Infinity;
     this.d.latido?.setPlaybackRate(0.8);
+  }
+
+  /** Mensaje para el jugador en el centro de la pantalla. @param {string} texto @param {number} s */
+  _pista(texto, s) {
+    (this.d.avisos.pista ?? this.d.avisos.nota)(texto, s);
   }
 
   get activo() {
@@ -87,6 +98,8 @@ export class CombateGuardian {
     if (this.logica.encenderPilar(i)) {
       this.d.avisos.sonido('pilar_enciende', this.pilares[i].punta);
       this.d.avisos.rafaga(this.pilares[i].punta, 30, PALETA.oro_brillante, 4);
+      const n = this.logica.pilares.filter((p) => p.encendido).length;
+      if (n < this.pilares.length) this.d.avisos.nota(`Pilar solar encendido: ${n} de ${this.pilares.length}`, 2.5);
     } else if (this.logica.nucleoAbierto) {
       this.d.avisos.nota('El núcleo ya está expuesto: ¡dispara!', 2);
     } else if (this.logica.recarga > 0) {
@@ -103,6 +116,8 @@ export class CombateGuardian {
     this.actor.ponerFase(1);
     this.d.avisos.barra(true, 1);
     this.d.latido?.setPlaybackRate(1);
+    // Cómo se le hace daño, dicho desde el principio: el Pulso solo cuenta con el núcleo abierto
+    this._pista('Enciende los tres pilares solares con E: abren el núcleo de su pecho. Solo ahí le hace daño el Pulso', 7);
   }
 
   /** Para la cinemática: se va levantando del trono. @param {number} u 0 = sentado, 1 = de pie */
@@ -123,9 +138,25 @@ export class CombateGuardian {
       this.d.avisos.rafaga(punto, 22, '#FFFFFF', 4);
       this.d.avisos.barra(true, this.logica.vida / GUARDIAN.vida);
     } else {
+      // Rebota en las placas: chispas grises donde pegó y una pista de qué falta
       this.d.avisos.sonido('escudo_bloquear', punto, 0.5);
+      this.d.avisos.rafaga(punto, 16, '#C9D2D8', 3);
+      this._avisarRebote(cerca);
     }
     return true;
+  }
+
+  /** Por qué no le hizo daño, sin repetirlo a cada disparo. @param {boolean} cerca  el Pulso pegó junto al pecho */
+  _avisarRebote(cerca) {
+    if (this.estado !== 'combate' || this.reloj - this.ultimoRebote < PISTA_REBOTE) return;
+    const l = this.logica;
+    const n = l.pilares.filter((p) => p.encendido).length;
+    const texto = l.nucleoAbierto ? (cerca ? null : '¡Las placas están abiertas: apunta al núcleo, en el pecho!')
+      : l.recarga > 0 ? 'Las placas lo protegen. Espera a que los pilares vuelvan a brillar'
+        : `Las placas lo protegen: enciende los tres pilares solares con E (${n} de ${this.pilares.length})`;
+    if (!texto) return;
+    this.ultimoRebote = this.reloj;
+    this._pista(texto, 4);
   }
 
   /** Dirección hacia el núcleo para la asistencia de puntería, si está expuesto. @param {THREE.Vector3} origen @param {THREE.Vector3} dir */
@@ -141,6 +172,7 @@ export class CombateGuardian {
    * @param {THREE.Vector3} jugador @param {boolean} enSuelo
    */
   actualizar(dt, t, jugador, enSuelo) {
+    this.reloj = t;
     if (this.estado === 'derrota') return;
     const l = this.logica;
     const dist = Math.hypot(jugador.x - this.actor.raiz.position.x, jugador.z - this.actor.raiz.position.z);
@@ -209,7 +241,7 @@ export class CombateGuardian {
         this.brilloHaz = 1.4;
         av.sonido('acertijo_resuelto', this.actor.raiz.position, 0.6);
         av.sacudida(0.4);
-        av.nota('¡El núcleo está expuesto!', 2.5);
+        this._pista('¡El núcleo está expuesto: dispárale al pecho!', 3);
         break;
       case 'nucleo_cerrado':
         av.sonido('losa_mover', this.actor.raiz.position, 0.7);
@@ -257,6 +289,7 @@ export class CombateGuardian {
     if (this.estado === 'derrota') return;
     this.logica = new LogicaGuardian(GUARDIAN, ATAQUES);
     this.estado = 'espera';
+    this.ultimoRebote = -Infinity;
     this.actor.sentado = 1;
     this.actor.ponerFase(0);
     this.actor.cuerpo.position.set(this.d.spawn.pos.x, this.d.spawn.pos.y, this.d.spawn.pos.z);

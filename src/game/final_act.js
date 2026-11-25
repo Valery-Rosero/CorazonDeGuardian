@@ -63,6 +63,7 @@ export class ActoFinal {
         derrota: () => this._derrota(),
         barra: (vis, f) => c.ui.barraJefe(vis, f),
         nota: (t, s) => c.hud.nota(t, s),
+        pista: (t, s) => c.hud.mensajeTutorial(t, s),
       },
     });
     this.latido = c.audio.buclePosicional('nucleo_latido', this.combate.actor.nucleo, { referencia: 3, maximo: 30, volumen: 0.9 });

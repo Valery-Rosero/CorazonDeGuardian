@@ -23,7 +23,7 @@ Hace siete años, el cartógrafo Mateo Solano entró en la selva buscando el Tem
 
 ## Tecnología
 
-Three.js 0.160 · cannon-es 0.20 · Vite · Blender 5.2 (Python) · numpy · 113 pruebas automáticas con `node --test`.
+Three.js 0.160 · cannon-es 0.20 · Vite · Blender 5.2 (Python) · numpy · 114 pruebas automáticas con `node --test`.
 
 ## Pilares de diseño
 

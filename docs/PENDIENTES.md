@@ -200,6 +200,13 @@ Guion gráfico con las nueve cinemáticas, cada viñeta junto a su captura del j
 | Atajos de depuración: `&soles` (los tres en la mano) y `&llave` (además, el portal despierto). La demostración técnica empieza con el portal despierto. | Para revisar y para cruzar el portal en la demostración del requisito 4. |
 | Una partida guardada de antes de la llave que ya pasó la cascada se carga con la llave completa y el portal despierto. | Nadie se queda atrapado al otro lado de la cascada sin el jade y el oro. |
 
+## El combate más claro (25/11)
+
+| Decisión | Motivo |
+|---|---|
+| Un compañero reportó que el Guardián no recibía daño. Con la versión actual no se reproduce: disparando de verdad al núcleo abierto (4, 8 y 12 m) y después de morir y reaparecer, incluso en la fase 3, el daño entra. | Lo más probable: una versión de antes del arreglo del 11/11, o disparar con las placas cerradas sin saber que hay que encender los pilares. |
+| Al empezar el combate, una pista en el centro: «Enciende los tres pilares solares con E…». Si el Pulso rebota, chispas grises y una pista con lo que falta (n de 3, esperar la recarga o apuntar al pecho), cada 6 s como mucho. Cada pilar encendido avisa «n de 3». | Antes, un Pulso en las placas solo sonaba: parecía un error. Prueba nueva en `tests/zona3_simulacion.test.js`. |
+
 ## Pendiente
 
 - Medir los FPS en una computadora con tarjeta gráfica dedicada con `npm run banco` (calidad media y alta) y mandar los resultados copiados.

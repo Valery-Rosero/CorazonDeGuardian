@@ -18,6 +18,7 @@ before(async () => {
 function crearCombate() {
   const golpes = [];
   const sucesos = [];
+  const pistas = [];
   const centro = sim.nivel.raiz.getObjectByName('centro_arena').getWorldPosition(new THREE.Vector3());
   const combate = new CombateGuardian({
     escena: sim.escena, fisica: sim.fisica, glb: glbGuardian.scene, toon: new THREE.MeshStandardMaterial(),
@@ -26,10 +27,10 @@ function crearCombate() {
     avisos: {
       danar: (n) => golpes.push(n), sonido: () => {}, sacudida: () => {}, rafaga: () => {},
       fase: (f) => sucesos.push(`fase${f}`), invocar: () => sucesos.push('invocar'), derrota: () => sucesos.push('derrota'),
-      barra: () => {}, nota: () => {},
+      barra: () => {}, nota: () => {}, pista: (t) => pistas.push(t),
     },
   });
-  return { combate, golpes, sucesos };
+  return { combate, golpes, sucesos, pistas };
 }
 
 test('arena: Victoria entra caminando desde la puerta y el umbral dispara el despertar', () => {
@@ -75,6 +76,25 @@ test('pilares: los tres del .glb abren el núcleo; solo entonces y cerca del pec
   // Un golpe en los pies no cuenta aunque el núcleo esté abierto
   combate.golpear(combate.actor.cuerpo, 25, combate.actor.raiz.position.clone());
   assert.equal(combate.logica.vida, GUARDIAN.vida - 25);
+});
+
+test('Guardián: si el Pulso rebota en las placas, una pista dice qué falta, sin repetirla a cada disparo', () => {
+  const { combate, pistas } = crearCombate();
+  combate.empezarCombate();
+  assert.match(pistas[0], /tres pilares/, 'al empezar el combate explica cómo se le hace daño');
+  const pecho = combate.actor.pecho(new THREE.Vector3());
+  combate.actualizar(DT, 10, new THREE.Vector3(0, -3, 690), true);
+  combate.usar(combate.pilares[0].interactuable);
+  combate.golpear(combate.actor.cuerpo, 25, pecho);
+  assert.match(pistas.at(-1), /1 de 3/, `pista: ${pistas.at(-1)}`);
+  const n = pistas.length;
+  combate.golpear(combate.actor.cuerpo, 25, pecho);
+  assert.equal(pistas.length, n, 'el segundo rebote seguido no repite la pista');
+  for (const p of combate.pilares) combate.usar(p.interactuable);
+  combate.actualizar(DT, 20, new THREE.Vector3(0, -3, 690), true);
+  combate.golpear(combate.actor.cuerpo, 25, combate.actor.raiz.position.clone());
+  assert.match(pistas.at(-1), /apunta al núcleo/, 'abierto pero lejos del pecho: apuntar al pecho');
+  assert.equal(combate.logica.vida, GUARDIAN.vida);
 });
 
 test('arena: tiene el trono, la entrada, el inicio del escape y los espectros de la invocación', () => {
